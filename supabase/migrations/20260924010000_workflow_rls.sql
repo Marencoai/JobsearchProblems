@@ -60,7 +60,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
     select
         public.is_workspace_member(target_workspace_id)
         and exists (
@@ -73,7 +73,7 @@ as $
               and wm.status = 'active'
               and p.status = 'active'
         );
-$;
+$$;
 
 
 create or replace function public.is_active_workspace_human(
@@ -85,7 +85,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
     select
         public.is_workspace_member(target_workspace_id)
         and exists (
@@ -99,7 +99,7 @@ as $
               and p.status = 'active'
               and p.principal_type = 'human'
         );
-$;
+$$;
 
 
 revoke all on function
