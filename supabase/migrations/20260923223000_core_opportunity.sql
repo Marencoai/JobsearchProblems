@@ -627,6 +627,22 @@ on public.opportunity_sources(
 where source_reference is not null;
 
 
+-- Prevent retry/reprocessing from attaching the same external
+-- source record to the same Opportunity more than once.
+--
+-- The same Gmail alert may contain several Opportunities, so
+-- opportunity_id remains part of the uniqueness boundary.
+
+create unique index opportunity_sources_opportunity_reference_unique
+on public.opportunity_sources(
+    workspace_id,
+    opportunity_id,
+    source_type,
+    source_reference
+)
+where source_reference is not null;
+
+
 -- Prevent the exact same URL from being attached to the same
 -- Opportunity repeatedly.
 
