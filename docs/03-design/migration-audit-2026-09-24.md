@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-24  
 **Scope:** `supabase/migrations/`  
-**Status:** Deployed and tested through Migration 020. Identity, tenant isolation, Candidate Knowledge, Evaluation, and Workflow lifecycle tests are passing. Daily Queue and Application end-to-end tests remain.
+**Status:** Deployed and tested through Migration 021. Identity, tenant isolation, Candidate Knowledge, Evaluation, Workflow, and Daily Queue lifecycle tests are passing. Application end-to-end testing remains.
 
 ## Audited migration chain
 
-Migrations 001 through 020 were reviewed in filename order for:
+Migrations 001 through 021 were reviewed in filename order for:
 
 - SQL and migration ordering
 - table and function dependencies
@@ -29,7 +29,7 @@ Migrations 001 through 020 were reviewed in filename order for:
 
 ## Final structural checks
 
-- 20 sequential SQL migrations
+- 21 sequential SQL migrations
 - no missing migration numbers
 - no non-SQL files in `supabase/migrations/`
 - 43 expected V1 tables
@@ -90,6 +90,7 @@ Migrations 001 through 020 were reviewed in filename order for:
 - Deployment testing found that dependency cycles were prevented but prerequisites did not yet block execution. Migration 020 now prevents a Task from entering `running` until `must_succeed` / `must_complete` prerequisites are satisfied while keeping `informational` dependencies non-blocking.
 - Protected human-facing Next Action assignment.
 - Preserved Daily Plan versions and historical priority snapshots.
+- Deployment testing found that a Daily Plan could be completed while child Work Blocks or Plan Items remained unfinished. Migration 021 now requires Work Blocks to be `completed` / `skipped` and Plan Items to be `completed` / `carried_forward` / `removed` before Plan completion.
 - Tightened internal helper exposure.
 
 ### Applications
@@ -121,7 +122,7 @@ Deployment testing is in progress against the new Supabase project.
 
 Completed:
 
-1. migrations 001 through 020 applied successfully,
+1. migrations 001 through 021 applied successfully,
 2. migration history verified,
 3. schema security advisor reviewed,
 4. test Auth user created,
@@ -131,14 +132,14 @@ Completed:
 8. agent self-escalation blocked,
 9. Candidate Knowledge validation exercised,
 10. Evaluation completion, versioning, snapshots, and immutability exercised,
-11. Internal Task, Task Attempt, Activity Event, dependency, and Next Action lifecycle exercised.
+11. Internal Task, Task Attempt, Activity Event, dependency, and Next Action lifecycle exercised,
+12. Daily Plan versioning, Today's One Thing validation, queue snapshots, supersession, completion, and historical immutability exercised.
 
 Remaining:
 
-12. Daily Plan versioning and queue lifecycle,
 13. Application approval, submission, retry, and submitted-material snapshots.
 
-Workflow testing also produced one corrective migration: Migration 020 enforces Task prerequisites at execution time.
+Deployment testing produced two corrective migrations: Migration 020 enforces Task prerequisites at execution time, and Migration 021 requires Daily Plan child state to be reconciled before Plan completion.
 
 The current Supabase schema security checks are clean. The only current Security Advisor warning is an Auth-project setting for leaked-password protection, which is outside the migration schema and should be enabled before production use.
 
