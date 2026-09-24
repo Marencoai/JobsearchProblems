@@ -855,6 +855,7 @@ declare
     project_record public.projects%rowtype;
     skill_record public.skills%rowtype;
     skill_supported boolean := false;
+    skill_support_snapshot jsonb := '[]'::jsonb;
 begin
 
     if new.evidence_story_id is not null then
@@ -967,32 +968,62 @@ begin
 
 
         select
-            (
-                exists (
-                    select 1
-                    from public.evidence_story_skills ess
-                    join public.evidence_stories es
-                      on es.workspace_id = ess.workspace_id
-                     and es.id = ess.evidence_story_id
-                    where ess.workspace_id = new.workspace_id
-                      and ess.skill_id = new.skill_id
-                      and ess.validation_status = 'confirmed'
-                      and es.validation_status = 'confirmed'
-                )
-                or
-                exists (
-                    select 1
-                    from public.project_skills ps
-                    join public.projects p
-                      on p.workspace_id = ps.workspace_id
-                     and p.id = ps.project_id
-                    where ps.workspace_id = new.workspace_id
-                      and ps.skill_id = new.skill_id
-                      and ps.validation_status = 'confirmed'
-                      and p.validation_status = 'confirmed'
-                )
+            coalesce(
+                jsonb_agg(support_item),
+                '[]'::jsonb
             )
-        into skill_supported;
+        into skill_support_snapshot
+        from (
+            select
+                jsonb_build_object(
+                    'type',
+                    'evidence_story',
+                    'id',
+                    es.id,
+                    'title',
+                    es.title,
+                    'evidence_strength',
+                    ess.evidence_strength,
+                    'validation_status',
+                    es.validation_status
+                ) as support_item
+            from public.evidence_story_skills ess
+            join public.evidence_stories es
+              on es.workspace_id = ess.workspace_id
+             and es.id = ess.evidence_story_id
+            where ess.workspace_id = new.workspace_id
+              and ess.skill_id = new.skill_id
+              and ess.validation_status = 'confirmed'
+              and es.validation_status = 'confirmed'
+
+            union all
+
+            select
+                jsonb_build_object(
+                    'type',
+                    'project',
+                    'id',
+                    p.id,
+                    'name',
+                    p.name,
+                    'evidence_strength',
+                    ps.evidence_strength,
+                    'validation_status',
+                    p.validation_status
+                ) as support_item
+            from public.project_skills ps
+            join public.projects p
+              on p.workspace_id = ps.workspace_id
+             and p.id = ps.project_id
+            where ps.workspace_id = new.workspace_id
+              and ps.skill_id = new.skill_id
+              and ps.validation_status = 'confirmed'
+              and p.validation_status = 'confirmed'
+        ) confirmed_support;
+
+
+        skill_supported :=
+            jsonb_array_length(skill_support_snapshot) > 0;
 
 
         if not skill_supported then
@@ -1013,6 +1044,8 @@ begin
                 skill_record.category,
                 'description',
                 skill_record.description,
+                'supporting_evidence',
+                skill_support_snapshot,
                 'snapshot_at',
                 now()
             );
