@@ -1198,15 +1198,15 @@ on public.applications(
 -- But the same Package should not produce more than one
 -- successful submitted/confirmed Application.
 
-create unique index applications_package_success_unique
+create unique index applications_active_package_unique
 on public.applications(
     workspace_id,
     application_package_id
 )
 where application_package_id is not null
-  and application_stage in (
-      'submitted',
-      'confirmed'
+  and application_stage not in (
+      'submission_failed',
+      'withdrawn'
   );
 
 
