@@ -625,6 +625,11 @@ begin
                 new.workspace_id;
         end if;
 
+        if story_record.validation_status = 'rejected' then
+            raise exception
+                'Rejected Evidence Stories cannot be used in an Evaluation';
+        end if;
+
         new.evidence_snapshot :=
             new.evidence_snapshot
             ||
@@ -644,7 +649,11 @@ begin
                     'evidence_type',
                         story_record.evidence_type,
                     'validation_status',
-                        story_record.validation_status
+                        story_record.validation_status,
+                    'source_type',
+                        story_record.source_type,
+                    'source_reference',
+                        story_record.source_reference
                 )
             );
 
@@ -670,6 +679,11 @@ begin
                 new.workspace_id;
         end if;
 
+        if project_record.validation_status = 'rejected' then
+            raise exception
+                'Rejected Projects cannot be used in an Evaluation';
+        end if;
+
         new.evidence_snapshot :=
             new.evidence_snapshot
             ||
@@ -688,7 +702,11 @@ begin
                     'quantitative_results',
                         project_record.quantitative_results,
                     'validation_status',
-                        project_record.validation_status
+                        project_record.validation_status,
+                    'source_type',
+                        project_record.source_type,
+                    'source_reference',
+                        project_record.source_reference
                 )
             );
 
