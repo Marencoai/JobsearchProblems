@@ -405,7 +405,12 @@ create table public.project_work_experiences (
         references public.principals(id)
         on delete set null,
 
+    updated_by_principal_id uuid null
+        references public.principals(id)
+        on delete set null,
+
     created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
 
     constraint project_work_experiences_workspace_id_id_unique
         unique (workspace_id, id),
@@ -459,8 +464,15 @@ on public.project_work_experiences(
 );
 
 
+create trigger set_project_work_experiences_updated_at
+before update
+on public.project_work_experiences
+for each row
+execute function public.set_updated_at();
+
+
 create trigger set_project_work_experiences_actor
-before insert
+before insert or update
 on public.project_work_experiences
 for each row
 execute function public.set_actor_audit_fields();
@@ -874,7 +886,12 @@ create table public.project_skills (
         references public.principals(id)
         on delete set null,
 
+    updated_by_principal_id uuid null
+        references public.principals(id)
+        on delete set null,
+
     created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
 
     constraint project_skills_workspace_id_id_unique
         unique (workspace_id, id),
@@ -917,8 +934,15 @@ on public.project_skills(
 );
 
 
+create trigger set_project_skills_updated_at
+before update
+on public.project_skills
+for each row
+execute function public.set_updated_at();
+
+
 create trigger set_project_skills_actor
-before insert
+before insert or update
 on public.project_skills
 for each row
 execute function public.set_actor_audit_fields();
@@ -970,7 +994,12 @@ create table public.evidence_story_skills (
         references public.principals(id)
         on delete set null,
 
+    updated_by_principal_id uuid null
+        references public.principals(id)
+        on delete set null,
+
     created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
 
     constraint evidence_story_skills_workspace_id_id_unique
         unique (workspace_id, id),
@@ -1013,8 +1042,15 @@ on public.evidence_story_skills(
 );
 
 
+create trigger set_evidence_story_skills_updated_at
+before update
+on public.evidence_story_skills
+for each row
+execute function public.set_updated_at();
+
+
 create trigger set_evidence_story_skills_actor
-before insert
+before insert or update
 on public.evidence_story_skills
 for each row
 execute function public.set_actor_audit_fields();
@@ -1058,7 +1094,12 @@ create table public.project_tools (
         references public.principals(id)
         on delete set null,
 
+    updated_by_principal_id uuid null
+        references public.principals(id)
+        on delete set null,
+
     created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
 
     constraint project_tools_workspace_id_id_unique
         unique (workspace_id, id),
@@ -1101,8 +1142,15 @@ on public.project_tools(
 );
 
 
+create trigger set_project_tools_updated_at
+before update
+on public.project_tools
+for each row
+execute function public.set_updated_at();
+
+
 create trigger set_project_tools_actor
-before insert
+before insert or update
 on public.project_tools
 for each row
 execute function public.set_actor_audit_fields();
@@ -1146,7 +1194,12 @@ create table public.evidence_story_tools (
         references public.principals(id)
         on delete set null,
 
+    updated_by_principal_id uuid null
+        references public.principals(id)
+        on delete set null,
+
     created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
 
     constraint evidence_story_tools_workspace_id_id_unique
         unique (workspace_id, id),
@@ -1189,8 +1242,15 @@ on public.evidence_story_tools(
 );
 
 
+create trigger set_evidence_story_tools_updated_at
+before update
+on public.evidence_story_tools
+for each row
+execute function public.set_updated_at();
+
+
 create trigger set_evidence_story_tools_actor
-before insert
+before insert or update
 on public.evidence_story_tools
 for each row
 execute function public.set_actor_audit_fields();
