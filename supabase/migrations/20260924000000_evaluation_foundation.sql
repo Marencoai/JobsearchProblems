@@ -745,8 +745,8 @@ end;
 $$;
 
 
-create trigger prepare_evaluation_evidence_before_insert
-before insert
+create trigger prepare_evaluation_evidence_before_write
+before insert or update
 on public.evaluation_evidence
 for each row
 execute function public.prepare_evaluation_evidence_snapshot();
@@ -945,8 +945,8 @@ end;
 $$;
 
 
-create trigger prepare_eval_company_intelligence_before_insert
-before insert
+create trigger prepare_eval_company_intelligence_before_write
+before insert or update
 on public.evaluation_company_intelligence
 for each row
 execute function public.prepare_evaluation_company_intelligence();
