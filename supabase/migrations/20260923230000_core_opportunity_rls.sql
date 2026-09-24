@@ -159,25 +159,32 @@ create or replace function public.enforce_company_archive_permission()
 returns trigger
 language plpgsql
 set search_path = public
-as $$
+as $
 begin
 
+    -- Entering OR leaving archived state is a privileged
+    -- lifecycle action. Ordinary company.update authority is
+    -- not sufficient to rewrite archival history.
+
     if old.status is distinct from new.status
-       and new.status = 'archived'
+       and (
+           old.status = 'archived'
+           or new.status = 'archived'
+       )
        and not public.has_permission(
            new.workspace_id,
            'company.archive'
        ) then
 
         raise exception
-            'Permission company.archive is required to archive this Company';
+            'Permission company.archive is required to change Company archive state';
 
     end if;
 
     return new;
 
 end;
-$$;
+$;
 
 
 create trigger enforce_company_archive
@@ -205,29 +212,73 @@ create or replace function public.enforce_opportunity_close_permission()
 returns trigger
 language plpgsql
 set search_path = public
-as $$
+as $
 begin
 
-    if old.opportunity_stage is distinct from new.opportunity_stage
-       and new.opportunity_stage = 'closed'
-       and not public.has_permission(
-           new.workspace_id,
-           'opportunity.close'
+    -- Entering OR leaving closed state, or changing the reason
+    -- attached to a closed Opportunity, is separately governed.
+
+    if (
+           old.opportunity_stage is distinct from new.opportunity_stage
+           and (
+               old.opportunity_stage = 'closed'
+               or new.opportunity_stage = 'closed'
+           )
+       )
+       or (
+           new.opportunity_stage = 'closed'
+           and old.closed_reason is distinct from new.closed_reason
        ) then
 
-        raise exception
-            'Permission opportunity.close is required to close this Opportunity';
+        if not public.has_permission(
+            new.workspace_id,
+            'opportunity.close'
+        ) then
+
+            raise exception
+                'Permission opportunity.close is required to change Opportunity close state';
+
+        end if;
 
     end if;
+
+
+    -- Closed Opportunities must explain why they closed and
+    -- cannot simultaneously present themselves as active.
+
+    if new.opportunity_stage = 'closed' then
+
+        if nullif(btrim(new.closed_reason), '') is null then
+            raise exception
+                'Closed Opportunities require a closed_reason';
+        end if;
+
+        new.is_currently_active := false;
+
+    else
+
+        -- Reopening is allowed only through the privileged
+        -- transition above. The stale close reason is cleared.
+
+        if old.opportunity_stage = 'closed' then
+            new.closed_reason := null;
+
+        elsif new.closed_reason is not null then
+            raise exception
+                'closed_reason may only be set when opportunity_stage is closed';
+        end if;
+
+    end if;
+
 
     return new;
 
 end;
-$$;
+$;
 
 
 create trigger enforce_opportunity_close
-before update of opportunity_stage
+before update of opportunity_stage, closed_reason
 on public.opportunities
 for each row
 execute function public.enforce_opportunity_close_permission();
