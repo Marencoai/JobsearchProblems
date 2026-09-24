@@ -638,7 +638,7 @@ create or replace function public.sync_application_gap_resolution_time()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
 
     if tg_op = 'INSERT' then
@@ -672,7 +672,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger sync_application_gap_resolution_time_before_write
