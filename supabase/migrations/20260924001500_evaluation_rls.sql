@@ -416,51 +416,111 @@ create or replace function public.require_draft_evaluation()
 returns trigger
 language plpgsql
 set search_path = public
-as $$
+as $
 declare
-    target_workspace_id uuid;
-    target_evaluation_id uuid;
-    target_status text;
+    old_status text;
+    new_status text;
 begin
 
+    -- INSERT: the destination Evaluation must be a draft.
+    if tg_op = 'INSERT' then
+
+        select evaluation_status
+        into new_status
+        from public.evaluations
+        where workspace_id = new.workspace_id
+          and id = new.evaluation_id;
+
+        if not found then
+            raise exception
+                'Evaluation % does not exist in Workspace %',
+                new.evaluation_id,
+                new.workspace_id;
+        end if;
+
+        if new_status <> 'draft' then
+            raise exception
+                'Evaluation inputs cannot be added after the Evaluation is completed';
+        end if;
+
+        return new;
+
+    end if;
+
+
+    -- DELETE: the historical parent must still be a draft.
     if tg_op = 'DELETE' then
-        target_workspace_id := old.workspace_id;
-        target_evaluation_id := old.evaluation_id;
-    else
-        target_workspace_id := new.workspace_id;
-        target_evaluation_id := new.evaluation_id;
+
+        select evaluation_status
+        into old_status
+        from public.evaluations
+        where workspace_id = old.workspace_id
+          and id = old.evaluation_id;
+
+        if not found then
+            raise exception
+                'Evaluation % does not exist in Workspace %',
+                old.evaluation_id,
+                old.workspace_id;
+        end if;
+
+        if old_status <> 'draft' then
+            raise exception
+                'Evaluation inputs cannot be removed after the Evaluation is completed';
+        end if;
+
+        return old;
+
+    end if;
+
+
+    -- UPDATE: protect BOTH sides of a possible parent change.
+    --
+    -- Without this check, a child row from a completed
+    -- Evaluation could be moved to a draft Evaluation, silently
+    -- changing the completed Evaluation's historical inputs.
+
+    select evaluation_status
+    into old_status
+    from public.evaluations
+    where workspace_id = old.workspace_id
+      and id = old.evaluation_id;
+
+    if not found then
+        raise exception
+            'Original Evaluation % does not exist in Workspace %',
+            old.evaluation_id,
+            old.workspace_id;
     end if;
 
 
     select evaluation_status
-    into target_status
+    into new_status
     from public.evaluations
-    where workspace_id = target_workspace_id
-      and id = target_evaluation_id;
-
+    where workspace_id = new.workspace_id
+      and id = new.evaluation_id;
 
     if not found then
         raise exception
-            'Evaluation % does not exist in Workspace %',
-            target_evaluation_id,
-            target_workspace_id;
+            'Destination Evaluation % does not exist in Workspace %',
+            new.evaluation_id,
+            new.workspace_id;
     end if;
 
 
-    if target_status <> 'draft' then
+    if old_status <> 'draft'
+       or new_status <> 'draft' then
+
         raise exception
-            'Evaluation inputs cannot be changed after the Evaluation is completed';
+            'Evaluation inputs may only be changed while both the original and destination Evaluations are drafts';
+
     end if;
 
-
-    if tg_op = 'DELETE' then
-        return old;
-    end if;
 
     return new;
 
 end;
-$$;
+$;
 
 
 -- ------------------------------------------------------------
