@@ -4122,6 +4122,8 @@ Last update
 
 A new Application should be created for a materially new submission attempt. Submitted Applications are historical records.
 
+If a submitted Application is later withdrawn, the same approved Package may be reused for a later retry without rewriting the original Material versions. Current Material versions already marked `submitted` remain eligible because they are immutable exact versions. The later Application gets its own attempt number and its own submitted-material snapshots.
+
 5.9 application_submitted_materials
 
 Represents the exact Material versions included in a specific Application submission.
