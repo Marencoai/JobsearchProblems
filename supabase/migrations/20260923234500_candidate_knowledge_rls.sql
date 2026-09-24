@@ -245,6 +245,22 @@ for each row
 execute function public.enforce_candidate_knowledge_validation();
 
 
+-- ------------------------------------------------------------
+-- Project ↔ Work Experience Claims
+-- ------------------------------------------------------------
+--
+-- Linking a Project to a Work Experience is also part of the
+-- candidate's professional record and therefore follows the
+-- same validation model.
+-- ------------------------------------------------------------
+
+create trigger enforce_project_work_experience_validation
+before insert or update
+on public.project_work_experiences
+for each row
+execute function public.enforce_candidate_knowledge_validation();
+
+
 -- ============================================================
 -- 3. PROTECT VALIDATED CAPABILITY LINKS FROM DELETION
 -- ============================================================
@@ -313,8 +329,77 @@ for each row
 execute function public.protect_validated_candidate_relationship_delete();
 
 
+create trigger protect_project_work_experience_validation_before_delete
+before delete
+on public.project_work_experiences
+for each row
+execute function public.protect_validated_candidate_relationship_delete();
+
+
 -- ============================================================
--- 4. ENABLE RLS
+-- 4. EVIDENCE STORY CONTEXT CONSISTENCY
+-- ============================================================
+--
+-- When an Evidence Story references both a Project and a Work
+-- Experience, those records must already be related through
+-- project_work_experiences.
+--
+-- This prevents a Story from accidentally claiming that a
+-- Project occurred inside the wrong employer / engagement.
+-- ============================================================
+
+create or replace function public.validate_evidence_story_context()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+
+    if new.project_id is null
+       or new.work_experience_id is null then
+
+        return new;
+
+    end if;
+
+
+    if not exists (
+        select 1
+        from public.project_work_experiences pwe
+        where pwe.workspace_id = new.workspace_id
+          and pwe.project_id = new.project_id
+          and pwe.work_experience_id = new.work_experience_id
+          and pwe.validation_status <> 'rejected'
+    ) then
+
+        raise exception
+            'Evidence Story Project and Work Experience are not linked in Candidate Knowledge';
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function public.validate_evidence_story_context()
+from public;
+
+
+create trigger validate_evidence_story_context_before_write
+before insert or update of
+    project_id,
+    work_experience_id
+on public.evidence_stories
+for each row
+execute function public.validate_evidence_story_context();
+
+
+-- ============================================================
+-- 5. ENABLE RLS
 -- ============================================================
 
 alter table public.work_experiences
@@ -349,7 +434,7 @@ enable row level security;
 
 
 -- ============================================================
--- 5. WORK EXPERIENCE POLICIES
+-- 6. WORK EXPERIENCE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view work experiences"
@@ -401,7 +486,7 @@ with check (
 
 
 -- ============================================================
--- 6. PROJECT POLICIES
+-- 7. PROJECT POLICIES
 -- ============================================================
 
 create policy "authorized principals can view projects"
@@ -447,7 +532,7 @@ with check (
 
 
 -- ============================================================
--- 7. EVIDENCE STORY POLICIES
+-- 8. EVIDENCE STORY POLICIES
 -- ============================================================
 
 create policy "authorized principals can view evidence stories"
@@ -493,7 +578,7 @@ with check (
 
 
 -- ============================================================
--- 8. SKILL POLICIES
+-- 9. SKILL POLICIES
 -- ============================================================
 --
 -- Skills are taxonomy/reference records inside Candidate
@@ -554,7 +639,7 @@ with check (
 
 
 -- ============================================================
--- 9. TOOL POLICIES
+-- 10. TOOL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view tools"
