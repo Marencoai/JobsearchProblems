@@ -224,7 +224,60 @@ execute function public.enforce_candidate_knowledge_validation();
 
 
 -- ============================================================
--- 3. ENABLE RLS
+-- 3. PROTECT VALIDATED CAPABILITY LINKS FROM DELETION
+-- ============================================================
+--
+-- Confirmed / rejected Skill relationships are part of the
+-- candidate's validated professional record.
+--
+-- A Principal with ordinary candidate_knowledge.update may
+-- manage draft relationships, but deleting a validated claim
+-- requires candidate_knowledge.validate.
+-- ============================================================
+
+create or replace function public.protect_validated_candidate_relationship_delete()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+
+    if old.validation_status in (
+        'confirmed',
+        'rejected'
+    )
+    and not public.has_permission(
+        old.workspace_id,
+        'candidate_knowledge.validate'
+    ) then
+
+        raise exception
+            'Permission candidate_knowledge.validate is required to delete validated Candidate Knowledge relationships';
+
+    end if;
+
+
+    return old;
+
+end;
+$;
+
+
+create trigger protect_project_skill_validation_before_delete
+before delete
+on public.project_skills
+for each row
+execute function public.protect_validated_candidate_relationship_delete();
+
+
+create trigger protect_evidence_story_skill_validation_before_delete
+before delete
+on public.evidence_story_skills
+for each row
+execute function public.protect_validated_candidate_relationship_delete();
+
+-- ============================================================
+-- 4. ENABLE RLS
 -- ============================================================
 
 alter table public.work_experiences
@@ -259,7 +312,7 @@ enable row level security;
 
 
 -- ============================================================
--- 4. WORK EXPERIENCE POLICIES
+-- 5. WORK EXPERIENCE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view work experiences"
@@ -311,7 +364,7 @@ with check (
 
 
 -- ============================================================
--- 5. PROJECT POLICIES
+-- 6. PROJECT POLICIES
 -- ============================================================
 
 create policy "authorized principals can view projects"
@@ -357,7 +410,7 @@ with check (
 
 
 -- ============================================================
--- 6. EVIDENCE STORY POLICIES
+-- 7. EVIDENCE STORY POLICIES
 -- ============================================================
 
 create policy "authorized principals can view evidence stories"
@@ -403,7 +456,7 @@ with check (
 
 
 -- ============================================================
--- 7. SKILL POLICIES
+-- 8. SKILL POLICIES
 -- ============================================================
 --
 -- Skills are taxonomy/reference records inside Candidate
@@ -464,7 +517,7 @@ with check (
 
 
 -- ============================================================
--- 8. TOOL POLICIES
+-- 9. TOOL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view tools"
@@ -510,7 +563,7 @@ with check (
 
 
 -- ============================================================
--- 9. PROJECT ↔ WORK EXPERIENCE POLICIES
+-- 10. PROJECT ↔ WORK EXPERIENCE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view project work relationships"
@@ -568,7 +621,7 @@ using (
 
 
 -- ============================================================
--- 10. PROJECT ↔ SKILL POLICIES
+-- 11. PROJECT ↔ SKILL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view project skills"
@@ -626,7 +679,7 @@ using (
 
 
 -- ============================================================
--- 11. EVIDENCE STORY ↔ SKILL POLICIES
+-- 12. EVIDENCE STORY ↔ SKILL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view evidence story skills"
@@ -684,7 +737,7 @@ using (
 
 
 -- ============================================================
--- 12. PROJECT ↔ TOOL POLICIES
+-- 13. PROJECT ↔ TOOL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view project tools"
@@ -742,7 +795,7 @@ using (
 
 
 -- ============================================================
--- 13. EVIDENCE STORY ↔ TOOL POLICIES
+-- 14. EVIDENCE STORY ↔ TOOL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view evidence story tools"
@@ -800,7 +853,7 @@ using (
 
 
 -- ============================================================
--- 14. VALIDATION AUTHORITY EXAMPLE
+-- 15. VALIDATION AUTHORITY EXAMPLE
 -- ============================================================
 --
 -- Future Candidate Knowledge Agent
@@ -841,7 +894,7 @@ using (
 
 
 -- ============================================================
--- 15. CONFIRMED KNOWLEDGE PROTECTION
+-- 16. CONFIRMED KNOWLEDGE PROTECTION
 -- ============================================================
 --
 -- This also protects against a subtler problem.
@@ -876,7 +929,7 @@ using (
 
 
 -- ============================================================
--- 16. SOURCE OF TRUTH RECAP
+-- 17. SOURCE OF TRUTH RECAP
 -- ============================================================
 --
 -- Candidate Knowledge
