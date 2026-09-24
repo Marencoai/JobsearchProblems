@@ -409,6 +409,10 @@ revoke all on function public.validate_evidence_story_context()
 from public;
 
 
+drop trigger if exists validate_evidence_story_context_before_write
+on public.evidence_stories;
+
+
 create trigger validate_evidence_story_context_before_write
 before insert or update of
     project_id,
