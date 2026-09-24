@@ -263,6 +263,26 @@ begin
                 'Permission evaluation.update is required to edit a draft Evaluation';
         end if;
 
+
+        if new.id <> old.id
+           or new.workspace_id <> old.workspace_id
+           or new.opportunity_id <> old.opportunity_id
+           or new.version_number <> old.version_number
+           or new.opportunity_snapshot
+              is distinct from old.opportunity_snapshot
+           or new.created_at <> old.created_at
+           or new.created_by_principal_id
+              is distinct from old.created_by_principal_id then
+
+            raise exception
+                'Evaluation identity, version, and Opportunity snapshot are immutable';
+
+        end if;
+
+
+        -- evaluated_at is reserved for finalization.
+        new.evaluated_at := null;
+
         return new;
 
     end if;
@@ -280,9 +300,8 @@ begin
                 'Permission evaluation.complete is required to complete an Evaluation';
         end if;
 
-        if new.evaluated_at is null then
-            new.evaluated_at := now();
-        end if;
+        -- Completion time is a database-owned historical fact.
+        new.evaluated_at := now();
 
         return new;
 
