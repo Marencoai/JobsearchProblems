@@ -1068,6 +1068,7 @@ begin
         attempt_count = new.attempt_number,
         last_attempt_at = new.started_at,
         status = 'running',
+        result_summary = null,
         updated_by_principal_id = actor_id
     where workspace_id = new.workspace_id
       and id = new.internal_task_id;
