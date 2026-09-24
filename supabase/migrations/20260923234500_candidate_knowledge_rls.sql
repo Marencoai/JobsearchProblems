@@ -353,7 +353,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 begin
 
     if new.project_id is null
@@ -402,7 +402,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function public.validate_evidence_story_context()
@@ -436,7 +436,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
     dependency_exists boolean;
     is_being_removed boolean := false;
@@ -481,7 +481,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function public.protect_project_work_context()
