@@ -364,17 +364,37 @@ begin
     end if;
 
 
-    if not exists (
-        select 1
-        from public.project_work_experiences pwe
-        where pwe.workspace_id = new.workspace_id
-          and pwe.project_id = new.project_id
-          and pwe.work_experience_id = new.work_experience_id
-          and pwe.validation_status <> 'rejected'
-    ) then
+    if new.validation_status = 'confirmed' then
 
-        raise exception
-            'Evidence Story Project and Work Experience are not linked in Candidate Knowledge';
+        if not exists (
+            select 1
+            from public.project_work_experiences pwe
+            where pwe.workspace_id = new.workspace_id
+              and pwe.project_id = new.project_id
+              and pwe.work_experience_id = new.work_experience_id
+              and pwe.validation_status = 'confirmed'
+        ) then
+
+            raise exception
+                'Confirmed Evidence Stories require a confirmed Project / Work Experience relationship';
+
+        end if;
+
+    else
+
+        if not exists (
+            select 1
+            from public.project_work_experiences pwe
+            where pwe.workspace_id = new.workspace_id
+              and pwe.project_id = new.project_id
+              and pwe.work_experience_id = new.work_experience_id
+              and pwe.validation_status <> 'rejected'
+        ) then
+
+            raise exception
+                'Evidence Story Project and Work Experience are not linked in Candidate Knowledge';
+
+        end if;
 
     end if;
 
@@ -392,14 +412,98 @@ from public;
 create trigger validate_evidence_story_context_before_write
 before insert or update of
     project_id,
-    work_experience_id
+    work_experience_id,
+    validation_status
 on public.evidence_stories
 for each row
 execute function public.validate_evidence_story_context();
 
 
 -- ============================================================
--- 5. ENABLE RLS
+-- 5. PROTECT PROJECT / WORK CONTEXT USED BY STORIES
+-- ============================================================
+--
+-- An Evidence Story may explicitly claim that a Project occurred
+-- within a particular Work Experience.
+--
+-- Once a non-rejected Story depends on that pairing, the
+-- Project ↔ Work Experience relationship cannot be deleted or
+-- rejected without first resolving the dependent Story.
+-- ============================================================
+
+create or replace function public.protect_project_work_context()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+    dependency_exists boolean;
+    is_being_removed boolean := false;
+begin
+
+    if tg_op = 'DELETE' then
+        is_being_removed := true;
+    else
+        is_being_removed :=
+            old.validation_status <> 'rejected'
+            and new.validation_status = 'rejected';
+    end if;
+
+
+    if not is_being_removed then
+        return new;
+    end if;
+
+
+    select exists (
+        select 1
+        from public.evidence_stories es
+        where es.workspace_id = old.workspace_id
+          and es.project_id = old.project_id
+          and es.work_experience_id = old.work_experience_id
+          and es.validation_status <> 'rejected'
+    )
+    into dependency_exists;
+
+
+    if dependency_exists then
+        raise exception
+            'Project / Work Experience relationship is still used by an active Evidence Story';
+    end if;
+
+
+    if tg_op = 'DELETE' then
+        return old;
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function public.protect_project_work_context()
+from public;
+
+
+create trigger protect_project_work_context_before_update
+before update of validation_status
+on public.project_work_experiences
+for each row
+execute function public.protect_project_work_context();
+
+
+create trigger protect_project_work_context_before_delete
+before delete
+on public.project_work_experiences
+for each row
+execute function public.protect_project_work_context();
+
+
+-- ============================================================
+-- 6. ENABLE RLS
 -- ============================================================
 
 alter table public.work_experiences
