@@ -628,7 +628,60 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 7. SKILLS
+-- 7. EVIDENCE STORY CONTEXT CONSISTENCY
+-- ============================================================
+--
+-- If an Evidence Story names BOTH a Project and a Work
+-- Experience, that Project must actually be linked to that Work
+-- Experience through project_work_experiences.
+--
+-- This prevents evidence from accidentally combining unrelated
+-- professional contexts.
+-- ============================================================
+
+create or replace function public.validate_evidence_story_context()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+
+    if new.project_id is null
+       or new.work_experience_id is null then
+
+        return new;
+
+    end if;
+
+
+    if not exists (
+        select 1
+        from public.project_work_experiences pwe
+        where pwe.workspace_id = new.workspace_id
+          and pwe.project_id = new.project_id
+          and pwe.work_experience_id = new.work_experience_id
+    ) then
+
+        raise exception
+            'Evidence Story Project is not linked to the selected Work Experience';
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+create trigger validate_evidence_story_context_before_write
+before insert or update of project_id, work_experience_id
+on public.evidence_stories
+for each row
+execute function public.validate_evidence_story_context();
+
+-- ============================================================
+-- 8. SKILLS
 -- ============================================================
 
 create table public.skills (
@@ -703,7 +756,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 8. TOOLS
+-- 9. TOOLS
 -- ============================================================
 
 create table public.tools (
@@ -771,7 +824,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 9. PROJECT ↔ SKILL
+-- 10. PROJECT ↔ SKILL
 -- ============================================================
 
 create table public.project_skills (
@@ -868,7 +921,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 10. EVIDENCE STORY ↔ SKILL
+-- 11. EVIDENCE STORY ↔ SKILL
 -- ============================================================
 
 create table public.evidence_story_skills (
@@ -964,7 +1017,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 11. PROJECT ↔ TOOL
+-- 12. PROJECT ↔ TOOL
 -- ============================================================
 
 create table public.project_tools (
@@ -1041,7 +1094,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 12. EVIDENCE STORY ↔ TOOL
+-- 13. EVIDENCE STORY ↔ TOOL
 -- ============================================================
 
 create table public.evidence_story_tools (
@@ -1118,7 +1171,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 13. CANDIDATE KNOWLEDGE RELATIONSHIP MAP
+-- 14. CANDIDATE KNOWLEDGE RELATIONSHIP MAP
 -- ============================================================
 --
 -- Conceptually:
@@ -1156,7 +1209,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 14. WHY PROJECT_WORK_EXPERIENCES EXISTS
+-- 15. WHY PROJECT_WORK_EXPERIENCES EXISTS
 -- ============================================================
 --
 -- We intentionally did NOT put:
@@ -1183,7 +1236,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 15. SOURCE OF TRUTH RULE
+-- 16. SOURCE OF TRUTH RULE
 -- ============================================================
 --
 -- Candidate Knowledge is living professional knowledge.
