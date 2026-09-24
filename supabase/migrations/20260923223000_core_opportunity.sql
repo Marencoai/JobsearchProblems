@@ -426,6 +426,32 @@ create table public.opportunities (
             or salary_min <= salary_max
         ),
 
+    constraint opportunities_closed_reason_valid
+        check (
+            closed_reason is null
+            or closed_reason in (
+                'rejected',
+                'withdrawn',
+                'role_closed',
+                'no_response',
+                'accepted_elsewhere',
+                'other'
+            )
+        ),
+
+    constraint opportunities_closed_state_consistent
+        check (
+            (
+                opportunity_stage = 'closed'
+                and closed_reason is not null
+            )
+            or
+            (
+                opportunity_stage <> 'closed'
+                and closed_reason is null
+            )
+        ),
+
     constraint opportunities_company_workspace_fk
         foreign key (
             workspace_id,
@@ -446,7 +472,7 @@ create table public.opportunities (
             workspace_id,
             id
         )
-        on delete set null
+        on delete restrict
 );
 
 
@@ -463,7 +489,7 @@ references public.opportunities(
     workspace_id,
     id
 )
-on delete set null;
+on delete restrict;
 
 
 create index opportunities_workspace_id_idx
