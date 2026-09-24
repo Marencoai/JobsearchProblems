@@ -6064,6 +6064,14 @@ Record creation
 
 Circular dependencies should be prevented.
 
+Dependency types are operational execution rules, not descriptive labels:
+
+- `informational`: does not block execution.
+- `must_succeed`: predecessor Task must reach `completed`.
+- `must_complete`: predecessor Task must be finished before the dependent Task may run. It is satisfied by `completed`, `cancelled`, or `failed` only when the predecessor has exhausted `max_attempts`.
+
+A retryable failed predecessor therefore continues to block a dependent Task. Dependency checks should run whenever a Task attempts to enter `running` state so direct state changes and Task Attempt creation cannot bypass prerequisites.
+
 8.7 task_attempts
 
 Represents one execution attempt for an Internal Task.
