@@ -7251,3 +7251,425 @@ Audit Events should be append-only and access-controlled separately from ordinar
 External providers own their native messages, Calendar events, job pages, and accounts.
 
 Supabase stores enough structured references, checkpoints, and outcomes to coordinate workflow, recover safely, and explain what the system did without unnecessarily duplicating every external object.
+
+### 9. V1 Implementation Scope
+
+The complete database schema describes the intended architecture of the Job Search AI Agent.
+
+V1 should not implement every designed table immediately.
+
+The initial implementation should include only the data structures required to prove the core job-search workflow while preserving an architecture that can expand without major redesign.
+
+The V1 implementation goal is:
+
+**Opportunity Intake → Verification → Translation → Candidate Knowledge Retrieval → Evaluation → Prioritization → Daily Work Queue → Application Preparation**
+
+---
+
+#### 9.1 V1 Security Foundation
+
+These tables should be implemented first because all business data depends on the Workspace, Principal, and permission model.
+
+Build in V1:
+
+- `workspaces`
+- `principals`
+- `workspace_memberships`
+- `roles`
+- `permissions`
+- `role_permissions`
+- `candidate_settings`
+- `automation_policies`
+
+Purpose:
+
+```text
+Workspace
+    ↓
+Principal
+    ↓
+Membership
+    ↓
+Role
+    ↓
+Permission
+Both humans and agents should operate through this access model.
+
+All later V1 tables should inherit the Workspace and RLS architecture established here.
+
+9.2 V1 Opportunity Foundation
+
+Build in V1:
+
+companies
+job_families
+opportunities
+opportunity_sources
+company_intelligence
+
+These tables support:
+
+Job Alert
+    ↓
+Company
+    ↓
+Opportunity
+    ↓
+Opportunity Sources
+    ↓
+Verification and enrichment
+
+V1 should be able to:
+
+Identify Opportunities
+Deduplicate Opportunities
+Preserve multiple Sources
+Find canonical job postings
+Store current Company context
+Preserve historical Opportunities
+9.3 V1 Candidate Knowledge Foundation
+
+Build in V1:
+
+work_experiences
+projects
+project_work_experiences
+evidence_stories
+skills
+tools
+project_skills
+evidence_story_skills
+project_tools
+evidence_story_tools
+
+These tables provide the initial Candidate Knowledge Base.
+
+Conceptually:
+
+Work Experience
+      ↓
+Project
+      ↓
+Evidence Story
+   ↙         ↘
+Skill        Tool
+
+Candidate Knowledge should provide the evidence used by Evaluations and Application preparation.
+
+V1 does not require a complete Candidate Profile management interface.
+
+Initial records may be seeded from existing resumes, LinkedIn information, project documentation, and candidate-provided information.
+
+9.4 V1 Evaluation
+
+Build in V1:
+
+evaluations
+evaluation_evidence
+evaluation_company_intelligence
+application_gaps
+
+These tables allow the system to combine:
+
+Opportunity
+      +
+Candidate Knowledge
+      +
+Company Intelligence
+      ↓
+Evaluation
+
+V1 Evaluation should support:
+
+Candidate Fit: You → Them
+Opportunity Fit: Them → You
+Problem translation
+Evidence confidence
+Strengths
+Tradeoffs
+Important gaps
+Unknowns
+Recommended next action
+
+Evaluation history should remain versioned.
+
+9.5 V1 Workflow Engine
+
+Build in V1:
+
+activity_events
+activity_event_links
+activity_replies
+internal_tasks
+task_dependencies
+task_attempts
+next_actions
+
+These tables support the core workflow:
+
+Something happens
+        ↓
+Activity Event
+        ↓
+Internal Task
+        ↓
+Human attention needed?
+      /           \
+    No             Yes
+    ↓               ↓
+Continue        Next Action
+
+The candidate should interact primarily with Activity Events and Next Actions.
+
+Internal Tasks should remain primarily machine-managed.
+
+9.6 V1 Daily Work Queue
+
+Build in V1:
+
+daily_plans
+work_blocks
+daily_plan_items
+
+These tables support:
+
+Today's One Thing
+Prioritized Next Actions
+Focus Blocks
+Daily progress
+Carry-forward work
+Historical queue snapshots
+
+The Daily Work Queue should answer:
+
+What should I do today, and why?
+
+9.7 V1 Application Foundation
+
+Build in V1:
+
+application_templates
+application_packages
+application_materials
+application_material_evidence
+applications
+application_submitted_materials
+
+These tables support the initial application workflow:
+
+Candidate Knowledge
+        +
+Application Template
+        +
+Opportunity
+        ↓
+Application Package
+        ↓
+Application Materials
+        ↓
+Candidate Review
+        ↓
+Application
+
+Application Packages represent working preparation.
+
+Applications represent actual submission history.
+
+Submitted materials should remain immutable historical records.
+
+9.8 Deferred After Core V1
+
+The following tables remain part of the intended architecture but should not be required before the core V1 workflow is operational.
+
+Candidate Knowledge Expansion
+
+Defer:
+
+artifacts
+project_artifacts
+evidence_story_artifacts
+
+These become valuable when portfolio and supporting-material workflows are added.
+
+Career Development
+
+Defer:
+
+career_development_gaps
+career_gap_opportunities
+
+Reason:
+
+Career Development Gaps become more useful after multiple real Opportunities have been evaluated and recurring patterns can be identified.
+
+Application Question Automation
+
+Defer:
+
+application_answer_packets
+application_answers
+application_answer_evidence
+application_submitted_answers
+
+Reason:
+
+The first V1 should prove Opportunity evaluation and application-material preparation before automating complex ATS question handling.
+
+The schema should remain ready for these tables so exact submitted answers can later be preserved.
+
+Contact and Outreach CRM
+
+Defer:
+
+contacts
+opportunity_contacts
+outreach_engagements
+outreach_engagement_opportunities
+outreach_messages
+outreach_message_evidence
+outreach_interactions
+relationship_notes
+
+Reason:
+
+Outreach is expected to be an important early expansion, but the core Opportunity intake and evaluation loop should be proven first.
+
+Interview Management
+
+Defer:
+
+interview_processes
+interviews
+interview_contacts
+interview_preparations
+interview_questions
+interview_question_evidence
+interview_debriefs
+interview_followups
+
+Reason:
+
+Interview automation becomes useful after active Opportunities begin progressing into interviews.
+
+The architecture already defines where these records will fit.
+
+Advanced Automation Infrastructure
+
+Defer:
+
+external_actions
+workflow_runs
+integration connection and synchronization state
+
+Reason:
+
+V1 should initially emphasize preparation, recommendation, and human approval.
+
+Advanced external execution becomes necessary when the system begins performing more actions autonomously.
+
+9.9 V1 Dependency Order
+
+The V1 database should be implemented in dependency order.
+
+Conceptually:
+
+1. SECURITY
+   Workspace
+   Principals
+   Roles
+   Permissions
+        ↓
+
+2. OPPORTUNITY
+   Companies
+   Job Families
+   Opportunities
+   Sources
+        ↓
+
+3. CANDIDATE KNOWLEDGE
+   Work Experience
+   Projects
+   Evidence
+   Skills
+   Tools
+        ↓
+
+4. EVALUATION
+   Evaluations
+   Evidence Links
+   Application Gaps
+        ↓
+
+5. WORKFLOW
+   Activity Events
+   Internal Tasks
+   Next Actions
+        ↓
+
+6. DAILY QUEUE
+   Daily Plans
+   Work Blocks
+   Plan Items
+        ↓
+
+7. APPLICATION
+   Templates
+   Packages
+   Materials
+   Applications
+
+Each layer should be tested before the next dependent layer is added.
+
+9.10 V1 Expansion Path
+
+Once the core loop is working reliably, expansion should follow actual candidate workflow needs rather than simply implementing the remaining schema in order.
+
+A likely expansion sequence is:
+
+Core V1
+   ↓
+Outreach
+   ↓
+Application Question Automation
+   ↓
+Interview Management
+   ↓
+Career Development
+   ↓
+Higher Autonomy / External Actions
+
+The exact sequence may change based on real usage.
+
+9.11 V1 Scope Principle
+
+The full schema represents what the system is designed to become.
+
+The V1 schema represents what the system needs to prove first.
+
+A deferred table is not rejected architecture.
+
+It is architecture that does not yet need to carry implementation cost.
+
+The system should build the smallest useful layer while protecting the relationships, security boundaries, and historical model required for future expansion.
+
+
+And the **org-chart instinct is actually useful from here on out**.
+
+When we're about to build a table, you can ask:
+
+> “Who is this table's boss?”
+
+Meaning, what does it belong to?
+
+And:
+
+> “Who reports to it?”
+
+Meaning, what depends on it?
+
+That will make foreign keys, dependency order, and even RLS much easier to reason about.
+
+Once you paste this in, **we are done designing the schema for now**.
+
+The next step is our first actual build step: **turn Section 1, the Security Foundation, into Supabase SQL.**
