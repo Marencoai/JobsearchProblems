@@ -278,7 +278,7 @@ $;
 
 
 create trigger enforce_opportunity_close
-before update of opportunity_stage, closed_reason
+before update of opportunity_stage, closed_reason, is_currently_active
 on public.opportunities
 for each row
 execute function public.enforce_opportunity_close_permission();
