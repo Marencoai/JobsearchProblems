@@ -1175,7 +1175,112 @@ execute function public.enforce_task_attempt_lifecycle();
 
 
 -- ============================================================
--- 11. NEXT ACTION ASSIGNMENT VALIDATION
+-- 11. SYNC FINALIZED TASK ATTEMPTS TO PARENT TASK
+-- ============================================================
+--
+-- A Task Attempt is execution history.
+--
+-- The parent Internal Task is current workflow state.
+--
+-- Finalizing an Attempt should therefore update the parent Task
+-- in the same transaction so the two records cannot drift.
+--
+-- succeeded
+--      ↓
+-- Internal Task = completed
+--
+-- failed / cancelled attempt
+--      ↓
+-- Internal Task = failed
+--
+-- A failed Task may later be moved back to ready/running for a
+-- retry while attempt history remains preserved.
+-- ============================================================
+
+create or replace function public.sync_task_from_finalized_attempt()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+    task_result text;
+begin
+
+    if old.status = 'running'
+       and new.status in (
+           'succeeded',
+           'failed',
+           'cancelled'
+       ) then
+
+        if new.status = 'succeeded' then
+
+            task_result :=
+                coalesce(
+                    new.result_summary,
+                    'Task attempt succeeded'
+                );
+
+            update public.internal_tasks
+            set
+                status = 'completed',
+                result_summary = task_result,
+                updated_by_principal_id =
+                    public.current_principal_id()
+            where workspace_id = new.workspace_id
+              and id = new.internal_task_id
+              and status = 'running';
+
+
+        else
+
+            task_result :=
+                coalesce(
+                    new.result_summary,
+                    new.error_message,
+                    case
+                        when new.status = 'cancelled'
+                            then 'Task attempt cancelled'
+                        else 'Task attempt failed'
+                    end
+                );
+
+            update public.internal_tasks
+            set
+                status = 'failed',
+                result_summary = task_result,
+                updated_by_principal_id =
+                    public.current_principal_id()
+            where workspace_id = new.workspace_id
+              and id = new.internal_task_id
+              and status = 'running';
+
+        end if;
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function
+    public.sync_task_from_finalized_attempt()
+from public;
+
+
+create trigger sync_task_from_finalized_attempt_after_update
+after update of status
+on public.task_attempts
+for each row
+execute function public.sync_task_from_finalized_attempt();
+
+
+-- ============================================================
+-- 12. NEXT ACTION ASSIGNMENT VALIDATION
 -- ============================================================
 --
 -- Next Actions are human-facing.
@@ -1227,7 +1332,7 @@ execute function public.validate_next_action_assignee();
 
 
 -- ============================================================
--- 12. NEXT ACTION LIFECYCLE
+-- 13. NEXT ACTION LIFECYCLE
 -- ============================================================
 --
 -- New Next Actions begin:
@@ -1433,7 +1538,7 @@ execute function public.enforce_next_action_lifecycle();
 
 
 -- ============================================================
--- 13. ENABLE WORKFLOW RLS
+-- 14. ENABLE WORKFLOW RLS
 -- ============================================================
 
 alter table public.activity_events
@@ -1459,7 +1564,7 @@ enable row level security;
 
 
 -- ============================================================
--- 14. ACTIVITY EVENT POLICIES
+-- 15. ACTIVITY EVENT POLICIES
 -- ============================================================
 
 create policy "authorized principals can view activity events"
@@ -1493,7 +1598,7 @@ with check (
 
 
 -- ============================================================
--- 15. ACTIVITY EVENT LINK POLICIES
+-- 16. ACTIVITY EVENT LINK POLICIES
 -- ============================================================
 
 create policy "authorized principals can view activity event links"
@@ -1521,7 +1626,7 @@ with check (
 
 
 -- ============================================================
--- 16. ACTIVITY REPLY POLICIES
+-- 17. ACTIVITY REPLY POLICIES
 -- ============================================================
 
 create policy "authorized principals can view activity replies"
@@ -1574,7 +1679,7 @@ with check (
 
 
 -- ============================================================
--- 17. INTERNAL TASK POLICIES
+-- 18. INTERNAL TASK POLICIES
 -- ============================================================
 
 create policy "authorized principals can view internal tasks"
@@ -1633,7 +1738,7 @@ with check (
 
 
 -- ============================================================
--- 18. TASK DEPENDENCY POLICIES
+-- 19. TASK DEPENDENCY POLICIES
 -- ============================================================
 
 create policy "authorized principals can view task dependencies"
@@ -1681,7 +1786,7 @@ using (
 
 
 -- ============================================================
--- 19. TASK ATTEMPT POLICIES
+-- 20. TASK ATTEMPT POLICIES
 -- ============================================================
 
 create policy "authorized principals can view task attempts"
@@ -1730,7 +1835,7 @@ with check (
 
 
 -- ============================================================
--- 20. NEXT ACTION POLICIES
+-- 21. NEXT ACTION POLICIES
 -- ============================================================
 
 create policy "authorized principals can view next actions"
@@ -1789,7 +1894,7 @@ with check (
 
 
 -- ============================================================
--- 21. WORKFLOW SECURITY EXAMPLE
+-- 22. WORKFLOW SECURITY EXAMPLE
 -- ============================================================
 --
 -- Future Evaluation Agent:
@@ -1820,7 +1925,7 @@ with check (
 
 
 -- ============================================================
--- 22. WORKFLOW MODEL RECAP
+-- 23. WORKFLOW MODEL RECAP
 -- ============================================================
 --
 -- Activity Event
