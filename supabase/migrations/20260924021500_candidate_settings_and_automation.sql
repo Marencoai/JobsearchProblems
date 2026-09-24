@@ -398,6 +398,26 @@ begin
 
     actor_id := public.current_principal_id();
 
+
+    -- During bootstrap, the Workspace row is inserted before its
+    -- first Owner Membership. Allow only the automatic initial
+    -- Candidate Settings insert in that narrow window.
+
+    if tg_table_name = 'candidate_settings'
+       and tg_op = 'INSERT'
+       and actor_id is not null
+       and public.current_principal_is_human()
+       and not exists (
+           select 1
+           from public.workspace_memberships wm
+           where wm.workspace_id = new.workspace_id
+       ) then
+
+        return new;
+
+    end if;
+
+
     if actor_id is null
        or not public.is_active_workspace_human(
            new.workspace_id,
