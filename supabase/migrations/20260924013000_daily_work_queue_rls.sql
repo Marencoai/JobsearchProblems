@@ -404,6 +404,15 @@ begin
         end if;
 
 
+        if new.grade is null
+           or new.score is null then
+
+            raise exception
+                'Completed Daily Plans require both a grade and numeric score';
+
+        end if;
+
+
         if new.completed_at is null then
             new.completed_at := now();
         end if;
