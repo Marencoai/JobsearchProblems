@@ -196,6 +196,33 @@ for each row
 execute function public.enforce_candidate_knowledge_validation();
 
 
+-- ------------------------------------------------------------
+-- Project ↔ Skill Claims
+-- ------------------------------------------------------------
+--
+-- Linking a Project to a Skill is itself a capability claim.
+-- Agents may propose the relationship, but confirming or
+-- rejecting it requires candidate_knowledge.validate.
+-- ------------------------------------------------------------
+
+create trigger enforce_project_skill_validation
+before insert or update
+on public.project_skills
+for each row
+execute function public.enforce_candidate_knowledge_validation();
+
+
+-- ------------------------------------------------------------
+-- Evidence Story ↔ Skill Claims
+-- ------------------------------------------------------------
+
+create trigger enforce_evidence_story_skill_validation
+before insert or update
+on public.evidence_story_skills
+for each row
+execute function public.enforce_candidate_knowledge_validation();
+
+
 -- ============================================================
 -- 3. ENABLE RLS
 -- ============================================================
