@@ -159,7 +159,7 @@ create or replace function public.enforce_company_archive_permission()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
 
     -- Entering OR leaving archived state is a privileged
@@ -184,7 +184,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger enforce_company_archive
@@ -212,7 +212,7 @@ create or replace function public.enforce_opportunity_close_permission()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
 
     -- Entering OR leaving closed state, or changing the reason
@@ -274,7 +274,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger enforce_opportunity_close
