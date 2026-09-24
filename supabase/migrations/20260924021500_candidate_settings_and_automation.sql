@@ -196,7 +196,52 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 4. AUTOMATION POLICIES
+-- 4. INITIALIZE SETTINGS FOR NEW WORKSPACES
+-- ============================================================
+--
+-- Every new Workspace receives one default Candidate Settings
+-- record automatically.
+--
+-- This keeps bootstrap behavior deterministic and avoids a
+-- partially initialized Workspace with no settings row.
+-- ============================================================
+
+create or replace function public.initialize_candidate_settings_for_workspace()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+
+    insert into public.candidate_settings (
+        workspace_id
+    )
+    values (
+        new.id
+    )
+    on conflict (workspace_id) do nothing;
+
+
+    return new;
+
+end;
+$$;
+
+
+revoke all on function
+    public.initialize_candidate_settings_for_workspace()
+from public;
+
+
+create trigger initialize_candidate_settings_after_workspace_insert
+after insert
+on public.workspaces
+for each row
+execute function public.initialize_candidate_settings_for_workspace();
+
+-- ============================================================
+-- 5. AUTOMATION POLICIES
 -- ============================================================
 --
 -- Permissions answer:
@@ -311,7 +356,7 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 5. ENABLE RLS
+-- 6. ENABLE RLS
 -- ============================================================
 
 alter table public.candidate_settings
@@ -322,7 +367,7 @@ enable row level security;
 
 
 -- ============================================================
--- 6. CANDIDATE SETTINGS POLICIES
+-- 7. CANDIDATE SETTINGS POLICIES
 -- ============================================================
 
 create policy "authorized principals can view candidate settings"
@@ -372,7 +417,7 @@ with check (
 
 
 -- ============================================================
--- 7. AUTOMATION POLICY RLS
+-- 8. AUTOMATION POLICY RLS
 -- ============================================================
 
 create policy "authorized principals can view automation policies"
@@ -423,7 +468,7 @@ with check (
 
 
 -- ============================================================
--- 8. PROGRESSIVE AUTONOMY MODEL
+-- 9. PROGRESSIVE AUTONOMY MODEL
 -- ============================================================
 --
 -- Database permission
