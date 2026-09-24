@@ -745,7 +745,7 @@ create or replace function public.enforce_membership_role_assignment()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 declare
     actor_id uuid;
     membership_count integer;
@@ -832,7 +832,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger enforce_membership_role_assignment_before_write
@@ -861,7 +861,7 @@ create or replace function public.protect_workspace_owner_membership()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 declare
     owner_role_id uuid;
     removing_owner boolean := false;
@@ -947,7 +947,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger protect_workspace_owner_membership_before_delete
