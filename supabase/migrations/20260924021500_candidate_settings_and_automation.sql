@@ -273,6 +273,11 @@ create table public.automation_policies (
     constraint automation_policies_action_key_not_blank
         check (
             nullif(btrim(action_key), '') is not null
+        ),
+
+    constraint automation_policies_action_key_normalized
+        check (
+            action_key = lower(btrim(action_key))
         )
 );
 
