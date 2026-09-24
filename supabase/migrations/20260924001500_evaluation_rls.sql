@@ -66,6 +66,8 @@ set search_path = public
 as $$
 declare
     opportunity_record public.opportunities%rowtype;
+    company_name_value text;
+    source_snapshot jsonb;
     lock_key bigint;
 begin
 
@@ -104,6 +106,43 @@ begin
 
 
     -- --------------------------------------------------------
+    -- Preserve Company identity and source provenance used by
+    -- this Evaluation.
+    -- --------------------------------------------------------
+
+    select name
+    into company_name_value
+    from public.companies
+    where workspace_id = new.workspace_id
+      and id = opportunity_record.company_id;
+
+
+    select coalesce(
+        jsonb_agg(
+            jsonb_build_object(
+                'id', os.id,
+                'source_type', os.source_type,
+                'source_url', os.source_url,
+                'external_job_id', os.external_job_id,
+                'source_title', os.source_title,
+                'source_company_name', os.source_company_name,
+                'source_location', os.source_location,
+                'source_salary_text', os.source_salary_text,
+                'discovered_at', os.discovered_at,
+                'last_checked_at', os.last_checked_at,
+                'is_active', os.is_active
+            )
+            order by os.discovered_at
+        ),
+        '[]'::jsonb
+    )
+    into source_snapshot
+    from public.opportunity_sources os
+    where os.workspace_id = new.workspace_id
+      and os.opportunity_id = new.opportunity_id;
+
+
+    -- --------------------------------------------------------
     -- Always assign the next Evaluation version.
     -- --------------------------------------------------------
 
@@ -126,6 +165,9 @@ begin
 
             'company_id',
             opportunity_record.company_id,
+
+            'company_name',
+            company_name_value,
 
             'job_family_id',
             opportunity_record.job_family_id,
@@ -174,6 +216,9 @@ begin
 
             'last_verified_at',
             opportunity_record.last_verified_at,
+
+            'sources',
+            source_snapshot,
 
             'snapshot_at',
             now()
