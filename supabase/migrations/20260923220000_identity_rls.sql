@@ -245,7 +245,10 @@ as $$
         where mine.principal_id = public.current_principal_id()
           and mine.status = 'active'
           and theirs.principal_id = target_principal_id
-          and theirs.status = 'active'
+
+          -- Historical actors remain visible even if their
+          -- Workspace membership was later suspended or
+          -- deactivated. This preserves audit readability.
     );
 $$;
 
