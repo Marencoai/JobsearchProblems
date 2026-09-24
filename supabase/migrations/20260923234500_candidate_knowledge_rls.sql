@@ -223,11 +223,33 @@ for each row
 execute function public.enforce_candidate_knowledge_validation();
 
 
+-- ------------------------------------------------------------
+-- Project ↔ Tool Claims
+-- ------------------------------------------------------------
+
+create trigger enforce_project_tool_validation
+before insert or update
+on public.project_tools
+for each row
+execute function public.enforce_candidate_knowledge_validation();
+
+
+-- ------------------------------------------------------------
+-- Evidence Story ↔ Tool Claims
+-- ------------------------------------------------------------
+
+create trigger enforce_evidence_story_tool_validation
+before insert or update
+on public.evidence_story_tools
+for each row
+execute function public.enforce_candidate_knowledge_validation();
+
+
 -- ============================================================
 -- 3. PROTECT VALIDATED CAPABILITY LINKS FROM DELETION
 -- ============================================================
 --
--- Confirmed / rejected Skill relationships are part of the
+-- Confirmed / rejected Skill and Tool relationships are part of the
 -- candidate's validated professional record.
 --
 -- A Principal with ordinary candidate_knowledge.update may
@@ -239,7 +261,7 @@ create or replace function public.protect_validated_candidate_relationship_delet
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
 
     if old.validation_status in (
@@ -260,7 +282,7 @@ begin
     return old;
 
 end;
-$;
+$$;
 
 
 create trigger protect_project_skill_validation_before_delete
@@ -275,6 +297,21 @@ before delete
 on public.evidence_story_skills
 for each row
 execute function public.protect_validated_candidate_relationship_delete();
+
+
+create trigger protect_project_tool_validation_before_delete
+before delete
+on public.project_tools
+for each row
+execute function public.protect_validated_candidate_relationship_delete();
+
+
+create trigger protect_evidence_story_tool_validation_before_delete
+before delete
+on public.evidence_story_tools
+for each row
+execute function public.protect_validated_candidate_relationship_delete();
+
 
 -- ============================================================
 -- 4. ENABLE RLS
