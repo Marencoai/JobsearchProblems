@@ -1011,6 +1011,23 @@ begin
 
 
     -- --------------------------------------------------------
+    -- Approved Package version selection is frozen.
+    --
+    -- A caller may not switch is_current_package_version after
+    -- Package approval without first reopening the Package.
+    -- --------------------------------------------------------
+
+    if package_status = 'approved'
+       and old.is_current_package_version
+           is distinct from new.is_current_package_version then
+
+        raise exception
+            'Approved Package Material version selection is frozen; reopen the Package before changing the current version';
+
+    end if;
+
+
+    -- --------------------------------------------------------
     -- Submitted / rejected / archived are terminal.
     -- --------------------------------------------------------
 
