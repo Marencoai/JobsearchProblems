@@ -369,7 +369,73 @@ execute function public.prevent_workspace_change();
 
 
 -- ============================================================
--- 6. ENABLE RLS
+-- 6. HUMAN-CONTROLLED SETTINGS AND AUTONOMY
+-- ============================================================
+--
+-- Candidate preferences and authority expansion are human
+-- decisions. Even if an agent role is accidentally granted a
+-- settings-management permission later, it may not change these
+-- records through normal authenticated access.
+--
+-- Trusted migration/backend execution with no auth.uid() is
+-- still allowed for deterministic initialization.
+-- ============================================================
+
+create or replace function public.require_human_configuration_actor()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+    actor_id uuid;
+begin
+
+    if auth.uid() is null then
+        return new;
+    end if;
+
+
+    actor_id := public.current_principal_id();
+
+    if actor_id is null
+       or not public.is_active_workspace_human(
+           new.workspace_id,
+           actor_id
+       ) then
+
+        raise exception
+            'Candidate Settings and Automation Policies may only be changed by an active human Principal';
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function public.require_human_configuration_actor()
+from public;
+
+
+create trigger require_human_candidate_settings_actor
+before insert or update
+on public.candidate_settings
+for each row
+execute function public.require_human_configuration_actor();
+
+
+create trigger require_human_automation_policy_actor
+before insert or update
+on public.automation_policies
+for each row
+execute function public.require_human_configuration_actor();
+
+
+-- ============================================================
+-- 7. ENABLE RLS
 -- ============================================================
 
 alter table public.candidate_settings
@@ -380,7 +446,7 @@ enable row level security;
 
 
 -- ============================================================
--- 7. CANDIDATE SETTINGS POLICIES
+-- 8. CANDIDATE SETTINGS POLICIES
 -- ============================================================
 
 create policy "authorized principals can view candidate settings"
@@ -430,7 +496,7 @@ with check (
 
 
 -- ============================================================
--- 8. AUTOMATION POLICY RLS
+-- 9. AUTOMATION POLICY RLS
 -- ============================================================
 
 create policy "authorized principals can view automation policies"
@@ -481,7 +547,7 @@ with check (
 
 
 -- ============================================================
--- 9. PROGRESSIVE AUTONOMY MODEL
+-- 10. PROGRESSIVE AUTONOMY MODEL
 -- ============================================================
 --
 -- Database permission
