@@ -229,7 +229,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
     creates_cycle boolean;
 begin
@@ -282,7 +282,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function public.prevent_opportunity_history_cycle()
