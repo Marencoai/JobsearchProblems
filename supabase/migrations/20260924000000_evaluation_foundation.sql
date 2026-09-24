@@ -512,11 +512,13 @@ create table public.evaluation_evidence (
     constraint evaluation_evidence_workspace_id_id_unique
         unique (workspace_id, id),
 
-    constraint evaluation_evidence_has_source
+    constraint evaluation_evidence_one_source
         check (
-            evidence_story_id is not null
-            or project_id is not null
-            or skill_id is not null
+            num_nonnulls(
+                evidence_story_id,
+                project_id,
+                skill_id
+            ) = 1
         ),
 
     constraint evaluation_evidence_evaluation_workspace_fk
