@@ -915,6 +915,29 @@ begin
     end if;
 
 
+    -- When the entire Workspace itself is being deleted, the
+    -- membership removal is part of ON DELETE CASCADE rather
+    -- than an attempt to orphan a live Workspace.
+    --
+    -- In that case the parent Workspace row is already gone for
+    -- this referential action and the owner-preservation rule
+    -- should not block the Workspace deletion.
+
+    if not exists (
+        select 1
+        from public.workspaces w
+        where w.id = old.workspace_id
+    ) then
+
+        if tg_op = 'DELETE' then
+            return old;
+        end if;
+
+        return new;
+
+    end if;
+
+
     if not public.has_permission(
         old.workspace_id,
         'workspace.roles.manage'
