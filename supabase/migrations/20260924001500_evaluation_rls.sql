@@ -345,6 +345,23 @@ begin
                 'Permission evaluation.complete is required to complete an Evaluation';
         end if;
 
+
+        -- A completed Evaluation is a durable analytical
+        -- snapshot, so the minimum decision fields must exist.
+
+        if new.candidate_fit_score is null
+           or new.opportunity_fit_score is null
+           or new.opportunity_type is null
+           or new.evidence_confidence is null
+           or nullif(btrim(new.problem_translation), '') is null
+           or nullif(btrim(new.recommended_next_action), '') is null then
+
+            raise exception
+                'Evaluation is incomplete: fit scores, opportunity type, evidence confidence, problem translation, and recommended next action are required before completion';
+
+        end if;
+
+
         -- Completion time is a database-owned historical fact.
         new.evaluated_at := now();
 
@@ -610,7 +627,63 @@ execute function public.require_draft_evaluation();
 
 
 -- ============================================================
--- 4. ENABLE RLS
+-- 4. APPLICATION GAP RESOLUTION TIMESTAMP
+-- ============================================================
+--
+-- resolved_at is database-owned history.
+-- Reopening a Gap clears the prior resolution timestamp.
+-- ============================================================
+
+create or replace function public.sync_application_gap_resolution_time()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+begin
+
+    if tg_op = 'INSERT' then
+
+        if new.resolution_status = 'resolved' then
+            new.resolved_at := now();
+        else
+            new.resolved_at := null;
+        end if;
+
+        return new;
+
+    end if;
+
+
+    if new.resolution_status = 'resolved' then
+
+        if old.resolution_status <> 'resolved' then
+            new.resolved_at := now();
+        else
+            new.resolved_at := old.resolved_at;
+        end if;
+
+    else
+
+        new.resolved_at := null;
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+create trigger sync_application_gap_resolution_time_before_write
+before insert or update of resolution_status
+on public.application_gaps
+for each row
+execute function public.sync_application_gap_resolution_time();
+
+
+-- ============================================================
+-- 5. ENABLE RLS
 -- ============================================================
 
 alter table public.evaluations
