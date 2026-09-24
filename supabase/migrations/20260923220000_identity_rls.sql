@@ -132,13 +132,13 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
     select p.id
     from public.principals p
     where p.auth_user_id = auth.uid()
       and p.status = 'active'
     limit 1;
-$;
+$$;
 
 
 -- ============================================================
@@ -157,7 +157,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
     select coalesce(
         (
             select p.principal_type = 'human'
@@ -167,7 +167,7 @@ as $
         ),
         false
     );
-$;
+$$;
 
 
 -- ============================================================
