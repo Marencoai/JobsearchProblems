@@ -200,6 +200,13 @@ create table public.activity_events (
     source_system text null,
     source_reference text null,
 
+    -- Optional deterministic key used to make event creation
+    -- retry-safe.
+    --
+    -- Example:
+    -- gmail:message_123:recruiter_reply_received
+    idempotency_key text null,
+
     requires_candidate_attention boolean not null default false,
 
     -- Principal that recorded this Event in the system.
@@ -247,6 +254,14 @@ on public.activity_events(
     requires_candidate_attention
 )
 where requires_candidate_attention = true;
+
+
+create unique index activity_events_idempotency_unique
+on public.activity_events(
+    workspace_id,
+    idempotency_key
+)
+where idempotency_key is not null;
 
 
 create trigger set_activity_events_actor_audit
