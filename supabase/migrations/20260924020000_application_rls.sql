@@ -328,7 +328,79 @@ execute function public.validate_application_package_context();
 
 
 -- ============================================================
--- 3. APPLICATION PACKAGE LIFECYCLE
+-- 3. APPLICATION PACKAGE TEMPLATE VALIDATION
+-- ============================================================
+--
+-- New preparation should start from the current active Template
+-- version when a Template is used.
+--
+-- Historical Packages may continue pointing to a Template that
+-- is retired later.
+-- ============================================================
+
+create or replace function public.validate_application_package_template()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+    template_status text;
+begin
+
+    if new.application_template_id is null then
+        return new;
+    end if;
+
+
+    if tg_op = 'UPDATE'
+       and new.application_template_id
+           is not distinct from old.application_template_id then
+
+        return new;
+
+    end if;
+
+
+    select status
+    into template_status
+    from public.application_templates
+    where workspace_id = new.workspace_id
+      and id = new.application_template_id;
+
+
+    if not found then
+        raise exception
+            'Application Template does not exist in this Workspace';
+    end if;
+
+
+    if template_status <> 'active' then
+        raise exception
+            'New Application preparation must use an active Application Template';
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function
+    public.validate_application_package_template()
+from public;
+
+
+create trigger validate_application_package_template_before_write
+before insert or update of application_template_id
+on public.application_packages
+for each row
+execute function public.validate_application_package_template();
+
+
+-- ============================================================
+-- 4. APPLICATION PACKAGE LIFECYCLE
 -- ============================================================
 --
 -- draft
@@ -365,6 +437,7 @@ declare
     may_approve boolean;
 
     approved_material_count integer;
+    unresolved_current_material_count integer;
 
     old_business_state jsonb;
     new_business_state jsonb;
@@ -566,6 +639,24 @@ begin
         end if;
 
 
+        select count(*)
+        into unresolved_current_material_count
+        from public.application_materials
+        where workspace_id = new.workspace_id
+          and application_package_id = new.id
+          and is_current_package_version = true
+          and status in (
+              'draft',
+              'candidate_review'
+          );
+
+
+        if unresolved_current_material_count > 0 then
+            raise exception
+                'Application Package cannot be approved while current Materials still require preparation or review';
+        end if;
+
+
         new.approved_by_principal_id := actor_id;
         new.approved_at := now();
 
@@ -701,7 +792,7 @@ execute function public.enforce_application_package_lifecycle();
 
 
 -- ============================================================
--- 4. APPLICATION MATERIAL PARENT STATUS HELPER
+-- 5. APPLICATION MATERIAL PARENT STATUS HELPER
 -- ============================================================
 
 create or replace function public.get_application_package_status(
@@ -728,7 +819,7 @@ from public;
 
 
 -- ============================================================
--- 5. APPLICATION MATERIAL LIFECYCLE
+-- 6. APPLICATION MATERIAL LIFECYCLE
 -- ============================================================
 --
 -- Material content is versioned.
@@ -1028,7 +1119,7 @@ execute function public.enforce_application_material_lifecycle();
 
 
 -- ============================================================
--- 6. APPLICATION MATERIAL EVIDENCE LIFECYCLE
+-- 7. APPLICATION MATERIAL EVIDENCE LIFECYCLE
 -- ============================================================
 --
 -- Evidence links may be changed only while the Material itself
@@ -1106,7 +1197,7 @@ execute function public.require_mutable_application_material();
 
 
 -- ============================================================
--- 7. APPLICATION INSERT / PACKAGE CONSISTENCY
+-- 8. APPLICATION INSERT / PACKAGE CONSISTENCY
 -- ============================================================
 --
 -- If an Application uses a Package:
@@ -1189,7 +1280,7 @@ execute function public.validate_application_submission_context();
 
 
 -- ============================================================
--- 8. APPLICATION PRINCIPAL VALIDATION
+-- 9. APPLICATION PRINCIPAL VALIDATION
 -- ============================================================
 --
 -- Any recorded approving / submitting Principal must belong to
@@ -1244,7 +1335,7 @@ execute function public.validate_application_principals();
 
 
 -- ============================================================
--- 9. APPLICATION LIFECYCLE
+-- 10. APPLICATION LIFECYCLE
 -- ============================================================
 --
 -- submission_started
@@ -1275,6 +1366,7 @@ declare
     may_confirm boolean;
 
     approved_material_count integer;
+    package_status_value text;
 
     old_submission_state jsonb;
     new_submission_state jsonb;
@@ -1401,6 +1493,25 @@ begin
 
 
         if new.application_package_id is not null then
+
+            select status
+            into package_status_value
+            from public.application_packages
+            where workspace_id = new.workspace_id
+              and id = new.application_package_id;
+
+
+            if not found then
+                raise exception
+                    'Application Package does not exist in this Workspace';
+            end if;
+
+
+            if package_status_value <> 'approved' then
+                raise exception
+                    'Application Package must still be approved when submission occurs';
+            end if;
+
 
             select count(*)
             into approved_material_count
@@ -1674,7 +1785,7 @@ execute function public.enforce_application_lifecycle();
 
 
 -- ============================================================
--- 10. AUTOMATIC SUBMITTED-MATERIAL SNAPSHOT
+-- 11. AUTOMATIC SUBMITTED-MATERIAL SNAPSHOT
 -- ============================================================
 --
 -- When an Application becomes submitted:
@@ -1798,7 +1909,7 @@ execute function public.snapshot_materials_after_application_submit();
 
 
 -- ============================================================
--- 11. SUBMITTED MATERIALS ARE APPEND-ONLY
+-- 12. SUBMITTED MATERIALS ARE APPEND-ONLY
 -- ============================================================
 
 create or replace function public.prevent_submitted_material_mutation()
@@ -1830,7 +1941,7 @@ execute function public.prevent_submitted_material_mutation();
 
 
 -- ============================================================
--- 12. ENABLE APPLICATION RLS
+-- 13. ENABLE APPLICATION RLS
 -- ============================================================
 
 alter table public.application_templates
@@ -1853,7 +1964,7 @@ enable row level security;
 
 
 -- ============================================================
--- 13. APPLICATION TEMPLATE POLICIES
+-- 14. APPLICATION TEMPLATE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view application templates"
@@ -1902,7 +2013,7 @@ with check (
 
 
 -- ============================================================
--- 14. APPLICATION PACKAGE POLICIES
+-- 15. APPLICATION PACKAGE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view application packages"
@@ -1961,7 +2072,7 @@ with check (
 
 
 -- ============================================================
--- 15. APPLICATION MATERIAL POLICIES
+-- 16. APPLICATION MATERIAL POLICIES
 -- ============================================================
 
 create policy "authorized principals can view application materials"
@@ -2031,7 +2142,7 @@ with check (
 
 
 -- ============================================================
--- 16. APPLICATION MATERIAL EVIDENCE POLICIES
+-- 17. APPLICATION MATERIAL EVIDENCE POLICIES
 -- ============================================================
 
 create policy "authorized principals can view application material evidence"
@@ -2075,7 +2186,7 @@ using (
 
 
 -- ============================================================
--- 17. APPLICATION POLICIES
+-- 18. APPLICATION POLICIES
 -- ============================================================
 
 create policy "authorized principals can view applications"
@@ -2135,7 +2246,7 @@ with check (
 
 
 -- ============================================================
--- 18. SUBMITTED MATERIAL POLICIES
+-- 19. SUBMITTED MATERIAL POLICIES
 -- ============================================================
 --
 -- Submitted Material snapshots are created automatically by the
@@ -2164,7 +2275,7 @@ using (
 
 
 -- ============================================================
--- 19. APPLICATION ACTIVITY LINK SUPPORT
+-- 20. APPLICATION ACTIVITY LINK SUPPORT
 -- ============================================================
 --
 -- Migration 011 created a controlled polymorphic Activity link
@@ -2402,7 +2513,7 @@ from public;
 
 
 -- ============================================================
--- 20. APPLICATION SECURITY EXAMPLE
+-- 21. APPLICATION SECURITY EXAMPLE
 -- ============================================================
 --
 -- Future Application Agent:
@@ -2438,7 +2549,7 @@ from public;
 
 
 -- ============================================================
--- 21. HISTORICAL MODEL RECAP
+-- 22. HISTORICAL MODEL RECAP
 -- ============================================================
 --
 -- Living / working:
