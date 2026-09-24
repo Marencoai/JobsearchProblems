@@ -6600,6 +6600,8 @@ Record creation
 
 Normally one active Daily Plan should exist per Workspace per date.
 
+A Daily Plan may only become `completed` after its candidate-facing child state has been reconciled. Any Work Blocks must be `completed` or `skipped`, and every Daily Plan Item must have a terminal outcome of `completed`, `carried_forward`, or `removed`. This prevents a historical completed Plan from permanently containing unfinished child state.
+
 8.12 work_blocks
 
 Represents a focused group of candidate-facing work inside a Daily Plan.
