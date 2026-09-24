@@ -715,6 +715,19 @@ begin
         end if;
 
 
+        if exists (
+            select 1
+            from public.applications a
+            where a.workspace_id = new.workspace_id
+              and a.application_package_id = new.id
+        ) then
+
+            raise exception
+                'Application Package cannot be reopened after it has been used by an Application attempt';
+
+        end if;
+
+
         new.approved_by_principal_id := null;
         new.approved_at := null;
 
@@ -774,6 +787,19 @@ begin
 
             raise exception
                 'Application prepare or approve permission is required to archive a Package';
+
+        end if;
+
+
+        if exists (
+            select 1
+            from public.applications a
+            where a.workspace_id = new.workspace_id
+              and a.application_package_id = new.id
+        ) then
+
+            raise exception
+                'Application Package cannot be archived after it has been used by an Application attempt';
 
         end if;
 
