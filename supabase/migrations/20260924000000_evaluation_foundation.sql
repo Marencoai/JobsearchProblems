@@ -601,6 +601,7 @@ declare
     story_record public.evidence_stories%rowtype;
     project_record public.projects%rowtype;
     skill_record public.skills%rowtype;
+    skill_support_snapshot jsonb := '[]'::jsonb;
 begin
 
     new.evidence_snapshot := '{}'::jsonb;
@@ -732,6 +733,69 @@ begin
                 new.workspace_id;
         end if;
 
+
+        -- A Skill row is taxonomy, not proof that the candidate
+        -- possesses the Skill. Direct Skill evidence therefore
+        -- requires at least one confirmed supporting Candidate
+        -- Knowledge relationship.
+
+        select
+            coalesce(
+                jsonb_agg(support_item),
+                '[]'::jsonb
+            )
+        into skill_support_snapshot
+        from (
+            select
+                jsonb_build_object(
+                    'type',
+                    'evidence_story',
+                    'id',
+                    es.id,
+                    'title',
+                    es.title,
+                    'evidence_strength',
+                    ess.evidence_strength
+                ) as support_item
+            from public.evidence_story_skills ess
+            join public.evidence_stories es
+              on es.workspace_id = ess.workspace_id
+             and es.id = ess.evidence_story_id
+            where ess.workspace_id = new.workspace_id
+              and ess.skill_id = new.skill_id
+              and ess.validation_status = 'confirmed'
+              and es.validation_status = 'confirmed'
+
+            union all
+
+            select
+                jsonb_build_object(
+                    'type',
+                    'project',
+                    'id',
+                    p.id,
+                    'name',
+                    p.name,
+                    'evidence_strength',
+                    ps.evidence_strength
+                ) as support_item
+            from public.project_skills ps
+            join public.projects p
+              on p.workspace_id = ps.workspace_id
+             and p.id = ps.project_id
+            where ps.workspace_id = new.workspace_id
+              and ps.skill_id = new.skill_id
+              and ps.validation_status = 'confirmed'
+              and p.validation_status = 'confirmed'
+        ) confirmed_support;
+
+
+        if jsonb_array_length(skill_support_snapshot) = 0 then
+            raise exception
+                'Skill must have confirmed Candidate Knowledge support before it may be used as direct Evaluation evidence';
+        end if;
+
+
         new.evidence_snapshot :=
             new.evidence_snapshot
             ||
@@ -741,7 +805,8 @@ begin
                     'id', skill_record.id,
                     'name', skill_record.name,
                     'category', skill_record.category,
-                    'description', skill_record.description
+                    'description', skill_record.description,
+                    'supporting_evidence', skill_support_snapshot
                 )
             );
 
