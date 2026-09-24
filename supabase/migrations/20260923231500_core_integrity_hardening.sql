@@ -211,7 +211,93 @@ check (
 
 
 -- ============================================================
--- 5. DESIGN RULE FOR FUTURE TABLES
+-- 5. PREVENT OPPORTUNITY HISTORY CYCLES
+-- ============================================================
+--
+-- previous_opportunity_id forms a historical chain.
+--
+-- Invalid:
+--
+-- Opportunity A → Opportunity B → Opportunity A
+--
+-- Self-reference is already blocked by a CHECK constraint.
+-- This trigger prevents longer cycles.
+-- ============================================================
+
+create or replace function public.prevent_opportunity_history_cycle()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+    creates_cycle boolean;
+begin
+
+    if new.previous_opportunity_id is null then
+        return new;
+    end if;
+
+
+    with recursive history_chain as (
+
+        select
+            o.previous_opportunity_id
+
+        from public.opportunities o
+
+        where o.workspace_id = new.workspace_id
+          and o.id = new.previous_opportunity_id
+
+
+        union
+
+
+        select
+            o.previous_opportunity_id
+
+        from public.opportunities o
+
+        join history_chain hc
+          on o.id = hc.previous_opportunity_id
+
+        where o.workspace_id = new.workspace_id
+          and hc.previous_opportunity_id is not null
+    )
+
+    select exists (
+        select 1
+        from history_chain
+        where previous_opportunity_id = new.id
+    )
+    into creates_cycle;
+
+
+    if creates_cycle then
+        raise exception
+            'Opportunity history relationship would create a cycle';
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+revoke all on function public.prevent_opportunity_history_cycle()
+from public;
+
+
+create trigger prevent_opportunity_history_cycle_before_write
+before insert or update of previous_opportunity_id
+on public.opportunities
+for each row
+execute function public.prevent_opportunity_history_cycle();
+
+
+-- ============================================================
+-- 6. DESIGN RULE FOR FUTURE TABLES
 -- ============================================================
 --
 -- From this migration forward:
