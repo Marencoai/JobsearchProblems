@@ -720,6 +720,251 @@ using (
 
 
 -- ============================================================
+-- 16. MEMBERSHIP ROLE-ASSIGNMENT GUARD
+-- ============================================================
+--
+-- workspace.members.manage controls membership administration.
+--
+-- Assigning or changing a Role is a stronger capability because
+-- a Role determines what the Principal may do.
+--
+-- Therefore:
+--
+--   membership creation/update
+--        +
+--   role assignment
+--
+-- are not treated as identical powers.
+--
+-- The only exception is the controlled first-Workspace bootstrap
+-- where the newly created human Principal receives the global
+-- Owner Role before any membership exists.
+-- ============================================================
+
+create or replace function public.enforce_membership_role_assignment()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+declare
+    actor_id uuid;
+    membership_count integer;
+    target_role_workspace_id uuid;
+    target_role_name text;
+begin
+
+    actor_id := public.current_principal_id();
+
+
+    -- --------------------------------------------------------
+    -- Role did not change during UPDATE.
+    -- --------------------------------------------------------
+
+    if tg_op = 'UPDATE'
+       and new.role_id = old.role_id then
+
+        return new;
+
+    end if;
+
+
+    -- --------------------------------------------------------
+    -- Resolve target Role.
+    -- --------------------------------------------------------
+
+    select
+        workspace_id,
+        lower(name)
+    into
+        target_role_workspace_id,
+        target_role_name
+    from public.roles
+    where id = new.role_id;
+
+
+    if not found then
+        raise exception
+            'Role % does not exist',
+            new.role_id;
+    end if;
+
+
+    -- --------------------------------------------------------
+    -- Controlled first-Workspace bootstrap exception.
+    -- --------------------------------------------------------
+
+    if tg_op = 'INSERT' then
+
+        select count(*)
+        into membership_count
+        from public.workspace_memberships
+        where workspace_id = new.workspace_id;
+
+
+        if membership_count = 0
+           and actor_id = new.principal_id
+           and target_role_workspace_id is null
+           and target_role_name = 'owner' then
+
+            return new;
+
+        end if;
+
+    end if;
+
+
+    -- --------------------------------------------------------
+    -- All other Role assignment requires explicit Role
+    -- administration authority.
+    -- --------------------------------------------------------
+
+    if not public.has_permission(
+        new.workspace_id,
+        'workspace.roles.manage'
+    ) then
+
+        raise exception
+            'Permission workspace.roles.manage is required to assign or change Workspace Roles';
+
+    end if;
+
+
+    return new;
+
+end;
+$;
+
+
+create trigger enforce_membership_role_assignment_before_write
+before insert or update of role_id
+on public.workspace_memberships
+for each row
+execute function public.enforce_membership_role_assignment();
+
+
+-- ============================================================
+-- 17. PROTECT OWNER MEMBERSHIPS
+-- ============================================================
+--
+-- Prevent:
+--
+--   a lower-privileged membership manager from stripping an
+--   Owner Role
+--
+-- and:
+--
+--   a Workspace from accidentally losing its final active Owner.
+--
+-- ============================================================
+
+create or replace function public.protect_workspace_owner_membership()
+returns trigger
+language plpgsql
+set search_path = public
+as $
+declare
+    owner_role_id uuid;
+    removing_owner boolean := false;
+    remaining_owner_count integer;
+begin
+
+    select id
+    into owner_role_id
+    from public.roles
+    where workspace_id is null
+      and lower(name) = 'owner'
+    limit 1;
+
+
+    if owner_role_id is null then
+        raise exception
+            'Global Owner Role is not configured';
+    end if;
+
+
+    if old.role_id <> owner_role_id
+       or old.status <> 'active' then
+
+        if tg_op = 'DELETE' then
+            return old;
+        end if;
+
+        return new;
+
+    end if;
+
+
+    if tg_op = 'DELETE' then
+
+        removing_owner := true;
+
+    else
+
+        removing_owner :=
+            new.role_id <> owner_role_id
+            or new.status <> 'active';
+
+    end if;
+
+
+    if not removing_owner then
+        return new;
+    end if;
+
+
+    if not public.has_permission(
+        old.workspace_id,
+        'workspace.roles.manage'
+    ) then
+
+        raise exception
+            'Permission workspace.roles.manage is required to remove an Owner membership';
+
+    end if;
+
+
+    select count(*)
+    into remaining_owner_count
+    from public.workspace_memberships wm
+    where wm.workspace_id = old.workspace_id
+      and wm.role_id = owner_role_id
+      and wm.status = 'active'
+      and wm.id <> old.id;
+
+
+    if remaining_owner_count = 0 then
+
+        raise exception
+            'A Workspace must retain at least one active Owner';
+
+    end if;
+
+
+    if tg_op = 'DELETE' then
+        return old;
+    end if;
+
+    return new;
+
+end;
+$;
+
+
+create trigger protect_workspace_owner_membership_before_delete
+before delete
+on public.workspace_memberships
+for each row
+execute function public.protect_workspace_owner_membership();
+
+
+create trigger protect_workspace_owner_membership_before_update
+before update of role_id, status
+on public.workspace_memberships
+for each row
+execute function public.protect_workspace_owner_membership();
+
+
+-- ============================================================
 -- MIGRATION 002 COMPLETE
 -- ============================================================
 --
