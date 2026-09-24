@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-24  
 **Scope:** `supabase/migrations/`  
-**Status:** Static audit passed, ready for deployment testing in a new Supabase project.
+**Status:** Deployed and tested through Migration 020. Identity, tenant isolation, Candidate Knowledge, Evaluation, and Workflow lifecycle tests are passing. Daily Queue and Application end-to-end tests remain.
 
 ## Audited migration chain
 
-Migrations 001 through 018 were reviewed in filename order for:
+Migrations 001 through 020 were reviewed in filename order for:
 
 - SQL and migration ordering
 - table and function dependencies
@@ -29,7 +29,7 @@ Migrations 001 through 018 were reviewed in filename order for:
 
 ## Final structural checks
 
-- 18 sequential SQL migrations
+- 20 sequential SQL migrations
 - no missing migration numbers
 - no non-SQL files in `supabase/migrations/`
 - 43 expected V1 tables
@@ -87,6 +87,7 @@ Migrations 001 through 018 were reviewed in filename order for:
 
 - Preserved append-only Activity history.
 - Hardened task dependency and attempt behavior.
+- Deployment testing found that dependency cycles were prevented but prerequisites did not yet block execution. Migration 020 now prevents a Task from entering `running` until `must_succeed` / `must_complete` prerequisites are satisfied while keeping `informational` dependencies non-blocking.
 - Protected human-facing Next Action assignment.
 - Preserved Daily Plan versions and historical priority snapshots.
 - Tightened internal helper exposure.
@@ -116,22 +117,29 @@ The following remain deferred by design rather than missing accidentally:
 
 ## Deployment gate
 
-The source migration chain is ready for the next phase: execution against a brand-new Supabase project.
+Deployment testing is in progress against the new Supabase project.
 
-Static review cannot replace an actual PostgreSQL execution test. The deployment test should:
+Completed:
 
-1. apply migrations 001 through 018 in order,
-2. confirm all migrations succeed,
-3. inspect Supabase security and performance advisors,
-4. create a test Auth user,
-5. bootstrap the first personal Workspace,
-6. verify Owner permissions,
-7. verify RLS isolation with a second test Principal / Workspace,
-8. verify an agent cannot self-escalate,
-9. exercise Candidate Knowledge validation,
-10. exercise Evaluation completion and immutability,
-11. exercise Task / Next Action lifecycle,
-12. exercise Daily Plan versioning,
-13. exercise Application approval, submission, retry, and submitted-material snapshots.
+1. migrations 001 through 020 applied successfully,
+2. migration history verified,
+3. schema security advisor reviewed,
+4. test Auth user created,
+5. first personal Workspace bootstrapped,
+6. Owner permissions verified,
+7. RLS isolation verified with a second Principal / Workspace,
+8. agent self-escalation blocked,
+9. Candidate Knowledge validation exercised,
+10. Evaluation completion, versioning, snapshots, and immutability exercised,
+11. Internal Task, Task Attempt, Activity Event, dependency, and Next Action lifecycle exercised.
 
-No production or personal job-search data should be loaded until this deployment test passes.
+Remaining:
+
+12. Daily Plan versioning and queue lifecycle,
+13. Application approval, submission, retry, and submitted-material snapshots.
+
+Workflow testing also produced one corrective migration: Migration 020 enforces Task prerequisites at execution time.
+
+The current Supabase schema security checks are clean. The only current Security Advisor warning is an Auth-project setting for leaked-password protection, which is outside the migration schema and should be enabled before production use.
+
+No production or personal job-search data should be loaded until the remaining deployment tests pass.
