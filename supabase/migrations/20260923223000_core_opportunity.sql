@@ -640,7 +640,7 @@ on public.opportunity_sources(
 );
 
 
-create index opportunity_sources_external_job_id_idx
+create unique index opportunity_sources_external_job_id_unique
 on public.opportunity_sources(
     workspace_id,
     source_type,
