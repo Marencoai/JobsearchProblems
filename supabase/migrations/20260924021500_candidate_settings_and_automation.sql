@@ -240,6 +240,19 @@ on public.workspaces
 for each row
 execute function public.initialize_candidate_settings_for_workspace();
 
+
+-- Backfill any Workspace that may already exist when this
+-- migration is applied to an existing environment.
+
+insert into public.candidate_settings (
+    workspace_id
+)
+select
+    w.id
+from public.workspaces w
+on conflict (workspace_id) do nothing;
+
+
 -- ============================================================
 -- 5. AUTOMATION POLICIES
 -- ============================================================
