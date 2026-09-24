@@ -343,9 +343,11 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $
 declare
     template_status text;
+    template_job_family_id uuid;
+    opportunity_job_family_id uuid;
 begin
 
     if new.application_template_id is null then
@@ -355,15 +357,21 @@ begin
 
     if tg_op = 'UPDATE'
        and new.application_template_id
-           is not distinct from old.application_template_id then
+           is not distinct from old.application_template_id
+       and new.opportunity_id
+           is not distinct from old.opportunity_id then
 
         return new;
 
     end if;
 
 
-    select status
-    into template_status
+    select
+        status,
+        job_family_id
+    into
+        template_status,
+        template_job_family_id
     from public.application_templates
     where workspace_id = new.workspace_id
       and id = new.application_template_id;
@@ -381,10 +389,37 @@ begin
     end if;
 
 
+    select job_family_id
+    into opportunity_job_family_id
+    from public.opportunities
+    where workspace_id = new.workspace_id
+      and id = new.opportunity_id;
+
+
+    if not found then
+        raise exception
+            'Application Package Opportunity does not exist in this Workspace';
+    end if;
+
+
+    -- A Template with no Job Family is intentionally generic.
+    --
+    -- When both sides are classified, they must agree.
+
+    if template_job_family_id is not null
+       and opportunity_job_family_id is not null
+       and template_job_family_id <> opportunity_job_family_id then
+
+        raise exception
+            'Application Template Job Family does not match the Opportunity Job Family';
+
+    end if;
+
+
     return new;
 
 end;
-$$;
+$;
 
 
 revoke all on function
