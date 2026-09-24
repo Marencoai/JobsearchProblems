@@ -543,6 +543,15 @@ create table public.opportunity_sources (
 
     source_url text null,
 
+    -- External source record reference.
+    --
+    -- Examples:
+    --   Gmail message ID
+    --   Indeed alert identifier
+    --   LinkedIn posting reference
+    --   ATS source record ID
+    source_reference text null,
+
     external_job_id text null,
 
     source_title text null,
@@ -607,6 +616,15 @@ on public.opportunity_sources(
     source_url
 )
 where source_url is not null;
+
+
+create index opportunity_sources_source_reference_idx
+on public.opportunity_sources(
+    workspace_id,
+    source_type,
+    source_reference
+)
+where source_reference is not null;
 
 
 -- Prevent the exact same URL from being attached to the same
