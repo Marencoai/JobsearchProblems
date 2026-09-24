@@ -45,12 +45,6 @@ values
         'Update Workspace settings'
     ),
     (
-        'workspace.delete',
-        'workspace',
-        'delete',
-        'Delete a Workspace'
-    ),
-    (
         'workspace.members.manage',
         'workspace',
         'manage_members',
@@ -110,7 +104,6 @@ where r.workspace_id is null
   and p.permission_key in (
       'workspace.read',
       'workspace.update',
-      'workspace.delete',
       'workspace.members.manage',
       'workspace.roles.manage'
   )
@@ -486,13 +479,13 @@ with check (
 );
 
 
-create policy "authorized principals can delete workspace"
-on public.workspaces
-for delete
-to authenticated
-using (
-    public.has_permission(id, 'workspace.delete')
-);
+-- Physical Workspace deletion is intentionally not exposed to
+-- normal authenticated application access.
+--
+-- V1 uses status = 'archived' for normal retirement.
+--
+-- A future privileged purge workflow may perform full deletion
+-- when required for account/data removal.
 
 
 -- Direct Workspace INSERT is intentionally not allowed.
