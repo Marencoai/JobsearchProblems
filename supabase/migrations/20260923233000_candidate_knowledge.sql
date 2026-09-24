@@ -643,7 +643,7 @@ create or replace function public.validate_evidence_story_context()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
 
     if new.project_id is null
@@ -671,7 +671,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 create trigger validate_evidence_story_context_before_write
