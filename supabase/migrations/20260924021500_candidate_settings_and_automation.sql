@@ -386,7 +386,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
     actor_id uuid;
 begin
@@ -413,7 +413,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function public.require_human_configuration_actor()
