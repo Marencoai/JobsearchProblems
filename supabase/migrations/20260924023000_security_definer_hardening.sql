@@ -30,6 +30,15 @@ revoke all on schema private from anon;
 revoke all on schema private from authenticated;
 
 
+-- Prevent search-path object shadowing in the exposed public
+-- schema. Database owners and migrations retain owner authority.
+
+revoke create on schema public from public;
+
+grant usage on schema public to anon;
+grant usage on schema public to authenticated;
+
+
 -- ============================================================
 -- 2. MOVE IDENTITY / AUTHORIZATION IMPLEMENTATIONS
 -- ============================================================
