@@ -2,9 +2,15 @@ Job Search AI Agent
 
 System Design
 
+This document defines the intended architecture of the Job Search AI Agent.
+
+It describes how the major system components should work together, where authoritative state should live, how humans and AI agents should interact with the system, how historical records should be preserved, and how V1 can remain intentionally smaller than the long-term architecture.
+
+The system should optimize for candidate attention rather than activity volume.
+
 1. System Components
 
-Opportunity Activity Feed
+1.1 Opportunity Activity Feed
 
 Each Opportunity should have one primary chronological Activity Feed representing the complete history of the candidate's relationship with that Opportunity.
 
@@ -16,7 +22,7 @@ Research
 
 Evaluation
 
-Candidate knowledge and evidence
+Candidate Knowledge and evidence
 
 Application preparation
 
@@ -38,19 +44,23 @@ Agent actions
 
 The system should not require separate conversation threads for each workstream.
 
-Instead, individual Activity Events may support shallow nested replies so the candidate and agents can discuss or resolve a specific item without breaking the continuity of the full Opportunity history.
+Instead, individual Activity Events may support shallow replies so the candidate and agents can discuss or resolve a specific item without breaking the continuity of the Opportunity history.
 
-Structured objects such as Applications, Evaluations, Contacts, Outreach Engagements, Internal Tasks, and Next Actions remain separate records in the data model. Their relevant activity is surfaced into the shared Opportunity Activity Feed.
+Structured objects such as Applications, Evaluations, Contacts, Outreach Engagements, Interview records, Internal Tasks, Next Actions, and External Actions remain separate records in the data model. Relevant activity from those objects may be surfaced into the shared Opportunity Activity Feed.
 
-Future specialized agents should read from and write to the same shared system records and activity history rather than maintaining isolated private conversation histories.
+The Activity Feed is a collaboration and history surface. It is not the primary workflow engine.
 
-Shared Agent Foundation
+1.2 Shared Agent Foundation
 
 The architecture should support future specialized agents without requiring V1 to implement a full multi-agent system.
 
 Potential future agents include:
 
+Opportunity Discovery Agent
+
 Evaluation Agent
+
+Company Intelligence Agent
 
 Application Agent
 
@@ -58,17 +68,205 @@ Outreach Agent
 
 Interview Agent
 
-Safety Agent
+Career Development Agent
 
-Agents should coordinate through shared structured records, Internal Tasks, Activity Events, and permissions rather than through private agent memory.
+Safety and Verification Agent
 
-V1 may use one orchestrator or general AI workflow while preserving a data model that allows specialized agents to be added later.
+Agents should coordinate through shared structured records, Internal Tasks, Activity Events, permissions, and workflow state rather than through private agent memory.
+
+V1 may use one orchestrating AI workflow while preserving a data model that allows specialized agents to be added later.
+
+1.3 Identity, Workspace, and Access-Control Foundation
+
+The Workspace is the primary tenancy boundary.
+
+Every major business record should belong to a Workspace.
+
+Humans and AI agents should participate in the system as governed actors called Principals.
+
+Conceptually:
+
+Principal
+├── Human User
+├── AI Agent
+└── Trusted System Actor
+
+A Principal may belong to one or more Workspaces through Workspace Membership.
+
+Workspace Membership should assign a Role.
+
+Roles should grant Permissions.
+
+Conceptually:
+
+authenticated identity
+        ↓
+Principal
+        ↓
+Workspace Membership
+        ↓
+Role
+        ↓
+Permissions
+
+This shared access model should govern humans and agents rather than giving agents unrestricted backend access.
+
+Examples of permissions may include:
+
+opportunity.read
+opportunity.update
+candidate_knowledge.read
+candidate_knowledge.write
+evaluation.create
+application.prepare
+application.submit
+outreach.draft
+outreach.send
+interview.prepare
+email.read
+email.send
+calendar.read
+calendar.write
+
+External actions such as sending, submitting, or scheduling should use separate permissions from internal preparation actions.
+
+Normal agent activity should be subject to the same Workspace and permission boundaries as human activity.
+
+Unrestricted service-role access should be reserved for narrowly defined trusted backend operations where bypassing RLS is intentional.
+
+1.4 Workflow Layers
+
+The system should distinguish four different workflow concepts.
+
+Activity Event
+
+Answers:
+
+What happened?
+
+Activity Events preserve history.
+
+Examples:
+
+Job discovered
+
+Evaluation completed
+
+Application submitted
+
+Recruiter replied
+
+Interview scheduled
+
+Internal Task
+
+Answers:
+
+What does the system need to do?
+
+Internal Tasks support orchestration, waiting states, retries, dependencies, scheduling, ownership, and future agent coordination.
+
+Tasks exist primarily for the machine.
+
+Next Action
+
+Answers:
+
+What does the candidate need to do?
+
+Next Actions are simplified human-facing actions derived from workflow state.
+
+Examples:
+
+Review application package
+
+Approve outreach draft
+
+Answer one evidence question
+
+Reply to recruiter
+
+Prepare for interview
+
+Next Actions exist primarily for the candidate.
+
+External Action
+
+Answers:
+
+What real-world side effect is the system about to perform?
+
+Examples:
+
+Send an email
+
+Submit an application
+
+Send a LinkedIn message
+
+Create a Calendar event
+
+Apply a Gmail label
+
+External Actions require stronger execution controls than ordinary Internal Tasks.
+
+Before an External Action executes, the system should verify:
+
+Database permission
++
+Automation policy
++
+Required approval
++
+Safety conditions
+=
+External action allowed
+
+Successful External Actions should preserve the exact executed payload and result as historical records.
+
+1.5 Candidate Experience Principle
+
+The backend may contain many Tasks, retries, agent actions, waiting conditions, and system records.
+
+The candidate should not have to manage that complexity.
+
+The candidate should primarily understand:
+
+What changed
+
+Why it matters
+
+What the system already handled
+
+What needs attention now
+
+What should happen next
+
+The system should absorb workflow complexity and surface attention.
 
 2. Data and System of Record
 
-Supabase will serve as the primary system of record for the Job Search AI Agent.
+Supabase will serve as the primary structured system of record for the Job Search AI Agent.
 
-The database will store structured information about:
+The system should store structured information about:
+
+Access and Governance
+
+Workspaces
+
+Principals
+
+Workspace Memberships
+
+Roles
+
+Permissions
+
+Candidate Settings
+
+Automation Policies
+
+Opportunity Domain
 
 Companies
 
@@ -82,27 +280,75 @@ Opportunity Sources
 
 Contacts
 
+Opportunity-Contact relationships
+
 Opportunity Evaluations
 
-Candidate Knowledge
+Application Gaps
 
-Career Gaps
+Career Development Gaps
+
+Candidate Knowledge Domain
+
+Work Experiences
+
+Projects
+
+Evidence Stories
+
+Skills
+
+Tools and Technologies
+
+Artifacts
+
+Relationships connecting those records
+
+Application Domain
 
 Application Templates
 
 Application Packages
 
+Application Materials
+
+Application Answer Packets
+
 Applications
 
-Application Materials
+Submitted Material history
+
+Submitted Answer history
+
+Outreach Domain
 
 Outreach Engagements
 
+Outreach-Opportunity relationships
+
 Outreach Messages
+
+Outreach Interactions
+
+Relationship Notes
+
+Interview Domain
 
 Interview Processes
 
 Interviews
+
+Interview Contacts
+
+Interview Preparations
+
+Interview Questions
+
+Interview Debriefs
+
+Interview Follow-ups
+
+Workflow Domain
 
 Activity Events
 
@@ -110,17 +356,70 @@ Activity Replies
 
 Internal Tasks
 
+Task Dependencies
+
+Task Attempts
+
 Next Actions
 
-Candidate Settings
+External Actions
 
-Action history
+Workflow Runs
 
-External systems such as Gmail, LinkedIn, Indeed, company career sites, ATS platforms, and Google Calendar remain sources of information and actions. Supabase maintains the structured state needed to understand how those external events relate to each Company, Opportunity, Contact, Application, and workflow.
+Daily Plans
 
-Large source files or unnecessary copies of external content should not be stored in the database when a structured record, source reference, artifact link, or external URL is sufficient.
+Work Blocks
 
-Core Opportunity Data Model
+Daily Plan Items
+
+External systems such as Gmail, LinkedIn, Indeed, company career sites, ATS platforms, and Google Calendar remain sources of information or destinations for actions.
+
+Supabase maintains the structured state needed to understand how external information relates to each Company, Opportunity, Contact, Application, relationship, interview, and workflow.
+
+Large source files or unnecessary copies of external content should not be stored when a structured record, source reference, artifact reference, or external URL is sufficient.
+
+2.1 Workspace Ownership and RLS Boundary
+
+Every major tenant-owned record should contain an explicit workspace_id.
+
+This supports:
+
+Consistent RLS
+
+Debugging
+
+Query performance
+
+Auditability
+
+Future multi-tenant use
+
+RLS should primarily answer:
+
+Who is making the request?
+
+Which Workspace owns the record?
+
+Is that Principal an active member of the Workspace?
+
+Does the Principal have the required Permission?
+
+Permission logic should be centralized in reusable database access helpers where practical rather than duplicated independently across every table policy.
+
+Conceptual helpers may include:
+
+can_access_workspace(workspace_id)
+has_permission(workspace_id, permission_key)
+
+RLS should not be the only tenant-isolation safeguard.
+
+Relationships between tenant-owned tables should also prevent cross-Workspace references at the relational level.
+
+Conceptually, a child record should not be able to claim one workspace_id while pointing to a parent record in another Workspace.
+
+The schema should therefore support Workspace-safe foreign-key relationships where appropriate.
+
+2.2 Core Opportunity Data Model
 
 The system should separate the real-world Company and Opportunity from the external sources through which the Opportunity was discovered.
 
@@ -132,7 +431,9 @@ Example:
 
 Mor Furniture For Less
 
-A Company record should contain relatively stable company information. Time-sensitive research should be stored separately as Company Intelligence.
+A Company record should contain relatively stable company information.
+
+Time-sensitive research should be stored separately as Company Intelligence.
 
 Relationships:
 
@@ -142,7 +443,7 @@ One Company may have many Contacts.
 
 One Company may have many Company Intelligence records over time.
 
-One Company may have Outreach Engagements that are not tied to a single Opportunity.
+One Company may have Outreach Engagements that are not tied to a specific Opportunity.
 
 Company Intelligence
 
@@ -172,17 +473,7 @@ Inferences about current company priorities
 
 Sources supporting each observation
 
-Date researched
-
-Relationships:
-
-One Company may have multiple Company Intelligence records over time.
-
-Company Intelligence may support multiple Opportunity Evaluations.
-
-New Opportunities at an existing Company should reuse current Company Intelligence when still relevant rather than repeating the same research unnecessarily.
-
-Time-sensitive intelligence should be refreshed when its age or new evidence could materially change an Evaluation.
+Research date and freshness
 
 The Company describes who the employer is.
 
@@ -190,7 +481,7 @@ Company Intelligence describes what appears to be happening at the employer over
 
 Job Family
 
-Represents a reusable role type or closely related group of roles across companies.
+Represents a reusable role type or closely related group of roles across Companies.
 
 Examples:
 
@@ -204,7 +495,7 @@ AI Transformation
 
 Revenue Operations
 
-A Job Family allows the system to reuse role-specific knowledge across different Opportunities without treating different companies' openings as the same Opportunity.
+A Job Family allows role-specific knowledge to be reused without treating separate job openings as the same Opportunity.
 
 Relationships:
 
@@ -212,17 +503,17 @@ One Job Family may relate to many Opportunities.
 
 One Job Family may have one or more Application Templates.
 
-One Job Family may accumulate recurring interview themes, common requirements, terminology, and Career Development signals.
+One Job Family may accumulate recurring requirements, terminology, interview themes, and Career Development signals.
 
 Opportunity
 
-Represents one specific job opening at one specific Company.
+Represents one specific hiring event at one specific Company.
 
 Example:
 
-Mor Furniture For Less, AI Solutions Manager
-
-A different company hiring a similar role is a different Opportunity, even when both Opportunities belong to the same Job Family.
+Mor Furniture For Less
+AI Solutions Manager
+September 2026 hiring event
 
 The Opportunity should contain factual information about the specific opening, such as:
 
@@ -232,11 +523,13 @@ Job title
 
 Job Family
 
+Requisition identifier when available
+
 Location
 
 Work arrangement
 
-Compensation information
+Compensation
 
 Employment type
 
@@ -250,21 +543,27 @@ Date discovered
 
 Date last verified
 
+Posting date
+
+Closing date when known
+
 Current availability
 
-Relationships:
+A role title is not an Opportunity forever.
 
-One Company may have many Opportunities.
+If the same or similar role appears again months later, the system should determine whether it is:
 
-One Opportunity may have many Opportunity Sources.
+The same posting still active
 
-One Opportunity may have multiple Evaluations over time.
+The same requisition reopened
 
-One Opportunity may have zero, one, or multiple Applications over time.
+A repost of the previous hiring event
 
-One Opportunity may involve many Contacts.
+A genuinely new hiring event
 
-One Opportunity may have one primary Activity Feed containing many Activity Events.
+When it is a new hiring event, the system should create a new Opportunity while preserving and optionally linking the earlier Opportunity.
+
+This allows historical application and relationship context to be reused without rewriting the past.
 
 Opportunity Source
 
@@ -272,7 +571,7 @@ Represents a place where an Opportunity was found, observed, or verified.
 
 Examples:
 
-Indeed job-alert email
+Indeed alert
 
 LinkedIn posting
 
@@ -282,9 +581,11 @@ Recruiter email
 
 Referral
 
-Multiple sources for the same real-world job should enrich one Opportunity record rather than create duplicate Opportunities.
+Multiple sources for the same real-world opening should enrich one Opportunity rather than create duplicate Opportunities.
 
-Different sources may contribute different information, such as:
+Different sources may contribute different information.
+
+For example:
 
 Salary from Indeed
 
@@ -296,7 +597,7 @@ Confirmation that the role is active from a recruiter
 
 Contact
 
-Represents an individual person associated with a Company, Opportunity, or professional relationship.
+Represents an individual professional contact.
 
 Examples:
 
@@ -306,35 +607,31 @@ Hiring manager
 
 Functional leader
 
-Employee who posted about hiring
+Employee publicly posting about hiring
 
 Referral or warm connection
 
-Outreach target
+Former colleague
 
-Relationships:
+Networking contact
 
-One Company may have many Contacts.
+A Contact should exist independently from a single Opportunity.
 
-One Opportunity may involve many Contacts.
+One Contact may be relevant to multiple Opportunities over time.
 
-One Contact may be relevant to multiple Opportunities.
+The relationship between a Contact and Opportunity should be modeled separately so the same Contact may serve different roles for different Opportunities.
 
-One Contact may participate in multiple Outreach Engagements over time.
-
-The relationship between a Contact and an Opportunity should describe why the person matters, such as recruiter, hiring manager, referral, outreach target, interviewer, or team leader.
-
-Opportunity Evaluation
+2.3 Opportunity Evaluation
 
 An Opportunity Evaluation represents the system's assessment of an Opportunity at a specific point in time.
 
-Evaluations should be stored separately from the Opportunity so changes in Candidate Knowledge, Company Intelligence, or job information do not overwrite previous reasoning.
+Evaluations should remain separate from Opportunities so changes in Candidate Knowledge, Company Intelligence, or job information do not overwrite previous reasoning.
 
 An Evaluation may include:
 
-Candidate Fit score: You → Them
+Candidate Fit: You → Them
 
-Opportunity Fit score: Them → You
+Opportunity Fit: Them → You
 
 Hidden Pursuit Score
 
@@ -346,51 +643,43 @@ Plain-language problem translation
 
 Problem Fit
 
-Qualification gaps
-
-Application gaps
+Qualification or Application Gaps
 
 Career Development signals
 
 Company and culture signals
 
+Required decision authority
+
 Important tradeoffs
 
 Recommended next action
 
-Unresolved candidate questions
+Unresolved questions
 
 Evidence and sources used
 
-Evaluation date
-
-Evaluation version
-
-Relationships:
+Evaluation date and version
 
 One Opportunity may have multiple Evaluations over time.
 
-One Evaluation belongs to one Opportunity.
-
-A new Evaluation should be created when materially new information changes the assessment.
-
-Evaluations should record which Candidate Knowledge and Company Intelligence materially influenced the assessment.
+A materially changed assessment should create a new Evaluation rather than overwrite the previous one.
 
 The Opportunity describes what the job is.
 
-The Evaluation describes what the system currently believes about the job and why.
+The Evaluation describes what the system believed about that job at that point in time and why.
 
-Candidate Knowledge Base
+2.4 Candidate Knowledge Base
 
 The Candidate Knowledge Base is the system's structured source of truth for the candidate's professional history, projects, capabilities, tools, accomplishments, artifacts, and validated evidence.
 
-It should provide richer context than a resume and should allow the system to understand not only what the candidate claims to know, but where that knowledge came from, how it was applied, and what evidence supports it.
+A resume is an output of Candidate Knowledge, not the primary source of truth.
 
-Core entities may include:
+Core Candidate Knowledge entities include:
 
 Work Experience
 
-Represents a role, contract, company, or professional engagement.
+Represents a role, contract, company, client engagement, or substantial work period.
 
 May include:
 
@@ -420,7 +709,7 @@ Related Evidence Stories
 
 Project
 
-Represents a substantial body of work that may span one or more capabilities, tools, and Evidence Stories.
+Represents a substantial body of work.
 
 A Project may include:
 
@@ -438,9 +727,9 @@ Responsibilities
 
 Architecture or system description
 
-Tools and technologies used
+Tools and technologies
 
-Skills and capabilities demonstrated
+Skills demonstrated
 
 Scale or complexity
 
@@ -448,7 +737,7 @@ Outcomes
 
 Quantitative results
 
-Current status
+Status
 
 Related Work Experience
 
@@ -460,31 +749,27 @@ Links
 
 Candidate notes
 
-Projects should provide enough context for the system to explain what the candidate built or accomplished without reconstructing the project from individual stories every time.
-
 Evidence Story
 
-Represents a specific example that demonstrates how the candidate handled a problem, decision, interaction, or outcome.
+Represents a specific example showing how the candidate handled a problem, decision, interaction, project, or outcome.
 
-An Evidence Story may include:
-
-Related Work Experience
-
-Related Project
+An Evidence Story may contain:
 
 Situation or problem
 
-Candidate actions
+Candidate role
 
-Tools or systems used
+Actions taken
 
-Stakeholders involved
+Stakeholders
+
+Tools used
 
 Outcome
 
 Quantitative impact
 
-Professional terminology
+Professional translation
 
 Skills demonstrated
 
@@ -502,211 +787,93 @@ Adjacent experience
 
 Demonstrated understanding
 
-Inference
+Reasonable inference
 
 Unknown
 
-Evidence Stories provide proof and detail beneath broader Work Experience and Project records.
+The system must distinguish what the candidate actually did from professional terminology inferred from that work.
+
+Professional translation should not overwrite the original evidence.
 
 Skill or Capability
 
-Represents a professional capability that may be supported by multiple Projects and Evidence Stories.
-
-Examples:
-
-Discovery
-
-Solution design
-
-Salesforce administration
-
-Consultative selling
-
-Workflow design
-
-Systems integration
-
-AI enablement
-
-Stakeholder management
+Represents a reusable professional capability supported by Projects and Evidence Stories.
 
 Skills should not exist only as unsupported keywords.
 
-Where possible, Skills should link to the Projects and Evidence Stories that demonstrate them.
-
 Tool or Technology
 
-Represents a platform, system, framework, or technology the candidate has used.
+Represents a platform, technology, framework, or system used by the candidate.
 
-Examples:
-
-Supabase
-
-Salesforce
-
-Jira
-
-GitHub
-
-Claude
-
-ChatGPT
-
-Microsoft Graph
-
-SharePoint
-
-A Tool record may include:
-
-Tool name
-
-Experience level or familiarity
-
-Context of use
-
-Related Projects
-
-Related Work Experiences
-
-Related Evidence Stories
+Experience depth should come from linked evidence rather than a generic unsupported proficiency label.
 
 Artifact
 
-Represents tangible proof or supporting material created through the candidate's work.
+Represents tangible supporting proof.
 
 Examples:
 
-Demo videos
+Demo video
 
-Project screenshots
+GitHub repository
 
-User guides
+Screenshot
 
-Architecture diagrams
+User guide
 
-GitHub repositories
+Architecture diagram
 
-Case studies
+Presentation
 
-Presentations
+Case study
 
-LinkedIn posts
+LinkedIn post
 
 Documentation
 
-Artifacts may support Projects, Evidence Stories, Applications, interviews, and outreach.
+Candidate Knowledge should feed:
 
-Candidate Knowledge Relationships
+Candidate Knowledge
+      ↓
+      ├── Opportunity Evaluation
+      ├── Application Preparation
+      ├── Outreach
+      ├── Interview Preparation
+      └── Career Gap Analysis
 
-The Candidate Knowledge Base should be relational rather than a collection of isolated notes.
+Downstream outputs should reference Candidate Knowledge rather than becoming independent sources of candidate truth.
 
-Examples:
+2.5 Career Gaps
 
-One Work Experience may contain many Projects.
-
-One Project may contain many Evidence Stories.
-
-One Evidence Story may demonstrate many Skills.
-
-One Skill may be demonstrated across many Projects.
-
-One Project may use many Tools.
-
-One Artifact may support one or more Projects or Evidence Stories.
-
-Application materials, Opportunity Evaluations, interview preparation, and outreach should reference the Candidate Knowledge Base rather than relying only on resume text.
-
-Candidate Knowledge Design Principle
-
-The system should understand the candidate's professional history as connected context, not as a flat list of resume bullets.
-
-The Candidate Knowledge Base should make it possible to answer:
-
-What has this candidate done?
-
-Where did they do it?
-
-What did they build?
-
-What tools did they use?
-
-What problems did they solve?
-
-What evidence proves it?
-
-What artifacts can demonstrate it?
-
-The system should translate:
-
-Candidate story → professional terminology
-
-without replacing or overstating what the candidate actually did.
-
-Missing evidence is not automatically proof of missing capability.
-
-Career Gaps
-
-Career Gaps represent missing evidence, missing experience, or capabilities that may limit the candidate's fit for current or future Opportunities.
-
-The system should distinguish between different types of gaps rather than treating every unmet requirement as the same problem.
+The system should distinguish between Application Gaps and Career Development Gaps.
 
 Application Gap
 
-Represents something that weakens a specific Opportunity but may be solvable through better evidence, translation, positioning, or clarification.
+Represents something affecting one specific Opportunity that may be solvable through:
 
-Examples:
+Better evidence
 
-Relevant experience exists but has not been documented
+Terminology translation
 
-Candidate has adjacent experience but not the employer's terminology
+Positioning
 
-Resume does not currently show the required capability
+Clarification
 
-Candidate needs one clarifying example before applying
-
-A Project demonstrates the capability but has not yet been linked to the Opportunity
-
-Application Gaps should primarily trigger evidence discovery, Candidate Knowledge Base updates, or application customization.
+Opportunity-specific preparation
 
 Career Development Gap
 
-Represents a recurring or meaningful capability gap that may require learning, practice, certification, project work, or future job experience.
+Represents a recurring or meaningful capability gap that may require:
 
-Examples:
+Learning
 
-No direct experience owning production architecture decisions
+Practice
 
-Repeated lack of enterprise SaaS presales experience
+Certification
 
-Missing technical depth that appears across high-value target roles
+Project experience
 
-Repeated requirement for a tool or domain the candidate has never used
-
-A Career Development Gap may include:
-
-Gap description
-
-Related Skill or Capability
-
-Related Opportunities
-
-Frequency of occurrence
-
-Importance
-
-Evidence supporting the gap
-
-Whether the gap is blocking or developmental
-
-Suggested development path
-
-Current status
-
-Date first identified
-
-Date last observed
-
-Gap Promotion
+Future job experience
 
 A gap identified during one Opportunity should not automatically become a Career Development Gap.
 
@@ -724,43 +891,19 @@ A recurring capability gap
 
 Only meaningful recurring gaps should be promoted into the Career Development Gap Library.
 
-Relationships:
-
-One Opportunity may identify many Application Gaps.
-
-One Application Gap belongs primarily to one Opportunity.
-
-Multiple Opportunities may contribute evidence to one Career Development Gap.
-
-Career Development Gaps may link to Skills, Projects, learning activities, and future Evidence Stories.
-
-Design Principle:
-
-The system should not tell the candidate they lack a capability simply because the current Candidate Knowledge Base does not contain evidence for it.
+Design principle:
 
 Missing evidence is not the same as missing ability.
 
-Application Templates and Reusable Application Foundations
+2.6 Application Domain
 
-The system should separate reusable job-family Application Templates from opportunity-specific application work.
+The Application domain should distinguish reusable templates, working preparation, and historical submission records.
 
 Application Template
 
-Represents a reusable application foundation for a Job Family or closely related type of role.
+Represents a reusable application foundation for a Job Family.
 
-Examples:
-
-Strategic Solutions Engineer
-
-Enterprise Account Executive
-
-Director of Operations
-
-AI Transformation
-
-Revenue Operations
-
-An Application Template may define:
+Templates may define:
 
 Preferred resume structure
 
@@ -768,11 +911,9 @@ Standard formatting
 
 Relevant Candidate Knowledge categories
 
-Common accomplishments and stories
-
 Typical skills and terminology
 
-Common application-question responses
+Common application-question patterns
 
 Likely qualification gaps
 
@@ -780,101 +921,35 @@ Common interview themes
 
 Typical outreach positioning
 
-Templates should pull validated information from the Candidate Knowledge Base rather than becoming independent sources of candidate truth.
-
-Formatting standards should remain consistent across templates so opportunity-specific customization does not result in inconsistent or lower-quality application materials.
-
-Application
-
-An Application represents a specific submission attempt for an Opportunity.
-
-The Opportunity exists independently of whether the candidate applies.
-
-An Application should represent what actually happened, not what was merely prepared or recommended.
-
-An Application may retain:
-
-Opportunity
-
-Application date
-
-Application Stage
-
-Application Template used
-
-Exact resume version submitted
-
-Exact cover letter submitted
-
-Exact application-answer packet used
-
-Application or ATS URL
-
-Submission method
-
-Whether the candidate or system submitted it
-
-Confirmation email or submission evidence
-
-Notes specific to that submission attempt
-
-Relationships:
-
-One Opportunity may have zero, one, or multiple Applications over time.
-
-One Application belongs to one Opportunity.
-
-One Application may use one Application Template as its starting point.
-
-One Application may have multiple Application Materials.
-
-Submitted materials must be preserved exactly as they existed at the time of submission.
-
-Application Preparation and Submission
-
-Application preparation should be modeled as a structured workflow that produces opportunity-specific materials while preserving the exact version ultimately submitted.
-
-The system should support both human-submitted and future system-submitted applications according to configured automation permissions.
+Templates should pull from validated Candidate Knowledge rather than becoming an independent source of candidate truth.
 
 Application Package
 
-An Application Package represents the set of materials prepared for one Opportunity.
+Represents the working preparation workspace for one Opportunity.
 
-It may include:
+The Application Package is mutable while being prepared.
 
-Related Opportunity
+It may contain:
 
-Related Application Template
+Resume drafts
 
-Related Evaluation
+Cover letter drafts
 
-Resume
-
-Cover letter
-
-Application Answer Packet
+Answer packets
 
 Supporting documents
 
 Candidate notes
 
-Preparation status
-
 Review status
 
 Approval status
 
-Submission readiness
-
-Created timestamp
-
-Last updated timestamp
-
-The Application Package may exist before an Application is formally submitted.
+The Application Package is the equivalent of a working service record before finalization.
 
 Application Material
 
-An Application Material represents one specific artifact prepared for an Opportunity.
+Represents a specific version of a prepared artifact.
 
 Examples:
 
@@ -882,265 +957,132 @@ Resume
 
 Cover letter
 
-Screening answer packet
-
-Portfolio attachment
+Answer packet
 
 Project summary
 
-Supporting document
+Portfolio document
 
-An Application Material may include:
+Supporting attachment
 
-Material type
+Important edits should generally create new versions rather than silently overwrite prior material versions.
 
-Related Opportunity
+Application
 
-Related Application Package
+Represents an actual submission attempt.
 
-Source Template
+The Application should represent what actually happened, not what was merely prepared.
 
-Version
+The Application is the historical record equivalent of the finalized service record.
 
-Exact content or file reference
+Application preparation states belong primarily to the Application Package.
 
-Candidate approval status
+The Application begins when a real submission attempt occurs and may record states such as:
 
-Created timestamp
-
-Submitted status
-
-Submitted version indicator
-
-The system should preserve the exact version that was submitted.
-
-Draft and rejected versions should remain distinguishable from the final submitted version.
-
-Application Answer Packet
-
-The Application Answer Packet should collect known application questions and supported responses in the order required by the employer.
-
-It may include:
-
-Question text
-
-Question type
-
-Draft response
-
-Evidence used
-
-Confidence
-
-Candidate verification requirement
-
-Final approved response
-
-Submission status
-
-Frequently reused answers may reference validated Candidate Knowledge rather than being recreated from scratch.
-
-The system should not invent unsupported answers.
-
-If a required question cannot be answered truthfully from available information, the system should flag it for candidate input.
-
-Application Preparation Workflow
-
-The system should generally follow this pattern:
-
-Opportunity is actively being pursued and is ready for application preparation.
-
-Appropriate Application Template is selected.
-
-Relevant Candidate Knowledge is retrieved.
-
-Opportunity-specific resume is generated or selected.
-
-Cover letter is prepared when useful.
-
-Application questions are collected.
-
-Answer Packet is prepared.
-
-ATS and consistency checks are performed.
-
-Candidate reviews only the items requiring attention.
-
-Application Package is approved for submission.
-
-Submission occurs manually or automatically according to permissions.
-
-Exact submitted materials and confirmation evidence are preserved.
-
-Opportunity and Application states are updated.
-
-Activity Events are written to the shared Opportunity Feed.
-
-Human Review
-
-The system should minimize review burden by surfacing only material decisions.
-
-Candidate review should focus on:
-
-Unsupported or uncertain claims
-
-Material changes in positioning
-
-New application questions
-
-Compensation or legal attestations
-
-Required personal judgment
-
-Final submission approval when configured
-
-Submission Evidence
-
-A completed Application should preserve evidence that submission occurred.
-
-Examples:
-
-Confirmation page
-
-Confirmation email
-
-ATS confirmation
-
-Submitted timestamp
-
-Submitted URL
-
-Submission actor
-
-The system should distinguish between:
-
-Prepared
-
-Approved
+Submission in progress
 
 Submitted
 
 Confirmed
 
-Preparation should never be treated as proof of submission.
+Submission failed
 
-Application Agent Foundation
+Withdrawn
 
-A future Application Agent should operate on shared system records rather than maintain isolated private history.
+The system should preserve:
 
-The Application Agent may:
+Exact submitted material versions
 
-Select the appropriate Job Family template
+Exact submitted application answers
 
-Retrieve Candidate Knowledge
+Submission method
 
-Generate opportunity-specific materials
+Submission timestamp
 
-Prepare application answers
+Who approved the submission
 
-Run consistency and ATS checks
+Who performed the submission
 
-Surface only questions requiring candidate judgment
+Confirmation evidence
 
-Submit applications when authorized
+Later improvements to Candidate Knowledge, templates, materials, or answers must not rewrite what was historically submitted.
 
-Record submission evidence
+Conceptually:
 
-Create or update Internal Tasks
+Candidate Knowledge
+        ↓
+Application Template
+        ↓
+Application Package
+        ↓
+Working versions
+        ↓
+Approval
+        ↓
+Application submission
+        ↓
+Historical submission snapshot
 
-Surface Next Actions
+2.7 Outreach and Relationship Management
 
-Write meaningful application activity into the shared Opportunity Activity Feed
-
-Outreach and Relationship Management
-
-Outreach should be modeled as a reusable relationship workflow rather than only as tasks attached to individual Opportunities.
-
-The architecture should support a future specialized Outreach Agent while allowing V1 outreach preparation to be handled through the general system.
+Outreach should be modeled as a reusable relationship domain rather than only as tasks attached to individual Opportunities.
 
 Outreach Engagement
 
-An Outreach Engagement represents an ongoing relationship-building effort with a Contact.
+Represents an ongoing relationship-building effort with a Contact.
 
-An Engagement may relate to:
+An Outreach Engagement may relate to:
 
-A specific Opportunity
+A Contact
 
 A Company
 
+No specific Opportunity
+
+One Opportunity
+
 Multiple Opportunities over time
 
-General networking or relationship development
+Because one professional relationship may become relevant to several Opportunities, Opportunity relationships should be modeled separately from the Engagement rather than assuming one opportunity_id permanently defines the relationship.
 
-An Outreach Engagement may include:
+For example:
 
-Contact
-
-Company
-
-Related Opportunity when applicable
-
-Relationship context
-
-Outreach goal
-
-Current relationship state
-
-Outreach state
-
-Relevant Candidate Knowledge
-
-Relevant Company Intelligence
-
-Last meaningful interaction
-
-Next Action
-
-Opportunity should be optional because professional relationships may exist independently of a specific job opening.
+Jason Boomer
+      ↓
+Outreach Engagement
+      ├── General Salesforce networking
+      ├── Opportunity A
+      └── Opportunity B
 
 Outreach Message
 
-An Outreach Message represents an individual communication or proposed communication.
+Represents one communication or proposed communication.
 
-It may include:
+The system should preserve:
 
-Related Outreach Engagement
+Exact message content
 
-Related Contact
+Draft version
 
-Related Opportunity when applicable
+Approval state
 
-Channel
+Who prepared it
 
-Direction: inbound or outbound
+Who approved it
 
-Purpose
+Who sent it
 
-Message content
+Send timestamp
 
-Draft status
+Response state
 
-Version
+External reference
 
-Candidate approval status
-
-Sent timestamp
-
-Response status
-
-Response timestamp
-
-Outcome
-
-Actor that created the message
-
-The system should preserve the exact version that was actually sent.
-
-Drafts that were rejected, revised, or approved should remain distinguishable from sent communications.
+The exact sent version should be historical and should not be overwritten by later drafts.
 
 Outreach History and Reuse
 
-Future outreach generation should retrieve relevant prior communications rather than depend on private agent memory.
+Future outreach generation should retrieve relevant prior communications from shared system records.
 
 Relevant context may include:
 
@@ -1156,7 +1098,7 @@ Successful outreach patterns
 
 Candidate writing preferences
 
-Contact relationship history
+Relationship history
 
 Opportunity context
 
@@ -1164,53 +1106,19 @@ Candidate Knowledge
 
 Company Intelligence
 
-Historical outreach should be used as contextual evidence, not automatically copied or reused without considering the new situation.
+Historical outreach is context, not text to copy blindly.
 
-Outreach Agent Foundation
+2.8 Interview Management
 
-A future Outreach Agent should operate on shared system records rather than maintain an isolated private history.
-
-The Outreach Agent may:
-
-Identify appropriate outreach targets
-
-Retrieve relationship history
-
-Draft messages
-
-Revise messages through candidate conversation
-
-Record candidate preferences
-
-Detect responses
-
-Recommend follow-up timing
-
-Create or update Internal Tasks
-
-Surface Next Actions
-
-Write meaningful Outreach activity into the shared Activity Feed
-
-External messages should follow the system's configured automation permissions and approval requirements.
-
-Interview Management
-
-Interview activity should be modeled as a structured workflow associated with an Opportunity.
-
-The system should support a future Interview Agent while allowing V1 interview preparation and tracking to operate through the shared system.
+Interview activity should be modeled as structured workflow associated with an Opportunity.
 
 Interview Process
 
-An Interview Process represents the employer's hiring process for one Opportunity.
+Represents the employer's hiring process for one Opportunity.
 
 It may include:
 
-Related Opportunity
-
-Current Interview Stage
-
-Overall process status
+Current interview stage
 
 Recruiter or coordinator
 
@@ -1218,21 +1126,15 @@ Known interview stages
 
 Expected process structure
 
-Important employer instructions
-
 Scheduling status
 
 Candidate notes
 
-Date process began
-
-Date process ended
-
-One Opportunity may have zero or one active Interview Process at a time.
+Start and completion dates
 
 Interview
 
-An Interview represents one specific meeting, assessment, or hiring interaction within an Interview Process.
+Represents one specific interview, assessment, case study, or hiring interaction.
 
 Examples:
 
@@ -1240,135 +1142,61 @@ Recruiter screen
 
 Hiring manager interview
 
-Technical interview
+Technical or functional interview
 
 Case study
 
-Panel interview
+Panel
 
 Executive interview
 
 Final interview
 
-An Interview may include:
-
-Related Interview Process
-
-Related Opportunity
-
-Interview type
-
-Stage
-
-Date and time
-
-Duration
-
-Format
-
-Meeting link or location
-
-Interviewers
-
-Interviewer roles
-
-Instructions
-
-Preparation status
-
-Outcome
-
-Candidate notes
-
-Follow-up status
-
 Interview Preparation
 
-Interview preparation should be generated using the Opportunity, Evaluation, Candidate Knowledge Base, Company Intelligence, and known interviewer context.
+Preparation should use:
+
+Opportunity
+
+Current Evaluation
+
+Candidate Knowledge
+
+Company Intelligence
+
+Known interviewer context
+
+Prior interview activity in the same process
 
 Preparation may include:
 
-Plain-language explanation of what the interviewer is likely evaluating
+What the interviewer is likely evaluating
 
-Relevant Candidate Evidence Stories
+Relevant Evidence Stories
 
 Likely questions
 
 Candidate talking points
 
-Questions for the interviewer
+Candidate questions
 
 Known gaps or risks
 
 Company context
 
-Role-specific terminology
+Role terminology
 
-Previous interview feedback
-
-Information requiring candidate clarification
-
-The system should prioritize useful talking points and evidence rather than forcing rigid scripted answers.
-
-Interview Activity and Follow-Up
-
-Meaningful interview events should appear in the shared Opportunity Activity Feed.
-
-Examples:
-
-Interview scheduled
-
-Preparation ready
-
-Candidate completed practice
-
-Interview completed
-
-Candidate debrief recorded
-
-Thank-you message drafted
-
-Follow-up sent
-
-Employer feedback received
-
-Next interview scheduled
-
-Internal Tasks may manage reminders, preparation, scheduling checks, and follow-up timing.
-
-Candidate-facing Next Actions should surface only when human attention is required.
+The system should prioritize useful talking points rather than forcing rigid scripts.
 
 Interview Debrief
 
-After an interview, the system should be able to capture a lightweight debrief while the information is still fresh.
+The system should capture a lightweight post-interview debrief while information is fresh.
 
-The debrief may include:
+The debrief may produce new information for:
 
-Questions asked
+Evaluation
 
-Candidate's perception of the conversation
-
-Important information learned
-
-Concerns or positive signals
-
-New company context
-
-New role requirements
-
-Follow-up commitments
-
-Interviewer-specific context
-
-Candidate evidence that worked well
-
-Evidence gaps discovered
-
-Interview debrief information may update:
-
-Opportunity Evaluation
-
-Candidate Knowledge Base
+Candidate Knowledge
 
 Company Intelligence
 
@@ -1378,313 +1206,139 @@ Outreach context
 
 Future interview preparation
 
-Interview Agent Foundation
+An interview is both a hiring event and a source of system learning.
 
-A future Interview Agent should operate on shared system records rather than maintain an isolated private history.
+2.9 Workflow and Historical State
 
-The Interview Agent may:
+The system should intentionally distinguish living or mutable state from historical snapshots.
 
-Detect newly scheduled interviews
+Examples of living or mutable state:
 
-Generate preparation briefs
+Candidate Knowledge
 
-Identify likely questions
+Current Opportunity state
 
-Retrieve relevant Candidate Evidence
+Internal Tasks
 
-Run interactive practice
+Next Actions
 
-Capture debriefs
+Current Outreach state
 
-Draft thank-you messages
+Current Company Intelligence relevance
 
-Track follow-up
+Examples of historical records:
 
-Create or update Internal Tasks
+Evaluation versions
 
-Surface Next Actions
+Activity Events
 
-Write meaningful interview activity into the shared Opportunity Activity Feed
+Submitted application materials
 
-Opportunity Activity, Tasks, Replies, and Next Actions
+Submitted application answers
 
-The system should separate human-facing workflow from machine-facing workflow.
+Sent outreach messages
 
-The candidate should primarily interact with a simple Activity Feed and Daily Work Queue.
+Completed interviews and debriefs
 
-The system may maintain more detailed Internal Task records to support orchestration, scheduling, reporting, agent coordination, dependencies, retries, and timestamps without requiring the candidate to manually manage those fields.
+Successful External Actions
 
-Activity Event
+Task Attempts
 
-Represents something that happened, was discovered, was decided, or materially changed within an Opportunity.
+Daily Plan snapshots
 
-Examples:
+Historical records should not be silently rewritten to make them match current state.
 
-Job discovered
+2.10 Candidate Settings and Automation Policies
 
-Evaluation completed
+Candidate Settings should be stored as structured configuration rather than scattered hard-coded assumptions.
 
-Candidate Knowledge added
+Settings may include:
 
-Resume prepared
+Location preferences
 
-Application submitted
+Approved relocation areas
 
-Outreach recommended
+Compensation preferences
 
-LinkedIn connection accepted
+Work-arrangement preferences
 
-Recruiter email received
+Travel preferences
 
-Interview scheduled
+Search strategy mode
 
-Follow-up completed
+Work-block preferences
 
-Agent recommendation
+Daily Opportunity Target
 
-Candidate note
+Notification preferences
 
-An Activity Event may include:
+Candidate communication preferences
 
-Related Opportunity
+Preference strength may use:
 
-Event type
+Hard No
 
-Event timestamp
+Strong Preference
 
-Actor
+Open to It
 
-Summary
+Neutral
 
-Detailed content
+Nice Bonus
 
-Related Contact
+Automation Policies should be stored separately from general candidate preferences.
 
-Related Application
+Automation Policies should define what classes of action the system may perform and what approval is required.
 
-Related Evaluation
+Example levels:
 
-Related Internal Task
+Prepare Only
 
-Related source or evidence
+Approve Before Action
 
-Whether candidate attention is required
+Act Within Rules
 
-Activity Events form the chronological history shown in the Opportunity Activity Feed.
+Autonomous
 
-Activity Reply
+Permissions determine whether a Principal has technical authority to perform an action.
 
-Represents a reply to a specific Activity Event.
+Automation Policies determine whether the candidate has authorized that action under the current rules.
 
-Replies allow the candidate, system, or future agents to discuss or resolve one item without creating a separate conversation thread.
-
-Examples:
-
-Candidate: "Done, I messaged Jane."
-
-Outreach Agent: "Logged. I'll check again in four days."
-
-Safety Agent: "This application answer needs verification."
-
-Candidate: "Use the Reliant example."
-
-Relationships:
-
-One Activity Event may have many Replies.
-
-One Reply belongs to one Activity Event.
-
-Replies remain associated with the event they concern.
-
-Replies should remain relatively shallow rather than creating deeply nested conversation trees.
-
-Internal Task
-
-Represents a structured unit of work maintained primarily by the system.
-
-Tasks are not required to be the candidate's primary interface.
-
-They exist to support reliable workflow execution and may include:
-
-Related Opportunity
-
-Related Company
-
-Related Contact
-
-Related Application
-
-Task type
-
-Task owner
-
-Responsible agent or human
-
-Trigger
-
-Status
-
-Created timestamp
-
-Due timestamp
-
-Completion timestamp
-
-Priority
-
-Dependencies
-
-Waiting condition
-
-Retry state
-
-Approval requirement
-
-Source Activity Event
-
-Result or completion evidence
-
-Next workflow step
-
-Examples:
-
-Wait four days after outreach
-
-Check whether recruiter replied
-
-Prepare application packet
-
-Refresh Company Intelligence
-
-Generate interview brief
-
-Verify candidate answer
-
-Schedule follow-up
-
-Re-run Evaluation after new Candidate Knowledge is added
-
-The system should maintain Internal Task state automatically whenever possible.
-
-The candidate should not be required to manually update operational fields such as timestamps, dependencies, retry state, or workflow status.
-
-Tasks may be visible through an optional detail view when the candidate wants to inspect the underlying workflow.
-
-Next Action
-
-Represents the simplified human-facing action that currently requires attention.
-
-A Next Action is derived from the underlying workflow and should contain only the information needed to make progress.
-
-Examples:
-
-Review application packet
-
-Follow Jane on LinkedIn
-
-Reply to recruiter
-
-Answer one evidence question
-
-Approve outreach draft
-
-Prepare for interview
-
-A Next Action may include:
-
-Related Opportunity
-
-Related Internal Task
-
-Related Activity Event
-
-Recommended action
-
-Priority
-
-Due or target date
-
-Estimated effort
-
-Whether candidate approval is required
-
-Whether it is eligible to become Today's One Thing
-
-Short supporting context
-
-The Daily Work Queue is a prioritized view of active Next Actions.
-
-Workflow Pattern
-
-The system should generally follow this pattern:
-
-Something happens → Activity Event is recorded → Internal Task state is created or updated → Next Action is surfaced only if human attention is required → Candidate or system acts → Result is recorded as a new Activity Event → Workflow continues automatically where possible.
-
-Example:
-
-Candidate sends outreach message.
-
-Activity Event records that the message was sent.
-
-Internal Task enters a waiting state for four days.
-
-Nothing appears in the candidate's queue during the waiting period.
-
-If a response arrives, the waiting Task is resolved.
-
-A new Activity Event records the reply.
-
-A Next Action appears only if the candidate needs to respond.
-
-If no reply arrives after four days, a follow-up Next Action may be created.
-
-Activity and Task Design Principle
-
-Tasks exist primarily for the machine.
-
-Next Actions exist primarily for the candidate.
-
-Activity Events preserve history.
-
-Replies preserve contextual conversation.
-
-The Activity Feed provides the shared human-and-agent collaboration surface while structured Internal Tasks provide the reliable workflow engine underneath it.
+The system must never grant itself additional autonomy.
 
 3. Opportunity Lifecycle
 
-An Opportunity represents one specific job opening at one specific Company.
+An Opportunity represents one specific hiring event at one specific Company.
 
 The system should not force application activity, outreach activity, interview activity, and overall Opportunity state into one status field.
 
-Instead, the system should maintain separate but related workflow states.
+Instead, these workflows should progress independently while remaining connected.
 
-Opportunity Stage
+3.1 Opportunity Stage
 
 Opportunity Stage represents the overall relationship with the job.
 
-Recommended Opportunity Stages:
+Recommended stages:
 
 Discovered
 
-Opportunity has been found from an alert, proactive search, referral, company careers page, or other source.
+Opportunity has been found.
 
 Verified
 
-The system has confirmed that the Opportunity is real, current enough to pursue, and not a duplicate of an existing Opportunity.
+The system has confirmed the Opportunity is sufficiently real/current and has addressed obvious duplicate risk.
 
 Evaluating
 
-The system is translating the job, researching the Company, matching Candidate Knowledge, and identifying gaps.
+The system is translating the job, researching context, retrieving Candidate Knowledge, and identifying gaps.
 
 Pursuing
 
 The candidate has decided the Opportunity is worth active effort.
 
-Application preparation, outreach, or both may occur during this stage.
-
 Interviewing
 
-The candidate has entered an employer interview, assessment, or formal hiring-process stage.
+The candidate has entered the employer's formal interview, assessment, or hiring process.
 
 Offer
 
@@ -1694,7 +1348,7 @@ Closed
 
 The Opportunity is no longer being actively pursued.
 
-Closed reason should be stored separately, for example:
+Closed reason should remain separate, for example:
 
 Rejected
 
@@ -1708,33 +1362,29 @@ Accepted Elsewhere
 
 Other
 
-Application Stage
+3.2 Application Workflow State
 
-Application Stage represents the state of the submission process for a specific Application.
+Application preparation and actual Application history should remain distinct underneath the interface.
 
-Recommended stages:
+Candidate-facing application state may be derived from both the Application Package and Application records.
 
-Not Started
+Conceptually:
 
-Preparing
+No package
+→ Preparing
+→ Ready for Review
+→ Approved
+→ Submission in Progress
+→ Submitted
+→ Confirmed
 
-Ready for Review
+The working states belong primarily to the Application Package.
 
-Ready to Submit
+Historical submission states belong to the Application.
 
-Submitted
+3.3 Outreach State
 
-Confirmed
-
-Withdrawn
-
-Application preparation should not be confused with submission.
-
-Outreach State
-
-Outreach State represents the state of relationship-building activity.
-
-Recommended states:
+Recommended states may include:
 
 Not Started
 
@@ -1752,9 +1402,9 @@ Waiting
 
 Closed
 
-Outreach may occur before or after an Application is submitted.
+Outreach may occur before or after application submission.
 
-Interview Stage
+3.4 Interview Stage
 
 Interview Stage should be managed within the Interview Process and may vary by employer.
 
@@ -1772,115 +1422,64 @@ Panel
 
 Executive or Final
 
-The system should preserve the employer's actual process rather than forcing every company into an identical interview-stage sequence.
+The system should preserve the employer's actual process rather than forcing every Company into the same sequence.
 
-Parallel Workflow States
+3.5 Parallel Workflow States
 
-Opportunity Stage, Application Stage, Outreach State, and Interview Stage may progress independently.
+Opportunity Stage, application state, Outreach State, and Interview Stage may progress independently.
 
 Example:
 
 Opportunity Stage: Pursuing
-
-Application Stage: Not Started
-
+Application State: Preparing
 Outreach State: Engaged
-
-Another valid example:
-
-Opportunity Stage: Pursuing
-
-Application Stage: Submitted
-
-Outreach State: Not Started
 
 Another valid example:
 
 Opportunity Stage: Interviewing
-
-Application Stage: Confirmed
-
+Application State: Confirmed
 Outreach State: Engaged
-
 Interview Stage: Hiring Manager
 
-Lifecycle Design Rules
+Detailed actions should remain in Activity Events, Internal Tasks, Applications, Outreach records, and Interview records rather than becoming excessive lifecycle statuses.
 
-The Opportunity Stage should represent the Opportunity's current business state.
-
-Detailed actions should remain in Activity Events, Internal Tasks, Applications, Outreach records, and Interview records.
-
-The system should avoid creating excessive lifecycle statuses for every small action.
-
-For example:
-
-"Resume drafted" is an Activity Event, not an Opportunity Stage.
-
-"Follow-up scheduled" is an Internal Task, not an Opportunity Stage.
-
-"Recruiter replied" is an Activity Event that may trigger a state change.
-
-"Application submitted" updates Application Stage and creates an Activity Event.
-
-Lifecycle state changes should create Activity Events so the history remains visible.
+Lifecycle changes should create Activity Events so history remains visible.
 
 Where possible, lifecycle state should be updated automatically from structured system activity rather than requiring manual candidate maintenance.
 
 4. Automation and Scheduling
 
-The system should support background automation, scheduled workflows, and future agent behavior while preserving human control over meaningful external actions.
+The system should support background automation, scheduled workflows, event-driven workflows, and future agent behavior while preserving human control over meaningful external actions.
 
 Automation should reduce candidate effort rather than create additional administrative work.
 
-Automation Principles
+4.1 Automation Principles
 
 The system should:
 
 Perform routine background work automatically when safe
 
-Create or update Internal Tasks without requiring candidate maintenance
+Create or update Internal Tasks without candidate maintenance
 
-Surface Next Actions only when human attention is needed
+Surface Next Actions only when human attention is required
 
-Preserve meaningful Activity Events for traceability
+Preserve meaningful Activity Events
 
-Avoid excessive notifications or agent chatter
+Preserve External Action audit history
 
-Respect configured approval requirements
+Avoid excessive notifications and agent chatter
 
-Never grant itself additional permissions
+Respect permissions and Automation Policies
 
-Automation should be progressive.
+Never grant itself additional permissions or autonomy
 
-The candidate may begin with:
-
-Prepare only
-
-Draft only
-
-Recommend only
-
-and later authorize:
-
-Submit
-
-Send
-
-Schedule
-
-Follow up
-
-Perform other external actions
-
-Permissions should be configurable by action type.
-
-Scheduled Work
+4.2 Scheduled Work
 
 Scheduled automation may include:
 
 Morning Opportunity intake
 
-Job alert processing
+Job-alert processing
 
 Proactive Opportunity discovery
 
@@ -1904,35 +1503,29 @@ Career Gap review
 
 Candidate Knowledge enrichment
 
-Scheduled work should create output only when useful.
+Scheduled checks should create candidate-facing output only when useful.
 
-For example:
-
-If no outreach follow-up is due, the Outreach workflow should not create a candidate-facing action simply because its scheduled check ran.
-
-Event-Driven Work
+4.3 Event-Driven Work
 
 Not all automation should depend on a clock.
 
-The system should respond to meaningful events.
+Meaningful events may include:
 
-Examples:
+New job alert
 
-New job alert arrives
+Application confirmation
 
-Application confirmation received
+Recruiter reply
 
-Recruiter replies
+Interview scheduled
 
-Interview is scheduled
+New Candidate Knowledge
 
-Candidate adds new Knowledge or Evidence
+Contact response
 
-Contact responds to outreach
+Opportunity closure
 
-Opportunity closes
-
-New Company information materially affects an Evaluation
+Material new Company Intelligence
 
 An event may:
 
@@ -1944,11 +1537,13 @@ Create or update an Internal Task.
 
 Trigger an agent or workflow.
 
+Create an External Action request when appropriate.
+
 Surface a Next Action when human attention is required.
 
-Waiting States
+4.4 Waiting States
 
-The system should support Internal Tasks that are intentionally waiting rather than incorrectly treating them as incomplete candidate work.
+The system should support Internal Tasks that are intentionally waiting.
 
 Examples:
 
@@ -1960,17 +1555,17 @@ Waiting for scheduled interview
 
 Waiting for candidate approval
 
-Waiting for company application portal availability
+Waiting for application portal availability
 
-Waiting Tasks should not appear in the Daily Work Queue unless candidate action is required.
+Waiting Tasks should not appear in the Daily Work Queue unless candidate attention is required.
 
-The system should resume the workflow automatically when the waiting condition expires or the relevant event occurs.
+The system should resume workflow automatically when the waiting condition expires or the relevant event occurs.
 
-Daily Work Queue Generation
+4.5 Daily Work Queue
 
-The Daily Work Queue should be generated from current system state, open Next Actions, deadlines, and configured candidate priorities.
+The Daily Work Queue should be generated from current system state and active Next Actions.
 
-The queue should consider:
+It should consider:
 
 Urgency
 
@@ -1998,11 +1593,15 @@ Work-block preferences
 
 The queue should not simply sort Tasks by creation date.
 
-Today's One Thing
+The system may preserve a lightweight Daily Plan snapshot of what was actually presented to the candidate for later progress review and calibration.
+
+4.6 Today's One Thing
 
 The system should identify one highest-leverage action when appropriate.
 
-Today's One Thing should represent the action most likely to materially advance the candidate's job search.
+Today's One Thing should answer:
+
+If this is the only meaningful job-search action completed today, which action creates the most leverage?
 
 It may include:
 
@@ -2016,11 +1615,9 @@ Completing a critical application requirement
 
 Resolving a blocker preventing a strong Opportunity from moving forward
 
-Today's One Thing should not be selected solely because it is urgent.
+It should reflect leverage, timing, importance, dependencies, and candidate effort rather than urgency alone.
 
-It should reflect leverage, timing, and importance.
-
-Dynamic Reprioritization
+4.7 Dynamic Reprioritization
 
 The Daily Work Queue should be allowed to change when new information arrives.
 
@@ -2036,9 +1633,7 @@ Outreach Contact responds
 
 Application deadline changes
 
-The system may reprioritize remaining work automatically.
-
-When a significant reprioritization affects the candidate's day, the system should explain:
+When significant reprioritization affects the candidate's day, the system should explain:
 
 What changed
 
@@ -2046,13 +1641,13 @@ Why it matters
 
 What moved
 
-What action now requires attention
+What now requires attention
 
-Interruptions
+4.8 Interruptions
 
 The system should interrupt the candidate only when delay could materially reduce Opportunity value or create a missed commitment.
 
-An interruption should be pre-processed.
+Interruptions should be pre-processed.
 
 Instead of:
 
@@ -2060,9 +1655,9 @@ Recruiter emailed you.
 
 Prefer:
 
-Recruiter asked for interview availability. I checked your calendar, Thursday at 2 PM is open, and I drafted the reply. Review and send?
+Recruiter asked for interview availability. I checked your calendar, identified open times, and drafted the reply. Review and send?
 
-Work Blocks
+4.9 Work Blocks
 
 Candidate Settings may define preferred work blocks such as:
 
@@ -2078,11 +1673,11 @@ Deep-focus work
 
 Quick tasks
 
-Next Actions may be assigned to an appropriate work block automatically.
+Next Actions may be assigned to appropriate blocks automatically.
 
 Work blocks should support focus without preventing urgent reprioritization.
 
-Completion and Verification
+4.10 Completion and Verification
 
 The system should determine completion from system evidence whenever possible.
 
@@ -2096,53 +1691,85 @@ Calendar event created
 
 Candidate confirmation
 
-External system status
+External system state
 
-The candidate should not be required to manually mark something complete when the system can reliably determine that it occurred.
+The candidate should not be required to manually mark something complete when reliable evidence already exists.
 
-Failure Handling
+4.11 Failure Handling and Idempotency
 
 Automated workflows should fail visibly and safely.
 
-If a workflow cannot complete:
+If a workflow cannot complete, the system should:
 
 Preserve completed work
 
 Record the failure
 
-Avoid duplicate external actions
+Isolate unrelated processing
 
 Retry when appropriate
 
+Avoid duplicate records and external actions
+
 Surface candidate attention only if needed
 
-The system should not silently assume success.
+External Actions and other retry-sensitive operations should use idempotency controls where appropriate.
 
-Agent Scheduling Foundation
+The system should never silently assume success.
 
-Future specialized agents may run on schedules, events, or both.
+4.12 External Action Execution
 
-Evaluation Agent:
+External Actions should have an explicit lifecycle separate from ordinary Internal Tasks.
+
+Conceptually:
+
+Internal Task
+      ↓
+External Action proposed
+      ↓
+Permission check
+      ↓
+Automation Policy check
+      ↓
+Approval check
+      ↓
+Safety check
+      ↓
+Execution
+      ↓
+Result recorded
+      ↓
+Activity Event
+
+Successful execution records should preserve the exact payload and external result reference.
+
+4.13 Agent Scheduling Foundation
+
+Future specialized agents may activate through schedules, events, or both.
+
+Examples:
+
+Evaluation Agent
 
 Runs when a new Opportunity is verified
 
-Re-runs when material Candidate Knowledge changes
+Re-runs when material Candidate Knowledge or Company Intelligence changes
 
-Outreach Agent:
+Outreach Agent
 
 Reviews active Outreach Engagements
 
-Responds to incoming communication
+Responds to new relationship activity
 
 Checks follow-up timing
 
-Application Agent:
+Application Agent
 
-Prepares materials when an Opportunity is ready for application work
+Prepares materials when an Opportunity enters application preparation
 
-Watches for required candidate decisions
+Watches for candidate decisions and approvals
 
-Interview Agent:
+Interview Agent
 
 Activates when an interview is scheduled
 
@@ -2150,19 +1777,59 @@ Prepares materials before the meeting
 
 Requests debrief afterward
 
-Safety Agent:
+Safety and Verification Agent
 
-Reviews selected external actions or unsupported claims before execution
+Reviews unsupported claims
 
-Agents should use shared system state, Internal Tasks, Activity Events, and configured permissions rather than maintain isolated workflow logic.
+Reviews selected External Actions
+
+Enforces safety and approval conditions
+
+Agents should use shared system state and governed permissions rather than isolated workflow logic.
 
 5. Integrations
 
-Gmail Status Synchronization
+External systems should remain responsible for the information and actions they naturally own.
 
-Supabase is the authoritative source for Opportunity and workflow state.
+Supabase should maintain the structured state that connects those external systems together.
 
-Gmail labels should provide a secondary visual representation of that state so job-search email can be organized without requiring the candidate to manually manage the inbox.
+For each integration, the architecture should distinguish whether it is:
+
+A source of information
+
+A destination for actions
+
+Both
+
+Read-only
+
+Write-enabled
+
+Human-approved
+
+System-authorized
+
+The system should avoid duplicating external data unnecessarily when a structured reference or source link is sufficient.
+
+5.1 Gmail
+
+Gmail may serve as:
+
+Source of job alerts
+
+Source of application confirmations
+
+Source of recruiter communication
+
+Source of interview communication
+
+Source of rejection and offer messages
+
+Destination for organizational actions such as labels and archiving
+
+Supabase remains authoritative for Opportunity and workflow state.
+
+Gmail labels may mirror system state for candidate convenience.
 
 Example labels may include:
 
@@ -2178,728 +1845,763 @@ Job Search/Rejected
 
 Job Search/Offer
 
-When relevant email activity changes system state, the system should:
-
-Interpret the email.
-
-Update the appropriate structured record in Supabase.
-
-Apply the corresponding Gmail label when appropriate.
-
-Archive informational messages that no longer require candidate attention.
-
-Preserve the original email so it remains searchable and retrievable.
-
-Gmail labels are a convenience and organizational layer, not the authoritative source of system state.
-
-Other integration behavior will be designed in this section as the architecture continues.
-### 5. Integrations
-
-External systems should remain responsible for the information and actions they naturally own.
-
-Supabase should maintain the structured system state that connects those external systems together.
-
-The architecture should distinguish whether each integration is:
-
-- A source of information
-- A destination for actions
-- Both
-- Read-only
-- Write-enabled
-- Human-approved
-- System-authorized
-
-The system should avoid duplicating external data unnecessarily when a structured reference or source link is sufficient.
-
-#### Gmail
-
-Gmail may serve as:
-
-- Source of job alerts
-- Source of application confirmations
-- Source of recruiter communication
-- Source of interview communication
-- Source of rejection and offer messages
-- Destination for organizational actions such as labels and archiving
-
-Supabase remains authoritative for Opportunity and Application state.
-
-Gmail labels may mirror system state for candidate convenience.
-
-Meaningful Gmail events should create Activity Events and may update Internal Tasks, Next Actions, Application state, Outreach state, or Interview state.
+Meaningful Gmail events should create Activity Events and may update Applications, Outreach state, Interview state, Internal Tasks, Next Actions, or External Actions.
 
 The original email should remain retrievable.
 
-#### LinkedIn
+5.2 LinkedIn
 
 LinkedIn may serve as:
 
-- Source of job Opportunities
-- Source of hiring posts
-- Source of Company and Contact context
-- Source of public professional activity
-- Source of potential outreach targets
-- Future destination for candidate-approved outreach actions
+Source of job Opportunities
 
-LinkedIn information should be linked to structured Companies, Contacts, Opportunities, and Outreach Engagements rather than stored as isolated notes.
+Source of hiring posts
 
-V1 should prioritize candidate review for external LinkedIn communication.
+Source of Company and Contact context
 
-#### Indeed
+Source of public professional activity
+
+Source of outreach targets
+
+Future destination for candidate-authorized outreach actions
+
+LinkedIn information should be connected to structured Companies, Contacts, Opportunities, and Outreach Engagements rather than stored as isolated notes.
+
+V1 should prioritize human control for LinkedIn external communication.
+
+5.3 Indeed
 
 Indeed may serve primarily as an Opportunity discovery source.
 
 The system may process:
 
-- Job alerts
-- Job postings
-- Salary information
-- Location and work arrangement
-- Employer information
-- Job links
+Job alerts
+
+Job postings
+
+Salary information
+
+Location and work arrangement
+
+Employer information
+
+Job links
 
 Indeed should not become the source of truth for Opportunity state.
 
-If the same job is later found through another source, the additional source should enrich the existing Opportunity rather than create a duplicate.
+If the same job appears through another source, the additional source should enrich the existing Opportunity rather than create a duplicate.
 
-#### Google Calendar
+5.4 Google Calendar
 
-Google Calendar may serve as both a source and destination.
+Google Calendar may serve as both source and destination.
 
 The system may:
 
-- Read candidate availability
-- Detect scheduled interviews
-- Create or update interview events when authorized
-- Support interview preparation timing
-- Help identify scheduling conflicts
+Read candidate availability
 
-Calendar events should link back to the relevant Opportunity and Interview records.
+Detect scheduled interviews
 
-#### Employer Career Sites and ATS Platforms
+Create or update interview events when authorized
+
+Support interview-preparation timing
+
+Identify scheduling conflicts
+
+Calendar events should link to structured Interview and Opportunity records.
+
+Supabase remains authoritative for interview workflow state.
+
+5.5 Employer Career Sites and ATS Platforms
 
 Employer career sites and ATS platforms may serve as:
 
-- Verification sources
-- Canonical job-description sources
-- Application destinations
-- Sources of application questions
-- Sources of submission confirmation
+Verification sources
 
-The system should prefer the employer's canonical posting when available for final job-description verification.
+Canonical job-description sources
 
-Application submission should follow configured automation permissions.
+Application destinations
 
-#### Supabase
+Sources of application questions
 
-Supabase is the primary system of record.
+Sources of submission confirmation
 
-It should store structured state for:
+The system should prefer the employer's canonical posting when available for current job facts.
 
-- Candidate settings
-- Companies
-- Opportunities
-- Opportunity Sources
-- Contacts
-- Company Intelligence
-- Evaluations
-- Candidate Knowledge
-- Career Gaps
-- Applications
-- Application Materials
-- Outreach
-- Interviews
-- Activity Events
-- Activity Replies
-- Internal Tasks
-- Next Actions
-- Workflow state
-- Action history
+Submission should follow configured permissions, Automation Policies, approval requirements, and safety checks.
 
-External systems may change or disappear.
+5.6 Supabase
 
-The system should therefore preserve enough structured context in Supabase to understand the candidate's job-search history without depending entirely on an external provider's interface.
+Supabase is the primary structured system of record.
 
-### 6. V1 Architecture
+External systems may change, disappear, or become unavailable.
+
+The system should preserve enough structured context to understand the candidate's job-search history without depending entirely on any external provider interface.
+
+6. V1 Architecture
 
 V1 should prove the core job-search workflow before introducing specialized agents or high levels of autonomous external action.
 
-The primary V1 objective is:
+Primary V1 objective:
 
-**Convert incoming job Opportunities into structured, evaluated, prioritized work that reduces candidate decision-making and administrative effort.**
+Convert incoming job Opportunities into structured, evaluated, prioritized work that reduces candidate decision-making and administrative effort.
 
-#### V1 Core Flow
-
-The initial system should support:
-
-1. Opportunity enters from a supported source.
-2. System extracts basic job information.
-3. System checks for duplicates.
-4. Existing Opportunity Sources are linked when the same job appears again.
-5. Canonical employer posting is identified when available.
-6. Opportunity record is created or updated in Supabase.
-7. Job description is translated into plain-language work and problems.
-8. Relevant Company context is collected.
-9. Candidate Knowledge is retrieved.
-10. Opportunity is evaluated.
-11. Candidate Fit and Opportunity Fit are calculated.
-12. Gaps and unanswered questions are identified.
-13. Internal Tasks and Next Actions are created when needed.
-14. Opportunity is ranked against other active Opportunities.
-15. Daily Work Queue is generated.
-16. Candidate reviews and acts on the prioritized work.
-17. Meaningful activity is written to the Opportunity Activity Feed.
-
----
-
-#### V1 System Components
-
-V1 should include:
-
-##### Supabase
-
-Primary system of record for structured data.
-
-Initial V1 data should support:
-
-- Candidate Settings
-- Companies
-- Opportunities
-- Opportunity Sources
-- Opportunity Evaluations
-- Candidate Knowledge Base
-- Career Gaps
-- Activity Events
-- Activity Replies
-- Internal Tasks
-- Next Actions
-- Applications
-- Application Materials
-- Contacts
-- Outreach Engagements
-- Interviews
-
-Not every object needs a complete user interface in V1.
-
-Some may initially exist only as structured backend records.
-
----
-
-##### Opportunity Intake
-
-Opportunity Intake should initially focus on known job-alert sources.
-
-Initial priority:
-
-- LinkedIn job-alert emails
-- Indeed job-alert emails
-
-V1 should:
-
-- Detect job Opportunities
-- Extract available structured information
-- Identify the originating source
-- Check whether the Opportunity already exists
-- Add additional Sources rather than creating duplicates
-- Attempt to locate the canonical employer posting
-- Create or update the Opportunity record
-
----
-
-##### Job Translation
-
-V1 should translate job descriptions from employer language into understandable work.
-
-Translation should identify:
-
-- What problem the employer appears to be solving
-- What the person would actually do
-- Major responsibilities
-- Important requirements
-- Important terminology
-- Likely success measures
-- Potential unknowns
-
-The translation should help prevent terminology alone from causing the candidate to incorrectly reject an Opportunity.
-
----
-
-##### Opportunity Evaluation
-
-V1 should evaluate Opportunities using:
-
-- Job description
-- Company context
-- Candidate Settings
-- Candidate Knowledge Base
-- Existing Career Gaps
-- Relevant prior evaluations
-
-V1 should produce:
-
-- Candidate Fit: You → Them
-- Opportunity Fit: Them → You
-- Opportunity type
-- Evidence confidence
-- Major strengths
-- Important gaps
-- Unknowns
-- Recommended next action
-
-The Hidden Pursuit Score may be used internally for ranking.
-
----
-
-##### Candidate Knowledge Base
-
-V1 does not need a complete professional profile-builder interface.
-
-The initial Candidate Knowledge Base may be populated from:
-
-- Existing resume
-- Existing LinkedIn profile
-- Known work history
-- Projects
-- Candidate conversation
-- Candidate-provided artifacts
-
-The system should support continued enrichment as new evidence is discovered.
-
----
-
-##### Activity Feed
-
-Each Opportunity should have one primary Activity Feed.
+6.1 V1 Core Flow
 
 V1 should support:
 
-- System-generated Activity Events
-- Candidate notes
-- Activity Replies
-- Meaningful workflow changes
-- Next Actions surfaced within context
+Opportunity enters from a supported source.
 
-The Activity Feed should not be required to control underlying workflow state.
+System extracts basic job information.
+
+System checks for duplicates.
+
+Existing Opportunity Sources are linked when the same opening appears again.
+
+Canonical employer posting is identified when available.
+
+Opportunity is created or updated in Supabase.
+
+Job description is translated into plain-language work and problems.
+
+Relevant Company context is collected.
+
+Candidate Knowledge is retrieved.
+
+Opportunity is evaluated.
+
+Candidate Fit and Opportunity Fit are calculated.
+
+Gaps and unanswered questions are identified.
+
+Internal Tasks and Next Actions are created when needed.
+
+Opportunity is ranked against other active Opportunities.
+
+Daily Work Queue is generated.
+
+Candidate reviews and acts on prioritized work.
+
+Meaningful activity is written to the Opportunity Activity Feed.
+
+6.2 V1 Access Foundation
+
+V1 should begin with the Workspace and Principal model rather than retrofit multi-tenant access later.
+
+Even if V1 contains only one human user and one Workspace, the architecture should support:
+
+Workspace ownership
+
+Human Principal
+
+System or orchestrator Principal
+
+Role and Permission assignments
+
+RLS-enforced access
+
+Actor attribution
+
+Specialized agents do not need to exist in V1, but the access model should already support them.
+
+6.3 V1 System Components
+
+V1 should include enough structured data to support:
+
+Candidate Settings
+
+Automation Policies
+
+Companies
+
+Opportunities
+
+Opportunity Sources
+
+Opportunity Evaluations
+
+Candidate Knowledge Base
+
+Career Gaps
+
+Activity Events
+
+Internal Tasks
+
+Next Actions
+
+Applications and submitted history when used
+
+Contacts
+
+Basic Outreach Engagements
+
+Basic Interview records
+
+Not every domain needs a complete user interface in V1.
+
+Some records may initially exist only as backend structured data.
+
+6.4 Opportunity Intake
+
+Initial intake should focus on known job-alert sources.
+
+Initial priority:
+
+LinkedIn job-alert emails
+
+Indeed job-alert emails
+
+V1 should:
+
+Detect individual Opportunities
+
+Extract available structured information
+
+Identify originating source
+
+Check for duplicates
+
+Link additional Sources
+
+Locate canonical employer posting when possible
+
+Create or update Opportunity state
+
+6.5 Job Translation
+
+V1 should translate job descriptions into understandable work.
+
+Translation should identify:
+
+What problem the employer appears to be solving
+
+What the person would actually do
+
+Major responsibilities
+
+Important requirements
+
+Important terminology
+
+Likely success measures
+
+Important unknowns
+
+Terminology alone should not cause the candidate to incorrectly reject an Opportunity.
+
+6.6 Opportunity Evaluation
+
+V1 should evaluate Opportunities using:
+
+Job description
+
+Company context
+
+Candidate Settings
+
+Candidate Knowledge Base
+
+Existing Career Gaps
+
+Relevant prior evaluations
+
+V1 should produce:
+
+Candidate Fit: You → Them
+
+Opportunity Fit: Them → You
+
+Opportunity type
+
+Evidence confidence
+
+Major strengths
+
+Important gaps
+
+Unknowns
+
+Recommended next action
+
+The Hidden Pursuit Score may be used internally for ranking.
+
+6.7 Candidate Knowledge Base
+
+V1 does not need a complete profile-builder interface.
+
+Initial Candidate Knowledge may be populated from:
+
+Existing resume
+
+LinkedIn profile
+
+Known work history
+
+Projects
+
+Candidate conversation
+
+Candidate-provided artifacts
+
+The system should support continued enrichment as evidence is discovered.
+
+6.8 Activity Feed and Workflow
+
+V1 should support:
+
+System-generated Activity Events
+
+Candidate notes
+
+Shallow Activity Replies when useful
+
+Internal Tasks
+
+Next Actions
+
+Waiting states
+
+Basic retry safety
+
+External Action records for real-world side effects when automation is used
 
 Structured records remain authoritative.
 
----
+6.9 Daily Work Queue
 
-##### Internal Task Engine
+V1 should generate a prioritized candidate-facing Work Queue including:
 
-V1 should support basic Internal Tasks for:
+Today's One Thing
 
-- Evaluation
-- Candidate questions
-- Application preparation
-- Follow-up
-- Outreach
-- Interview preparation
-- Waiting states
+High-priority Next Actions
 
-Tasks should primarily be maintained by the system.
+Application work
 
-The candidate should interact mainly with Next Actions.
+Outreach work
 
----
+Interview work
 
-##### Daily Work Queue
+Candidate evidence questions
 
-V1 should generate a prioritized candidate-facing Work Queue.
-
-The queue should include:
-
-- Today's One Thing
-- High-priority Next Actions
-- Application work
-- Outreach work
-- Interview work
-- Candidate evidence questions
-- Time-sensitive follow-ups
+Time-sensitive follow-ups
 
 The queue should answer:
 
-**What should I do today, and why?**
+What should I do today, and why?
 
-rather than present the candidate with a large report of everything the system found.
+rather than present a large report of everything the system found.
 
----
-
-#### V1 Human Control
+6.10 V1 Human Control
 
 V1 should default to human approval for meaningful external actions.
 
-The system may:
+The system may automatically:
 
-- Research
-- Evaluate
-- Draft
-- Recommend
-- Prepare
-- Organize
-- Create Internal Tasks
-- Create Next Actions
+Research
+
+Evaluate
+
+Draft
+
+Recommend
+
+Prepare
+
+Organize
+
+Create Internal Tasks
+
+Create Next Actions
 
 The candidate should initially perform or explicitly approve:
 
-- Application submission
-- LinkedIn messages
-- Emails to employers or contacts
-- Interview scheduling responses
-- Other meaningful external communications
+Application submission
 
-The architecture should allow these permissions to become more autonomous later without redesigning the underlying data model.
+LinkedIn messages
 
----
+Employer or Contact emails
 
-#### V1 Agent Strategy
+Interview scheduling responses
 
-V1 should not require multiple independent agents.
+Other meaningful external communications
+
+The architecture should allow these permissions to become more autonomous later without redesigning the underlying system.
+
+6.11 V1 Agent Strategy
+
+V1 should not require multiple independent specialized agents.
 
 A single orchestrating AI workflow may initially perform:
 
-- Intake
-- Translation
-- Evaluation
-- Application preparation
-- Outreach drafting
-- Interview preparation
+Intake
 
-The underlying data model should still identify the workflow domain responsible for each Task or Activity Event.
+Translation
 
-This allows specialized agents to be introduced later without changing the core system architecture.
+Evaluation
 
----
+Application preparation
 
-#### V1 Success Criteria
+Outreach drafting
+
+Interview preparation
+
+The orchestrator should still operate as a governed Principal and write durable state back into the shared system.
+
+6.12 V1 Success Criteria
 
 V1 should be considered successful if it can reliably:
 
-- Process incoming job Opportunities
-- Avoid duplicate Opportunities
-- Preserve multiple Sources
-- Translate unfamiliar job language
-- Evaluate Opportunities against real candidate evidence
-- Surface useful evidence gaps
-- Prioritize stronger Opportunities
-- Produce a manageable Daily Work Queue
-- Preserve Opportunity history
-- Reduce the candidate's manual job-search workload
+Process incoming job Opportunities
 
-V1 does not need to automate every part of the job search to provide meaningful value.
+Avoid duplicate Opportunities
 
-Its first job is to make the candidate's attention significantly more effective.
+Preserve multiple Sources
 
-### 7. Future Architecture
+Translate unfamiliar job language
 
-The future architecture may evolve from a single orchestrating AI workflow into a coordinated set of specialized agents.
+Evaluate Opportunities against real candidate evidence
 
-The system should preserve a shared source of truth so specialized agents can collaborate without maintaining isolated private histories.
+Surface useful evidence gaps
+
+Prioritize stronger Opportunities
+
+Produce a manageable Daily Work Queue
+
+Preserve Opportunity history
+
+Reduce manual job-search workload
+
+V1 does not need to automate every part of the job search to create meaningful value.
+
+Its first job is to make candidate attention significantly more effective.
+
+7. Future Architecture
+
+The future architecture may evolve from one orchestrating workflow into a coordinated set of specialized agents.
+
+The candidate should still experience one coherent system.
 
 Future agents should operate through:
 
-- Shared Supabase records
-- Internal Tasks
-- Activity Events
-- Activity Replies
-- Next Actions
-- Candidate Settings
-- Automation permissions
-- Structured domain objects
+Shared Supabase records
 
-Agents should communicate through shared state and recorded events rather than undocumented private memory.
+Principal identities
 
----
+Workspace Memberships
 
-#### Specialized Agents
+Roles and Permissions
 
-Potential future agents may include:
+Internal Tasks
 
-### Opportunity Discovery Agent
+Activity Events
 
-Responsibilities may include:
+Next Actions
 
-- Monitor job-alert sources
-- Perform proactive discovery
-- Identify adjacent or emerging roles
-- Verify canonical job postings
-- Detect duplicates
-- Create or enrich Opportunity records
-- Monitor closing dates or posting changes
+External Actions
 
----
+Candidate Settings
 
-### Evaluation Agent
+Automation Policies
 
-Responsibilities may include:
+Structured domain objects
 
-- Translate job descriptions
-- Retrieve relevant Candidate Knowledge
-- Evaluate Candidate Fit
-- Evaluate Opportunity Fit
-- Identify Application Gaps
-- Identify recurring Career Development Gaps
-- Update evaluations when new evidence appears
-- Explain why a score changed
+Agents should communicate through shared state and durable recorded events rather than undocumented private memory.
 
----
+7.1 Opportunity Discovery Agent
 
-### Company Intelligence Agent
+Potential responsibilities:
 
-Responsibilities may include:
+Monitor job-alert sources
 
-- Research Companies
-- Monitor meaningful Company changes
-- Maintain time-stamped Company Intelligence
-- Identify hiring patterns
-- Surface strategic signals
-- Refresh stale intelligence when relevant to an active Opportunity
+Perform proactive discovery
 
----
+Identify adjacent or emerging roles
 
-### Application Agent
+Verify canonical postings
 
-Responsibilities may include:
+Detect duplicates
 
-- Select the appropriate Application Template
-- Retrieve supporting Candidate Knowledge
-- Generate opportunity-specific materials
-- Prepare application answers
-- Check consistency
-- Preserve exact submitted versions
-- Submit applications when authorized
-- Record submission confirmation
+Create or enrich Opportunities
 
----
+Monitor posting changes
 
-### Outreach Agent
+7.2 Evaluation Agent
 
-Responsibilities may include:
+Potential responsibilities:
 
-- Identify relevant Contacts
-- Maintain Outreach Engagement history
-- Retrieve similar prior communications
-- Draft and revise outreach
-- Monitor responses
-- Recommend follow-up timing
-- Track relationship progression
-- Surface appropriate Next Actions
-- Send communication when authorized
+Translate job descriptions
 
----
+Retrieve Candidate Knowledge
 
-### Interview Agent
+Evaluate Candidate Fit
 
-Responsibilities may include:
+Evaluate Opportunity Fit
 
-- Detect interview activity
-- Research interviewers
-- Generate preparation briefs
-- Retrieve relevant Evidence Stories
-- Conduct interactive practice
-- Capture interview debriefs
-- Draft follow-up communication
-- Track interview stages and commitments
+Identify Application Gaps
 
----
+Identify recurring Career Development Gaps
 
-### Career Development Agent
+Re-evaluate when material evidence changes
 
-Responsibilities may include:
+Explain score changes
 
-- Monitor recurring Career Development Gaps
-- Identify patterns across target roles
-- Recommend focused learning or project opportunities
-- Track whether gaps are resolving
-- Connect newly developed capabilities back into the Candidate Knowledge Base
+7.3 Company Intelligence Agent
 
-The agent should prioritize development that improves future opportunity access rather than suggesting generic learning activity.
+Potential responsibilities:
 
----
+Research Companies
 
-### Safety and Verification Agent
+Monitor meaningful Company changes
 
-Responsibilities may include:
+Maintain time-stamped Company Intelligence
 
-- Review unsupported candidate claims
-- Detect contradictions
-- Verify sensitive or material application responses
-- Review selected external actions before execution
-- Enforce configured automation permissions
-- Prevent duplicate submissions or messages
-- Flag uncertain identity matches
-- Ensure that system actions are traceable
+Identify hiring patterns
+
+Surface strategic signals
+
+Refresh stale intelligence when relevant
+
+7.4 Application Agent
+
+Potential responsibilities:
+
+Select Application Template
+
+Retrieve Candidate Knowledge
+
+Generate opportunity-specific materials
+
+Prepare application answers
+
+Check consistency
+
+Preserve exact submitted versions
+
+Request External Actions
+
+Submit when authorized
+
+Record confirmation
+
+7.5 Outreach Agent
+
+Potential responsibilities:
+
+Identify relevant Contacts
+
+Maintain relationship history
+
+Retrieve previous communications
+
+Draft and revise outreach
+
+Monitor responses
+
+Recommend follow-up timing
+
+Track relationship progression
+
+Request External Actions
+
+Send communication when authorized
+
+7.6 Interview Agent
+
+Potential responsibilities:
+
+Detect interview activity
+
+Research interviewers
+
+Generate preparation briefs
+
+Retrieve relevant Evidence Stories
+
+Conduct interactive practice
+
+Capture debriefs
+
+Draft follow-up communication
+
+Track stages and commitments
+
+7.7 Career Development Agent
+
+Potential responsibilities:
+
+Monitor recurring Career Development Gaps
+
+Identify patterns across desirable roles
+
+Recommend focused learning or project opportunities
+
+Track whether gaps are resolving
+
+Connect new capabilities back into Candidate Knowledge
+
+Development should improve future opportunity access rather than generate generic learning activity.
+
+7.8 Safety and Verification Agent
+
+Potential responsibilities:
+
+Review unsupported candidate claims
+
+Detect contradictions
+
+Verify sensitive or material responses
+
+Review selected External Actions
+
+Enforce configured permissions and Automation Policies
+
+Prevent duplicate submissions or messages
+
+Flag uncertain identity matches
+
+Ensure actions are traceable
 
 The Safety Agent should act as a control layer rather than a general decision-maker.
 
----
+7.9 Agent Coordination
 
-#### Agent Coordination
-
-Specialized agents should be able to hand work to one another through structured system state.
+Specialized agents should hand work to one another through structured system state.
 
 Example:
 
-1. Discovery Agent creates an Opportunity.
-2. Evaluation Agent evaluates it.
-3. Evaluation Agent identifies missing evidence.
-4. Candidate Knowledge workflow requests clarification.
-5. Candidate provides evidence.
-6. Evaluation Agent updates the assessment.
-7. Application Agent prepares materials.
-8. Outreach Agent identifies a Contact.
-9. Safety Agent verifies external actions.
-10. Meaningful activity is written to the shared Opportunity Feed.
+Discovery Agent creates Opportunity
+        ↓
+Evaluation Agent evaluates it
+        ↓
+Missing evidence identified
+        ↓
+Candidate Knowledge workflow requests clarification
+        ↓
+Candidate provides evidence
+        ↓
+Evaluation updated
+        ↓
+Application Agent prepares package
+        ↓
+Outreach Agent identifies Contact
+        ↓
+Safety layer verifies External Action
+        ↓
+Meaningful activity enters Activity Feed
 
-Agents should not require direct peer-to-peer private conversation to coordinate work.
+Agents should not require private peer-to-peer conversations to coordinate work.
 
-Shared records should provide the durable handoff mechanism.
+7.10 Agent Memory
 
----
-
-#### Agent Ownership of Internal Tasks
-
-Internal Tasks may include a responsible domain or agent.
-
-Examples:
-
-- evaluation
-- outreach
-- application
-- interview
-- company intelligence
-- career development
-- safety
-
-Task ownership should help route work without exposing unnecessary operational complexity to the candidate.
-
-The candidate should continue to see simplified Next Actions rather than agent-specific task queues.
-
----
-
-#### Event-Driven Agent Activation
-
-Future agents may activate when relevant events occur.
-
-Examples:
-
-- New Opportunity → Evaluation Agent
-- New Candidate Evidence → Evaluation Agent
-- Application submitted → Outreach Agent
-- Contact reply received → Outreach Agent
-- Interview scheduled → Interview Agent
-- Repeated capability gap detected → Career Development Agent
-- External action pending → Safety Agent
-
-This allows the system to respond to meaningful changes instead of relying only on scheduled polling.
-
----
-
-#### Agent Memory
-
-Long-term agent memory should primarily come from structured shared records.
+Long-term agent memory should primarily come from shared structured records.
 
 Agents may use temporary working context while performing a task, but durable facts, decisions, messages, evaluations, and outcomes should be written back into the system.
 
-This reduces dependence on model-specific memory and allows future models or agents to continue work from the same shared history.
+This supports:
 
----
+Agent handoffs
 
-#### Progressive Autonomy
+Debugging
 
-Future versions may allow higher levels of automation.
+Model replacement
 
-Examples:
+Human participation
 
-Level 1:
-- Research
-- Recommend
-- Draft
+Long-term continuity
 
-Level 2:
-- Prepare
-- Organize
-- Schedule internal workflows
-- Request approval
+7.11 Progressive Autonomy
 
-Level 3:
-- Perform selected external actions with configured permission
+Future versions may support increasing levels of automation.
 
-Level 4:
-- Execute approved classes of recurring actions autonomously
+Example levels:
+
+Level 1
+
+Research
+
+Recommend
+
+Draft
+
+Level 2
+
+Prepare
+
+Organize
+
+Schedule internal workflows
+
+Request approval
+
+Level 3
+
+Perform selected External Actions with configured permission and approval rules
+
+Level 4
+
+Execute approved classes of recurring actions autonomously
 
 Autonomy should be configurable by action type rather than enabled globally.
 
-For example, the candidate may allow:
-
-- Automatic Gmail labeling
-- Automatic company research
-- Automatic interview-prep generation
-
-while still requiring approval for:
-
-- Sending LinkedIn messages
-- Submitting applications
-- Sending employer emails
-
----
-
-#### Future Analytics
+7.12 Future Analytics
 
 Future versions may analyze accumulated system data to identify patterns such as:
 
-- Which Opportunity types convert to interviews
-- Which Candidate Evidence appears most often in successful applications
-- Which outreach approaches receive responses
-- Which Companies or role families produce stronger outcomes
-- Where applications are dropping out of the funnel
-- Which Career Gaps recur most often
-- Which actions create the highest leverage
+Which Opportunity types convert to interviews
 
-Analytics should support better candidate decisions rather than optimize for activity volume alone.
+Which Candidate Evidence appears in successful applications
 
----
+Which outreach approaches receive responses
 
-#### Future User Experience
+Which Companies or Job Families produce stronger outcomes
+
+Where applications drop out of the funnel
+
+Which Career Gaps recur
+
+Which actions create the highest leverage
+
+Analytics should support better decisions rather than optimize for activity volume alone.
+
+7.13 Future User Experience
 
 The future system may provide:
 
-- Opportunity Feed
-- Daily Work Queue
-- Candidate Profile
-- Company relationship view
-- Contact relationship view
-- Application workspace
-- Interview workspace
-- Career development view
-- Agent activity visibility
-- Configurable automation permissions
+Opportunity Feed
+
+Daily Work Queue
+
+Candidate Profile
+
+Company relationship view
+
+Contact relationship view
+
+Application workspace
+
+Interview workspace
+
+Career development view
+
+Agent activity visibility
+
+Automation controls
 
 The user experience should continue to hide unnecessary backend complexity.
 
-The candidate should primarily understand:
+7.14 Future Architecture Principle
 
-- What changed
-- Why it matters
-- What the system handled
-- What needs attention now
-- What should happen next
+The long-term goal is not to create many disconnected AI assistants.
 
----
+The goal is one coherent job-search operating system in which specialized agents work through a shared data model, shared history, shared permissions, and shared workflow engine.
 
-#### Future Architecture Principle
+The candidate should experience one system, not a collection of bots.
 
-The long-term goal is not to create many independent AI assistants.
+8. Design Decisions
 
-The goal is to create one coherent job-search operating system in which specialized agents can work through a shared data model, shared history, and shared workflow engine.
+This section records major architectural decisions so future changes can be evaluated against the reasoning that produced them.
 
-The candidate should experience one system, not a collection of disconnected bots.
-
-### 8. Design Decisions
-
-This section records major architectural decisions so future changes can be evaluated against the original reasoning.
-
-#### Supabase as Primary System of Record
+8.1 Supabase Is the Primary Structured System of Record
 
 Decision:
 
@@ -2907,39 +2609,79 @@ Supabase will serve as the authoritative structured system of record.
 
 Reason:
 
-The system requires relational data, reusable history, workflow state, structured candidate knowledge, and future agent coordination across many external systems.
+The system requires relational data, reusable history, workflow state, Candidate Knowledge, permissions, and future agent coordination across external systems.
 
-External platforms such as Gmail, LinkedIn, Indeed, ATS systems, and Google Calendar remain sources of information or destinations for action.
+External systems remain information sources or action destinations.
 
----
-
-#### Opportunity Represents One Specific Job Opening
+8.2 Workspace Is the Primary Tenancy Boundary
 
 Decision:
 
-An Opportunity represents one specific job opening at one specific Company.
+Major tenant-owned data belongs explicitly to a Workspace.
 
 Reason:
 
-Different Companies hiring for the same job family have different context, Contacts, salary, Company Intelligence, outreach history, and hiring outcomes.
+This creates one consistent security and ownership boundary for RLS, future multi-user support, coaches, teams, and agents.
 
-Reusable role-specific knowledge should live in Job Families and Application Templates rather than combining separate jobs into one Opportunity.
-
----
-
-#### Multiple Sources Enrich One Opportunity
+8.3 Humans and Agents Are Governed Principals
 
 Decision:
 
-The same real-world job found through Indeed, LinkedIn, email, or the employer careers site should remain one Opportunity with multiple Opportunity Sources.
+Humans, AI agents, and selected trusted system actors should be represented as Principals governed through Workspace Membership, Roles, and Permissions.
 
 Reason:
 
-This avoids duplicate evaluation and preserves the richer information provided by different sources.
+Agents should be accountable actors rather than unrestricted backend processes.
 
----
+This enables least-privilege access, RLS enforcement, auditability, and future agent specialization.
 
-#### Company Intelligence Is Separate From Opportunity Evaluation
+8.4 Normal Agent Activity Must Not Bypass RLS
+
+Decision:
+
+Routine agent work should operate under governed identities and should not rely on unrestricted service-role credentials.
+
+Reason:
+
+Using unrestricted credentials for normal agent work would bypass the permission architecture and weaken tenant isolation.
+
+Service-role access should be reserved for narrowly defined trusted operations.
+
+8.5 Tenant Isolation Should Be Enforced Beyond RLS
+
+Decision:
+
+Tenant-owned relationships should prevent cross-Workspace references at the relational level where practical.
+
+Reason:
+
+A child row should not be able to claim one Workspace while referencing a parent row owned by another Workspace.
+
+RLS and relational integrity should work together rather than relying on policy logic alone.
+
+8.6 Opportunity Represents One Specific Hiring Event
+
+Decision:
+
+An Opportunity represents one specific job opening or hiring event at one specific Company.
+
+Reason:
+
+A recurring job title may represent different hiring events over time.
+
+Historical Opportunities should remain preserved so new postings can reuse context without rewriting prior history.
+
+8.7 Multiple Sources Enrich One Opportunity
+
+Decision:
+
+The same real-world opening found through Indeed, LinkedIn, email, or an employer site should remain one Opportunity with multiple Opportunity Sources.
+
+Reason:
+
+This avoids duplicate evaluation while preserving richer source information.
+
+8.8 Company Intelligence Is Separate From Evaluation
 
 Decision:
 
@@ -2947,131 +2689,21 @@ Company Intelligence should be stored independently from individual Opportunity 
 
 Reason:
 
-Company research may remain useful across multiple Opportunities and should not need to be recreated for every job.
+Company research may remain useful across multiple Opportunities and should retain time and source context.
 
-Time-sensitive Company Intelligence should retain timestamps and source context.
-
----
-
-#### Candidate Knowledge Base Instead of Resume-Only Evidence
+8.9 Candidate Knowledge Base Is the Source of Candidate Truth
 
 Decision:
 
-The candidate's professional history should be modeled as a Candidate Knowledge Base rather than only as resume bullets or isolated Evidence Stories.
+Professional history should be modeled as Candidate Knowledge rather than only resume bullets or isolated documents.
 
 Reason:
 
-Projects, Work Experiences, Skills, Tools, Artifacts, and Evidence Stories provide reusable context for evaluation, applications, outreach, interviews, and career development.
+Projects, Work Experiences, Evidence Stories, Skills, Tools, and Artifacts provide reusable evidence for evaluation, applications, outreach, interviews, and career development.
 
-A resume is an output of this knowledge, not the primary source of truth.
+A resume is an output of this knowledge.
 
----
-
-#### Shared Opportunity Activity Feed
-
-Decision:
-
-Each Opportunity should have one primary chronological Activity Feed.
-
-Reason:
-
-The candidate should be able to understand the complete history of an Opportunity without navigating several disconnected conversations.
-
-Individual Activity Events may support replies so humans and agents can discuss specific items while preserving the full timeline.
-
----
-
-#### Structured State Remains Separate From the Feed
-
-Decision:
-
-The Activity Feed should not become the primary workflow engine.
-
-Reason:
-
-Conversation and chronological history are useful for humans, but reliable automation requires structured records.
-
-Applications, Evaluations, Tasks, Outreach, Interviews, and other domain objects remain authoritative underneath the feed.
-
----
-
-#### Internal Tasks Are Primarily Machine-Facing
-
-Decision:
-
-Internal Tasks remain part of the architecture even though they are not the candidate's primary task interface.
-
-Reason:
-
-Tasks provide reliable orchestration, timestamps, dependencies, waiting states, retries, reporting, ownership, and future agent handoffs.
-
-The system should maintain these records automatically whenever possible.
-
----
-
-#### Next Actions Are Human-Facing
-
-Decision:
-
-The candidate should interact primarily with simplified Next Actions rather than raw Internal Tasks.
-
-Reason:
-
-The candidate needs to know what requires attention now, not maintain system workflow metadata.
-
-The Daily Work Queue should be generated from active Next Actions.
-
----
-
-#### Opportunity, Application, Outreach, and Interview States Are Separate
-
-Decision:
-
-The system should not force every workflow into one Opportunity status field.
-
-Reason:
-
-These workflows may progress independently.
-
-For example:
-
-Opportunity Stage: Pursuing  
-Application Stage: Not Started  
-Outreach State: Engaged
-
-This accurately represents relationship-building that happens before application submission.
-
----
-
-#### Outreach Is a Reusable Relationship Domain
-
-Decision:
-
-Outreach should not exist only as tasks attached to a single Opportunity.
-
-Reason:
-
-Professional relationships often span multiple Opportunities or exist independently of a specific job.
-
-Outreach history should remain reusable for future networking, message generation, and relationship context.
-
----
-
-#### Exact Sent and Submitted Versions Must Be Preserved
-
-Decision:
-
-The system should distinguish drafts, approved versions, sent messages, and submitted application materials.
-
-Reason:
-
-Future analysis and agent behavior should learn from what the candidate actually approved and used, not from rejected drafts.
-
-This also preserves an accurate historical record.
-
----
-
-#### Missing Evidence Is Not Missing Capability
+8.10 Missing Evidence Is Not Missing Capability
 
 Decision:
 
@@ -3079,13 +2711,149 @@ The system must distinguish lack of documented evidence from lack of actual abil
 
 Reason:
 
-Job descriptions often use terminology that does not match how candidates describe their real experience.
+Job descriptions often use terminology that differs from how candidates describe equivalent or adjacent work.
 
-The system should first attempt evidence discovery and translation before treating a requirement as a true Career Development Gap.
+The system should attempt evidence discovery and translation before treating a requirement as a true Career Development Gap.
 
----
+8.11 Evaluation Is a Versioned Analytical Snapshot
 
-#### V1 Uses One Orchestrator
+Decision:
+
+Evaluations should be preserved as time-specific versions rather than overwritten.
+
+Reason:
+
+Candidate Knowledge, Company Intelligence, and Opportunity facts may change.
+
+Historical evaluation versions make score changes, reasoning, and calibration explainable.
+
+8.12 Shared Opportunity Activity Feed
+
+Decision:
+
+Each Opportunity should have one primary chronological Activity Feed.
+
+Reason:
+
+The candidate should be able to understand the full history without navigating disconnected workstream conversations.
+
+8.13 Structured State Remains Separate From the Feed
+
+Decision:
+
+The Activity Feed should not become the workflow engine.
+
+Reason:
+
+Chronological conversation is useful for humans, but reliable automation requires structured records.
+
+8.14 Internal Tasks Are Machine-Facing
+
+Decision:
+
+Internal Tasks remain part of the architecture even though they are not the candidate's primary interface.
+
+Reason:
+
+Tasks support dependencies, waiting conditions, retries, scheduling, ownership, reporting, and agent handoffs.
+
+8.15 Next Actions Are Human-Facing
+
+Decision:
+
+The candidate should interact primarily with simplified Next Actions.
+
+Reason:
+
+The candidate needs to know what requires attention, not maintain workflow metadata.
+
+8.16 External Actions Are Separate From Internal Tasks
+
+Decision:
+
+Real-world side effects should have explicit External Action records.
+
+Reason:
+
+Sending, submitting, scheduling, and similar operations require stronger controls for permissions, approval, safety, idempotency, exact payload history, and external confirmation.
+
+8.17 Opportunity, Application, Outreach, and Interview State Remain Separate
+
+Decision:
+
+The system should not force every workflow into one Opportunity status field.
+
+Reason:
+
+Application preparation, outreach, and interview activity may progress independently.
+
+8.18 Application Package and Application Are Different Concepts
+
+Decision:
+
+Application Package represents mutable preparation.
+
+Application represents an actual submission attempt and historical record.
+
+Reason:
+
+The distinction preserves the equivalent of a working record versus a finalized record.
+
+Preparation should never be mistaken for submission.
+
+8.19 Exact Submitted Materials and Answers Must Be Preserved
+
+Decision:
+
+The system should preserve exact submitted resume, cover letter, supporting material, and application-answer versions.
+
+Reason:
+
+Future Candidate Knowledge improvements must not rewrite what an employer actually received.
+
+8.20 Outreach Is a Reusable Relationship Domain
+
+Decision:
+
+Outreach should not exist only as tasks attached to one Opportunity.
+
+Reason:
+
+Professional relationships may span multiple Opportunities or exist independently of a job opening.
+
+8.21 Outreach Engagement May Relate to Multiple Opportunities
+
+Decision:
+
+Opportunity relationships should be modeled separately from the core Outreach Engagement.
+
+Reason:
+
+One relationship can become relevant to several job opportunities over time without becoming several disconnected relationship histories.
+
+8.22 Candidate Settings and Automation Policies Are Structured Configuration
+
+Decision:
+
+Candidate preferences and autonomy rules should be stored as structured configuration rather than hard-coded throughout workflows.
+
+Reason:
+
+Preferences change, autonomy may increase over time, and action authorization needs a consistent source of truth.
+
+8.23 Progressive Autonomy Is Action-Specific
+
+Decision:
+
+Automation authority should be configurable by action type.
+
+Reason:
+
+Research, drafting, Gmail labeling, application submission, outreach, and employer communication carry different levels of risk.
+
+The system must never grant itself additional autonomy.
+
+8.24 V1 Uses One Orchestrator
 
 Decision:
 
@@ -3093,13 +2861,9 @@ V1 should not require multiple independent specialized agents.
 
 Reason:
 
-The core workflow can be validated more quickly using one orchestrating AI workflow.
+The core workflow can be validated more quickly with one orchestrating AI workflow while preserving architecture for future specialized agents.
 
-The underlying data model should still support future specialized agents without redesign.
-
----
-
-#### Future Agents Use Shared State
+8.25 Future Agents Use Shared State
 
 Decision:
 
@@ -3107,25 +2871,9 @@ Future agents should operate on shared structured records rather than isolated p
 
 Reason:
 
-Shared state improves traceability, agent handoffs, debugging, human participation, model replacement, and long-term continuity.
+Shared state improves traceability, handoffs, debugging, human participation, model replacement, and long-term continuity.
 
----
-
-#### Progressive Autonomy
-
-Decision:
-
-Automation permissions should be configurable by action type.
-
-Reason:
-
-Research, drafting, labeling, application submission, outreach, and employer communication carry different levels of risk.
-
-The system should be able to automate low-risk work while preserving human approval for higher-impact external actions.
-
----
-
-#### Event-Driven Workflow
+8.26 Event-Driven Workflow
 
 Decision:
 
@@ -3133,13 +2881,19 @@ The system should respond to meaningful events in addition to scheduled automati
 
 Reason:
 
-Job-search workflows change when things happen, such as recruiter replies, application confirmations, interview scheduling, or new candidate evidence.
+Job-search workflows change when recruiter replies, application confirmations, interviews, and new evidence arrive.
 
-The system should not depend only on periodic polling.
+8.27 Historical Records Should Not Be Silently Rewritten
 
----
+Decision:
 
-#### Human Attention Is the Scarce Resource
+Completed historical events and finalized snapshots should remain preserved.
+
+Reason:
+
+The system should be able to explain what was known, decided, submitted, sent, or performed at a specific point in time even after living data changes.
+
+8.28 Human Attention Is the Scarce Resource
 
 Decision:
 
@@ -3147,6 +2901,6 @@ The system should optimize for candidate attention rather than activity volume.
 
 Reason:
 
-The purpose of the system is not to generate more tasks, applications, or notifications.
+The purpose is not to generate more tasks, applications, messages, or notifications.
 
-Its purpose is to identify and prepare the highest-leverage work so the candidate spends time where human judgment and action create the most value.
+The purpose is to identify and prepare the highest-leverage work so human judgment and action are spent where they create the most value.
