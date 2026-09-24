@@ -604,9 +604,9 @@ revoke all on function
 from public;
 
 
-grant execute on function
-    public.get_daily_plan_status(uuid, uuid)
-to authenticated;
+-- This helper is used internally by SECURITY DEFINER trigger
+-- functions below. It is intentionally not exposed as a
+-- candidate-facing RPC.
 
 
 -- ============================================================
