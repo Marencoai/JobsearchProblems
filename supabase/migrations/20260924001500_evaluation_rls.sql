@@ -416,7 +416,7 @@ create or replace function public.require_draft_evaluation()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 declare
     old_status text;
     new_status text;
@@ -520,7 +520,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 -- ------------------------------------------------------------
