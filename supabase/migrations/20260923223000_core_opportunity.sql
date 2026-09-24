@@ -421,9 +421,22 @@ create table public.opportunities (
 
     constraint opportunities_salary_range_valid
         check (
-            salary_min is null
-            or salary_max is null
-            or salary_min <= salary_max
+            (salary_min is null or salary_min >= 0)
+            and
+            (salary_max is null or salary_max >= 0)
+            and
+            (
+                salary_min is null
+                or salary_max is null
+                or salary_min <= salary_max
+            )
+        ),
+
+    constraint opportunities_posting_dates_valid
+        check (
+            posting_date is null
+            or closing_date is null
+            or posting_date <= closing_date
         ),
 
     constraint opportunities_closed_reason_valid
@@ -766,6 +779,12 @@ create table public.company_intelligence (
 
     constraint company_intelligence_workspace_id_id_unique
         unique (workspace_id, id),
+
+    constraint company_intelligence_freshness_dates_valid
+        check (
+            expires_at is null
+            or expires_at >= researched_at
+        ),
 
     constraint company_intelligence_company_workspace_fk
         foreign key (
