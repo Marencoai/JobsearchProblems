@@ -132,13 +132,42 @@ language sql
 stable
 security definer
 set search_path = public
-as $$
+as $
     select p.id
     from public.principals p
     where p.auth_user_id = auth.uid()
       and p.status = 'active'
     limit 1;
-$$;
+$;
+
+
+-- ============================================================
+-- 3A. CURRENT PRINCIPAL TYPE CHECK
+-- ============================================================
+--
+-- Role, permission, and membership administration are authority
+-- expansion operations. Normal AI agents must not be able to
+-- grant themselves or other agents additional authority even if
+-- a role is misconfigured later.
+-- ============================================================
+
+create or replace function public.current_principal_is_human()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+    select coalesce(
+        (
+            select p.principal_type = 'human'
+            from public.principals p
+            where p.id = public.current_principal_id()
+            limit 1
+        ),
+        false
+    );
+$;
 
 
 -- ============================================================
@@ -402,6 +431,9 @@ $$;
 revoke all on function public.current_principal_id()
 from public;
 
+revoke all on function public.current_principal_is_human()
+from public;
+
 revoke all on function public.is_workspace_member(uuid)
 from public;
 
@@ -416,6 +448,9 @@ from public;
 
 
 grant execute on function public.current_principal_id()
+to authenticated;
+
+grant execute on function public.current_principal_is_human()
 to authenticated;
 
 grant execute on function public.is_workspace_member(uuid)
@@ -542,6 +577,7 @@ for insert
 to authenticated
 with check (
     workspace_id is not null
+    and public.current_principal_is_human()
     and public.has_permission(
         workspace_id,
         'workspace.roles.manage'
@@ -555,6 +591,7 @@ for update
 to authenticated
 using (
     workspace_id is not null
+    and public.current_principal_is_human()
     and public.has_permission(
         workspace_id,
         'workspace.roles.manage'
@@ -562,6 +599,7 @@ using (
 )
 with check (
     workspace_id is not null
+    and public.current_principal_is_human()
     and public.has_permission(
         workspace_id,
         'workspace.roles.manage'
@@ -575,6 +613,7 @@ for delete
 to authenticated
 using (
     workspace_id is not null
+    and public.current_principal_is_human()
     and public.has_permission(
         workspace_id,
         'workspace.roles.manage'
@@ -634,6 +673,7 @@ with check (
         from public.roles r
         where r.id = role_permissions.role_id
           and r.workspace_id is not null
+          and public.current_principal_is_human()
           and public.has_permission(
               r.workspace_id,
               'workspace.roles.manage'
@@ -652,6 +692,7 @@ using (
         from public.roles r
         where r.id = role_permissions.role_id
           and r.workspace_id is not null
+          and public.current_principal_is_human()
           and public.has_permission(
               r.workspace_id,
               'workspace.roles.manage'
@@ -678,7 +719,8 @@ on public.workspace_memberships
 for insert
 to authenticated
 with check (
-    public.has_permission(
+    public.current_principal_is_human()
+    and public.has_permission(
         workspace_id,
         'workspace.members.manage'
     )
@@ -690,13 +732,15 @@ on public.workspace_memberships
 for update
 to authenticated
 using (
-    public.has_permission(
+    public.current_principal_is_human()
+    and public.has_permission(
         workspace_id,
         'workspace.members.manage'
     )
 )
 with check (
-    public.has_permission(
+    public.current_principal_is_human()
+    and public.has_permission(
         workspace_id,
         'workspace.members.manage'
     )
@@ -708,7 +752,8 @@ on public.workspace_memberships
 for delete
 to authenticated
 using (
-    public.has_permission(
+    public.current_principal_is_human()
+    and public.has_permission(
         workspace_id,
         'workspace.members.manage'
     )
@@ -753,13 +798,28 @@ begin
 
 
     -- --------------------------------------------------------
-    -- Role did not change during UPDATE.
+    -- Membership identity is immutable.
+    --
+    -- To assign a different Principal, create a new Membership
+    -- and remove the old one. Do not transfer a privileged row.
     -- --------------------------------------------------------
 
-    if tg_op = 'UPDATE'
-       and new.role_id = old.role_id then
+    if tg_op = 'UPDATE' then
 
-        return new;
+        if new.id <> old.id
+           or new.principal_id <> old.principal_id then
+
+            raise exception
+                'Workspace Membership id and principal_id are immutable';
+
+        end if;
+
+
+        -- Role did not change during this update.
+
+        if new.role_id = old.role_id then
+            return new;
+        end if;
 
     end if;
 
@@ -814,6 +874,14 @@ begin
     -- administration authority.
     -- --------------------------------------------------------
 
+    if not public.current_principal_is_human() then
+
+        raise exception
+            'Only a human Principal may assign or change Workspace Roles';
+
+    end if;
+
+
     if not public.has_permission(
         new.workspace_id,
         'workspace.roles.manage'
@@ -832,7 +900,7 @@ $$;
 
 
 create trigger enforce_membership_role_assignment_before_write
-before insert or update of role_id
+before insert or update
 on public.workspace_memberships
 for each row
 execute function public.enforce_membership_role_assignment();
