@@ -1202,7 +1202,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
     task_result text;
 begin
@@ -1264,7 +1264,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function
