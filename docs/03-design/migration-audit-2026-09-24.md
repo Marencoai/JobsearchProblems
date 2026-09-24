@@ -119,7 +119,7 @@ The following remain deferred by design rather than missing accidentally:
 
 ## Deployment gate
 
-Deployment testing is in progress against the new Supabase project.
+Deployment testing against the new Supabase project is complete.
 
 Completed:
 
@@ -139,6 +139,14 @@ Completed:
 
 Deployment testing produced three corrective migrations: Migration 020 enforces Task prerequisites at execution time, Migration 021 requires Daily Plan child state to be reconciled before Plan completion, and Migration 022 preserves intended retry behavior after a submitted Application is withdrawn.
 
-The current Supabase schema security checks are clean. The only current Security Advisor warning is an Auth-project setting for leaked-password protection, which is outside the migration schema and should be enabled before production use.
+The current Supabase schema security checks are clean. The only current Security Advisor warning is the Auth-project setting for leaked-password protection. This feature is only available on Supabase Pro plans and above and is not available on the project's current plan. The warning is therefore documented as an accepted current-plan limitation and should be reconsidered before broad public-user deployment or after a plan upgrade.
 
-The V1 database deployment gate has passed. The remaining project-level security warning is the Supabase Auth leaked-password setting, which should be enabled before production use.
+The V1 database deployment gate has passed.
+
+
+## Related documentation
+
+- [System Design](./system-design.md)
+- [Database Schema](./database-schema.md)
+- [Database Deployment Validation Report](./database-deployment-validation-2026-09-24.md)
+- [Database Change Management](./database-change-management.md)
