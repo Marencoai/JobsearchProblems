@@ -854,6 +854,7 @@ declare
     story_record public.evidence_stories%rowtype;
     project_record public.projects%rowtype;
     skill_record public.skills%rowtype;
+    skill_supported boolean := false;
 begin
 
     if new.evidence_story_id is not null then
@@ -868,6 +869,12 @@ begin
         if not found then
             raise exception
                 'Evidence Story does not exist in this Workspace';
+        end if;
+
+
+        if story_record.validation_status <> 'confirmed' then
+            raise exception
+                'Only confirmed Evidence Stories may support Application Materials';
         end if;
 
 
@@ -913,6 +920,12 @@ begin
         end if;
 
 
+        if project_record.validation_status <> 'confirmed' then
+            raise exception
+                'Only confirmed Projects may support Application Materials';
+        end if;
+
+
         new.evidence_snapshot :=
             jsonb_build_object(
                 'type',
@@ -950,6 +963,41 @@ begin
         if not found then
             raise exception
                 'Skill does not exist in this Workspace';
+        end if;
+
+
+        select
+            (
+                exists (
+                    select 1
+                    from public.evidence_story_skills ess
+                    join public.evidence_stories es
+                      on es.workspace_id = ess.workspace_id
+                     and es.id = ess.evidence_story_id
+                    where ess.workspace_id = new.workspace_id
+                      and ess.skill_id = new.skill_id
+                      and ess.validation_status = 'confirmed'
+                      and es.validation_status = 'confirmed'
+                )
+                or
+                exists (
+                    select 1
+                    from public.project_skills ps
+                    join public.projects p
+                      on p.workspace_id = ps.workspace_id
+                     and p.id = ps.project_id
+                    where ps.workspace_id = new.workspace_id
+                      and ps.skill_id = new.skill_id
+                      and ps.validation_status = 'confirmed'
+                      and p.validation_status = 'confirmed'
+                )
+            )
+        into skill_supported;
+
+
+        if not skill_supported then
+            raise exception
+                'Skill must be supported by confirmed Candidate Knowledge before it may support Application Materials';
         end if;
 
 
@@ -1111,15 +1159,22 @@ on public.applications(
 );
 
 
--- One prepared Package should normally become at most one
--- actual submission attempt.
+-- A Package may be reused after a failed or withdrawn
+-- submission attempt.
+--
+-- But the same Package should not produce more than one
+-- successful submitted/confirmed Application.
 
-create unique index applications_package_unique
+create unique index applications_package_success_unique
 on public.applications(
     workspace_id,
     application_package_id
 )
-where application_package_id is not null;
+where application_package_id is not null
+  and application_stage in (
+      'submitted',
+      'confirmed'
+  );
 
 
 create trigger set_applications_updated_at
