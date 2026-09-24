@@ -343,7 +343,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
     template_status text;
 begin
@@ -384,7 +384,7 @@ begin
     return new;
 
 end;
-$;
+$$;
 
 
 revoke all on function
