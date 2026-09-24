@@ -1032,6 +1032,17 @@ create table public.project_tools (
 
     usage_context text null,
 
+    validation_status text not null
+        default 'candidate_review_needed'
+        check (
+            validation_status in (
+                'confirmed',
+                'candidate_review_needed',
+                'inferred',
+                'rejected'
+            )
+        ),
+
     created_by_principal_id uuid null
         references public.principals(id)
         on delete set null,
@@ -1108,6 +1119,17 @@ create table public.evidence_story_tools (
     tool_id uuid not null,
 
     usage_context text null,
+
+    validation_status text not null
+        default 'candidate_review_needed'
+        check (
+            validation_status in (
+                'confirmed',
+                'candidate_review_needed',
+                'inferred',
+                'rejected'
+            )
+        ),
 
     created_by_principal_id uuid null
         references public.principals(id)
