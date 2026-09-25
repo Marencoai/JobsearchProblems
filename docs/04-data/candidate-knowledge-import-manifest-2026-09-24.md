@@ -1153,9 +1153,14 @@ Confirmed:
 These may be imported as confirmed Candidate Knowledge.
 
 ## RV-06 — Exact tool-to-project links for broad technical stack
-The source supports tools such as Python, GitHub, Cursor, Claude Code, Lovable, Power Automate, AWS/Azure and others, but not every source identifies which specific Project used each tool.
 
-**Recommendation:** create the Tool taxonomy rows, but only create Project/Story links where the context is explicit. Add the rest as evidence is confirmed.
+**Disposition: approved by candidate on 2026-09-24.**
+
+Create Tool taxonomy rows for supported tools such as Python, GitHub, Cursor, Claude Code, Lovable, Power Automate, AWS/Azure and others.
+
+Only create Project or Evidence Story links when the source explicitly supports that relationship.
+
+Do not infer project-specific tool usage merely because the candidate has used the tool elsewhere.
 
 ---
 
@@ -1221,7 +1226,7 @@ The goal is not maximum record count. The goal is enough structured truth that t
 
 Do not write this manifest into the real Candidate Knowledge tables until:
 
-1. the six review queues above are accepted, corrected, or deferred;
+1. the six review queues above are resolved;
 2. the documented first-of-month convention is applied to month-only career dates;
 3. the import script/SQL is generated from the finalized manifest;
 4. import is executed under the real candidate Workspace/Principal;
