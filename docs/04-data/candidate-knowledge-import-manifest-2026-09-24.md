@@ -3,7 +3,7 @@
 **Project:** JobsearchProblems  
 **Candidate:** Diana Marenco  
 **Prepared:** 2026-09-24  
-**Status:** DRAFT FOR IMPORT REVIEW — no production Candidate Knowledge rows have been written from this manifest yet.
+**Status:** APPROVED FOR INITIAL IMPORT — import script generated; no Candidate Knowledge rows have been written yet.
 
 ## 1. Purpose
 
@@ -1243,3 +1243,25 @@ After that, run one real Opportunity through:
 **Opportunity → translation → Candidate Knowledge retrieval → Evaluation → evidence trace → recommended next action**
 
 That is the first product-level golden-path test.
+
+
+# 14. Generated Import Script
+
+Generated on 2026-09-24:
+
+`supabase/data-imports/20260924_candidate_knowledge_initial.sql`
+
+Static review findings:
+
+- one transaction with commit only after assertions pass;
+- refuses to run when Candidate Knowledge already exists in the target Workspace;
+- establishes the authenticated human context from the target Principal's `auth_user_id` so validation/audit triggers run normally;
+- uses the documented first-of-month convention for month-only career dates;
+- creates 7 Work Experiences, 17 Projects, 32 Evidence Stories, 84 Skill taxonomy rows, and 34 Tool taxonomy rows;
+- creates Project ↔ Work Experience, Project ↔ Skill, Evidence Story ↔ Skill, and explicit Tool relationships;
+- keeps the Secure SharePoint-to-Claude MCP Connector Project and related Evidence Story at `candidate_review_needed`;
+- contains no destructive DELETE or ALTER operations; temporary mapping tables are dropped automatically on commit.
+
+**Target currently configured in script:** Workspace `538d7b18-ca89-4950-a5b0-164a77837095` (currently named `Test Workspace`) and human Principal `5d469573-deae-4500-bacb-4bbecffad83b`.
+
+The script has been generated and statically reviewed but has **not** been executed.
