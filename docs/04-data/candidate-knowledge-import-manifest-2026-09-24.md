@@ -1262,6 +1262,6 @@ Static review findings:
 - keeps the Secure SharePoint-to-Claude MCP Connector Project and related Evidence Story at `candidate_review_needed`;
 - contains no destructive DELETE or ALTER operations; temporary mapping tables are dropped automatically on commit.
 
-**Target currently configured in script:** Workspace `538d7b18-ca89-4950-a5b0-164a77837095` (currently named `Test Workspace`) and human Principal `5d469573-deae-4500-bacb-4bbecffad83b`.
+**Target currently configured in script:** Workspace `9341c194-c4f6-45c4-b3b1-37a832a7fc68` (named `Diana Job Search`) and human Principal `5d469573-deae-4500-bacb-4bbecffad83b`.
 
 The script has been generated and statically reviewed but has **not** been executed.
