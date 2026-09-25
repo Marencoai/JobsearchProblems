@@ -1142,12 +1142,15 @@ Confirmed:
 These may be imported as confirmed Candidate Knowledge.
 
 ## RV-05 — Ferrari secondary operating metrics
-Source material includes:
-- service turnaround reduced 20%
-- service revenue +15% year over year
-- customer-retention improvements associated with additional gross profit
 
-The broader Ferrari outcomes are confirmed, but these specific secondary figures were not individually reviewed.
+**Disposition: confirmed by candidate on 2026-09-24.**
+
+Confirmed:
+- service turnaround reduced 20%
+- service revenue increased 15% year over year
+- customer-retention improvements contributed an additional 35% gross profit
+
+These may be imported as confirmed Candidate Knowledge.
 
 ## RV-06 — Exact tool-to-project links for broad technical stack
 The source supports tools such as Python, GitHub, Cursor, Claude Code, Lovable, Power Automate, AWS/Azure and others, but not every source identifies which specific Project used each tool.
