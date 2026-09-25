@@ -1127,16 +1127,19 @@ Confirmed:
 These may be imported as confirmed Candidate Knowledge.
 
 ## RV-04 — Reliant secondary metrics
-Source material includes additional figures such as:
+
+**Disposition: confirmed by candidate on 2026-09-24.**
+
+Confirmed:
 - funded units 230 → 270/month
 - average deal size $22K → $28K
-- operating cost reduction 11%
-- marketing expense reduction 6%
-- submissions 1,800 → 2,300/month
-- 17% productivity improvement associated with Spinify
-- a 37% conversion metric in some resume versions
+- operating costs reduced 11%
+- marketing expenses reduced 6%
+- submissions increased 1,800 → 2,300/month
+- Spinify-related productivity improved 17%
+- the 37% conversion metric may be retained as confirmed where its original source context is preserved
 
-Because the candidate corrected the primary Reliant revenue framing during calibration, these secondary metrics should be reviewed individually before import.
+These may be imported as confirmed Candidate Knowledge.
 
 ## RV-05 — Ferrari secondary operating metrics
 Source material includes:
