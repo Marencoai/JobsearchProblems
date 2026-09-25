@@ -3,7 +3,7 @@
 **Project:** JobsearchProblems  
 **Candidate:** Diana Marenco  
 **Prepared:** 2026-09-24  
-**Status:** APPROVED FOR INITIAL IMPORT — import script generated; no Candidate Knowledge rows have been written yet.
+**Status:** IMPORTED AND VALIDATED — Candidate Knowledge loaded into the `Diana Job Search` Workspace on 2026-09-24.
 
 ## 1. Purpose
 
@@ -1265,3 +1265,53 @@ Static review findings:
 **Target currently configured in script:** Workspace `9341c194-c4f6-45c4-b3b1-37a832a7fc68` (named `Diana Job Search`) and human Principal `5d469573-deae-4500-bacb-4bbecffad83b`.
 
 The script has been generated and statically reviewed but has **not** been executed.
+
+
+# 15. Import Execution Result
+
+**Executed:** 2026-09-24  
+**Workspace:** `Diana Job Search`  
+**Workspace ID:** `9341c194-c4f6-45c4-b3b1-37a832a7fc68`
+
+The approved initial import script was executed successfully in Supabase.
+
+## Base records loaded
+
+- 7 Work Experiences
+- 17 Projects
+- 32 Evidence Stories
+- 84 Skills
+- 34 Tools / Technologies
+
+## Validation states
+
+- Work Experiences: 7 confirmed
+- Projects: 16 confirmed, 1 `candidate_review_needed`
+- Evidence Stories: 31 confirmed, 1 `candidate_review_needed`
+
+The intentionally unresolved records are:
+
+- Project: `Secure SharePoint-to-Claude MCP Connector`
+- Evidence Story: `Secure User-Scoped AI Access to SharePoint`
+
+## Relationship rows
+
+- 17 Project ↔ Work Experience links
+- 119 Project ↔ Skill links
+- 128 Evidence Story ↔ Skill links
+- 36 Project ↔ Tool links
+- 30 Evidence Story ↔ Tool links
+
+## RLS verification
+
+Authenticated-owner simulation for the real candidate Principal returned:
+
+- 7 visible Work Experiences
+- 17 visible Projects
+- 32 visible Evidence Stories
+- 84 visible Skills
+- 34 visible Tools
+
+Authenticated simulation for Test User 2 returned zero rows from the `Diana Job Search` Workspace across Work Experiences, Projects, and Evidence Stories.
+
+**Result:** initial Candidate Knowledge import passed count, validation-state, relationship, and tenant-isolation checks.
