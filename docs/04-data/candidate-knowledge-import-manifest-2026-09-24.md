@@ -1092,14 +1092,17 @@ Where a story naturally describes the whole role rather than one discrete Projec
 These are useful claims present in source material but were not individually calibrated in this session. Keep them out of `confirmed` state until reviewed.
 
 ## RV-01 — Alpine productivity metrics
-Source material states:
+
+**Disposition: confirmed by candidate on 2026-09-24.**
+
+Confirmed:
 - zero missed application deadlines after AI layer went live
 - funding applications completed in half the time
 - vicinity maps reduced from ~8 hours to under 1
 - proforma consolidation reduced from days to under a day
 - status-update email volume reduced 20%
 
-**Recommendation:** preserve as review-needed Evidence Stories, not confirmed import facts yet.
+These may be imported as confirmed Candidate Knowledge.
 
 ## RV-02 — Alpine / Housing Compass historical count variants
 Older/current documents contain both:
