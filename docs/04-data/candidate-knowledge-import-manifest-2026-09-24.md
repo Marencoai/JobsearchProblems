@@ -264,8 +264,8 @@ Use the candidate-confirmed/current canonical figures:
 - React
 - TypeScript
 - PostgreSQL / Supabase
-- 76 database tables
-- 557 row-level security policies
+- 60+ database tables
+- 500+ row-level security policies
 - role-based permissions
 - financial modeling across 15+ funding sources
 - 17 Edge Functions where a function count is needed and context supports it
@@ -684,7 +684,7 @@ These are the reusable story units that should sit underneath the Work Experienc
 **Project:** PR-01  
 **evidence_type:** direct  
 **validation_status:** confirmed  
-**Story:** Designed role-based access and 557 row-level security policies across a 76-table production system.  
+**Story:** Designed role-based access and 500+ row-level security policies across a 76-table production system.  
 **Skills:** Access-Control Design; Security-Conscious Architecture; Data Architecture.
 
 ### ES-04 — Move Nontechnical Staff Into AI-Assisted Work
@@ -1105,11 +1105,16 @@ Confirmed:
 These may be imported as confirmed Candidate Knowledge.
 
 ## RV-02 — Alpine / Housing Compass historical count variants
-Older/current documents contain both:
-- 76 tables / 557 RLS policies / 17 Edge Functions
-- 84 tables / 500+ RLS policies / 17 Edge Functions
 
-**Current manifest rule:** use 76 / 557 / 17 because that was the current LinkedIn wording and the candidate reviewed the Alpine/Housing Compass structure using those figures. Retain the older variant only as source history, not as a second fact.
+**Disposition: resolved with durable scale wording, confirmed by candidate on 2026-09-24.**
+
+Candidate Knowledge should use:
+
+- 60+ tables
+- 500+ row-level security policies
+- 15+ Edge Functions
+
+Exact historical counts may remain in source/reference history when useful, but reusable Candidate Knowledge should communicate stable scale rather than depend on one point-in-time count.
 
 ## RV-03 — Levo underwriting scale/cost
 Source material states:
