@@ -285,7 +285,7 @@ React; TypeScript; PostgreSQL; Supabase; SharePoint.
 
 **Primary Work Experience:** WE-01 Alpine  
 **status:** completed  
-**validation_status:** confirmed for overall project; individual metrics below may require review
+**validation_status:** confirmed
 
 **Problem:**  
 Employees needed immediate relief from manual information retrieval, email/document searching, meeting follow-up, and fragmented operational context while the larger platform was being built.
@@ -385,7 +385,7 @@ Salesforce; Flow Builder; DocuSign.
 
 **Primary Work Experience:** WE-02 Levo  
 **status:** completed  
-**validation_status:** confirmed for core project; some scale/cost metrics remain review-needed
+**validation_status:** confirmed
 
 **Scope:**
 - OCR integrated into intake/CRM workflow
@@ -524,7 +524,7 @@ Salesforce; Distribution Engine.
 
 **Primary Work Experience:** WE-04 Reliant  
 **status:** completed  
-**validation_status:** candidate_review_needed
+**validation_status:** confirmed
 
 **Scope:**  
 Live performance visibility / leaderboards using Spinify.
@@ -809,7 +809,7 @@ These are the reusable story units that should sit underneath the Work Experienc
 ### ES-20 — Deploy Live Sales Leaderboards
 **Project:** PR-12  
 **evidence_type:** direct  
-**validation_status:** candidate_review_needed  
+**validation_status:** confirmed  
 **Skills:** Sales Enablement; Performance Management; Change Adoption.
 
 ### ES-21 — Migrate a 150-Person / 60-Line Phone System
