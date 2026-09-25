@@ -1144,21 +1144,23 @@ The source supports tools such as Python, GitHub, Cursor, Claude Code, Lovable, 
 
 # 11. Schema / Import Decisions Exposed by Real Data
 
-## 11.1 Month-only dates vs PostgreSQL `date`
+## 11.1 Month-only date convention
 
 Most source records specify only month/year.
 
-The live schema stores `start_date` and `end_date` as PostgreSQL `date`, which requires a day.
+For V1, Candidate Knowledge career-history dates will use this convention:
 
-Do **not** silently invent day-level precision.
+- store the first day of the known month in PostgreSQL `date` fields;
+- treat that day value as an implementation placeholder, not a factual day-level claim;
+- format candidate-facing outputs as month/year only unless a source actually provides day-level precision;
+- do not use the placeholder day for exact-tenure or exact-day assertions.
 
-Before import choose one of:
+Examples:
 
-**Option A — convention:** store the first day of the known month and document that Candidate Knowledge dates are month-precision.
+- `June 2020` → `2020-06-01`
+- `April 2023` → `2023-04-01`
 
-**Option B — schema improvement:** add date-precision metadata (for example `start_date_precision` / `end_date_precision`) in a forward migration.
-
-Recommendation: Option B if this system will later ingest jobs/career history from many sources with different date precision. Option A is sufficient for a Diana-only V1 if documented.
+No schema migration is required for V1. If future ingestion needs mixed date precision, add explicit precision metadata through a forward migration at that time.
 
 ## 11.2 Ferrari parent/child Projects
 
@@ -1203,7 +1205,7 @@ The goal is not maximum record count. The goal is enough structured truth that t
 Do not write this manifest into the real Candidate Knowledge tables until:
 
 1. the six review queues above are accepted, corrected, or deferred;
-2. the month-only date strategy is chosen;
+2. the documented first-of-month convention is applied to month-only career dates;
 3. the import script/SQL is generated from the finalized manifest;
 4. import is executed under the real candidate Workspace/Principal;
 5. post-import checks verify:
