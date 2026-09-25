@@ -279,3 +279,21 @@ If the recommendation is to pursue, do not automatically build the Application P
 ## Success Condition
 
 The skill is successful when Diana can paste a JD and receive an evidence-backed vetting result without manually re-explaining her career, preferences, or evaluation criteria.
+
+
+## Handoff to Application Preparation
+
+When the completed Evaluation recommends pursuit and Diana chooses to proceed:
+
+1. move the Opportunity to the appropriate pursuing/preparation stage;
+2. create or reuse the Application Package;
+3. prepare the Application Brief;
+4. retrieve confirmed Candidate Knowledge based on the completed Evaluation;
+5. compose opportunity-specific resume content;
+6. render the resume using the approved PDF visual specification in `docs/03-design/resume-pdf-rendering-spec.md`;
+7. run visual QA and ATS parse-back QA;
+8. save the generated resume as a versioned Application Material linked to its supporting evidence;
+9. place the material in candidate review;
+10. do not mark an Application submitted until Diana explicitly confirms submission.
+
+See `docs/03-design/resume-generation-workflow.md` for the full handoff.
