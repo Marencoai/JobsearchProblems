@@ -1117,11 +1117,14 @@ Candidate Knowledge should use:
 Exact historical counts may remain in source/reference history when useful, but reusable Candidate Knowledge should communicate stable scale rather than depend on one point-in-time count.
 
 ## RV-03 — Levo underwriting scale/cost
-Source material states:
-- three underwriters handled roughly 2,000 monthly submissions
-- $6K/month offshore processing team eliminated
 
-**Recommendation:** review once before marking confirmed.
+**Disposition: confirmed by candidate on 2026-09-24.**
+
+Confirmed:
+- three underwriters handled roughly 2,000 monthly submissions
+- the workflow eliminated a $6K/month offshore processing team
+
+These may be imported as confirmed Candidate Knowledge.
 
 ## RV-04 — Reliant secondary metrics
 Source material includes additional figures such as:
