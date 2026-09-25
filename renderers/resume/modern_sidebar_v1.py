@@ -12,7 +12,7 @@ from pathlib import Path
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT, WD_ROW_HEIGHT_RULE
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn, nsdecls
 
@@ -54,20 +54,13 @@ def bullet(cell,text,sidebar=False):
     r=p.add_run("• "); fmt(r,7.55 if sidebar else 7.85,True,NAVY)
     r=p.add_run(text); fmt(r,7.55 if sidebar else 7.85,False,TEXT)
 
-def add_fixed_sidebar(section):
-    # Page-level VML shape in the header, behind document text.
-    header=section.header
-    p=header.paragraphs[0]
-    pict=OxmlElement("w:pict")
-    shape=parse_xml(
-        '<v:rect %s style="position:absolute;left:0;top:0;width:2.42in;height:11in;'
-        'z-index:-251654144;mso-position-horizontal-relative:page;'
-        'mso-position-vertical-relative:page" fillcolor="#%s" stroked="f"/>'
-        % (nsdecls("v"), SIDEBAR)
-    )
-    pict.append(shape); p._p.append(pict)
-    header.is_linked_to_previous=False
-    section.header_distance=Inches(0)
+def shade(cell, fill):
+    tcPr=cell._tc.get_or_add_tcPr()
+    shd=tcPr.find(qn("w:shd"))
+    if shd is None:
+        shd=OxmlElement("w:shd")
+        tcPr.append(shd)
+    shd.set(qn("w:fill"),fill)
 
 def role(cell,item):
     p=cell.add_paragraph(); p.paragraph_format.space_before=Pt(2.5); p.paragraph_format.space_after=Pt(1)
@@ -80,7 +73,6 @@ def role(cell,item):
 def render(data,out_path):
     d=Document(); s=d.sections[0]
     s.top_margin=Inches(.26); s.bottom_margin=Inches(.26); s.left_margin=Inches(.28); s.right_margin=Inches(.28)
-    add_fixed_sidebar(s)
     d.styles["Normal"].font.name="Arial"; d.styles["Normal"].font.size=Pt(8.3); d.styles["Normal"].font.color.rgb=RGBColor.from_string(TEXT)
 
     p=d.add_paragraph(); p.alignment=WD_ALIGN_PARAGRAPH.CENTER; p.paragraph_format.space_after=Pt(0)
@@ -92,9 +84,15 @@ def render(data,out_path):
 
     t=d.add_table(rows=1,cols=2); t.alignment=WD_TABLE_ALIGNMENT.CENTER; t.autofit=False
     t.columns[0].width=Inches(2.12); t.columns[1].width=Inches(5.72)
-    left,right=t.rows[0].cells; no_borders(t)
-    for c in (left,right): c.vertical_alignment=WD_CELL_VERTICAL_ALIGNMENT.TOP; c.paragraphs[0].paragraph_format.space_after=Pt(0)
-    # Transparent sidebar cell. The page-level background provides the blue.
+    row=t.rows[0]
+    row.height=Inches(9.45)
+    row.height_rule=WD_ROW_HEIGHT_RULE.AT_LEAST
+    left,right=row.cells
+    no_borders(t)
+    shade(left,SIDEBAR)
+    for c in (left,right):
+        c.vertical_alignment=WD_CELL_VERTICAL_ALIGNMENT.TOP
+        c.paragraphs[0].paragraph_format.space_after=Pt(0)
     cell_margins(left,105,120,80,120); cell_margins(right,105,150,80,85)
 
     for sec in data.get("sidebar",[]):
