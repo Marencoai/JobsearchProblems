@@ -297,3 +297,21 @@ When the completed Evaluation recommends pursuit and Diana chooses to proceed:
 10. do not mark an Application submitted until Diana explicitly confirms submission.
 
 See `docs/03-design/resume-generation-workflow.md` for the full handoff.
+
+
+## Evaluation Agent Identity
+
+Opportunity evaluations must run through the authenticated `Evaluation Agent` principal rather than an unrestricted database context.
+
+Required lifecycle:
+
+1. authenticate as Evaluation Agent;
+2. create the Evaluation in `draft`;
+3. attach Candidate Evidence;
+4. attach Company Intelligence snapshots;
+5. write analysis and scores;
+6. complete the Evaluation only after inputs are attached.
+
+Completed Evaluations are immutable. Materially new information requires a new version.
+
+See `docs/03-design/agent-principal-permissions.md`.
