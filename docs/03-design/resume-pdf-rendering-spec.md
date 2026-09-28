@@ -180,3 +180,49 @@ The final approved visual baseline includes:
 - refined role-title-to-first-bullet spacing.
 
 Future changes to the visual design should be intentional versioned changes, not per-job formatting adjustments.
+
+
+## Prototype Under Review: professional-two-page-v1
+
+**Status:** PROTOTYPE - NOT YET CANONICAL  
+**Tested:** 2026-09-28
+
+The one-page `modern-sidebar-v1` renderer exposed a layout weakness when opportunity-specific content was materially shorter than the Mor Furniture reference: text became visually compressed near the top while a large unused area remained at the bottom.
+
+A new two-page prototype was created to test a more stable application-resume architecture across different job families and content densities.
+
+### Prototype layout contract
+
+Page 1:
+- full candidate header;
+- opportunity-specific headline;
+- Professional Summary;
+- fixed-budget Core Capabilities;
+- Selected Impact;
+- highest-priority Professional Experience.
+
+Page 2:
+- compact continuation header;
+- Additional Experience;
+- Selected Projects & Systems;
+- Tools & Platforms;
+- Certification & Education.
+
+The layout is single-column except for a compact two-column Selected Impact block. It intentionally removes the full-height sidebar dependency.
+
+### Stress-test cases
+
+The prototype was rendered against:
+- Mor Furniture - AI Solutions Manager;
+- SoundHound AI - Account Manager, Enterprise.
+
+These cases intentionally represent different content mixes and job families.
+
+Both prototypes:
+- render as exactly two pages;
+- preserve readable body sizing rather than shrinking to force one page;
+- show no clipping or overlapping text;
+- maintain the same visual architecture while allowing different content;
+- pass PDF text extraction with readable headings, role/company/date information, quantified outcomes, tools, certification, and education.
+
+Do not replace the canonical renderer until Diana approves the visual result from both stress-test resumes.
