@@ -21,7 +21,7 @@ When an Application Package reaches resume generation:
 
 Current production renderer key:
 
-`executive-brief-two-page-v1`
+`executive-brief-two-page-v2`
 
 Implementation:
 
