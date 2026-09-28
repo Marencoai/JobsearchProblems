@@ -2,7 +2,7 @@
 
 **Status:** APPROVED CANONICAL BASELINE  
 **Approved:** 2026-09-28  
-**Canonical renderer:** `executive-brief-two-page-v1`
+**Canonical renderer:** `executive-brief-two-page-v2`
 
 ## Purpose
 
@@ -94,7 +94,8 @@ The content engine should shorten or remove lower-priority bullets before reduci
 - no full-height sidebar;
 - intentional white space rather than compressed text;
 - Page 1 is visually structured like an executive brief;
-- Page 2 reads like a clean chronological proof record.
+- Page 2 reads like a clean chronological proof record;
+- no visible footer text, page label, version label, or internal QA marker appears on the resume.
 
 ## Layout Rules
 
@@ -191,6 +192,8 @@ Both rendered as exactly two pages and passed visual and ATS text-extraction rev
 `modern-sidebar-v1` is retained only for historical reproducibility of prior Application Materials.
 
 `professional-two-page-v1` is a superseded prototype and should not be selected by new active Application Templates.
+
+`executive-brief-two-page-v1` is the approved predecessor retained for historical reproducibility. Version 2 removes the visible footer from production resumes without changing the two-page architecture.
 
 Do not silently alter historical artifacts that were produced with those renderer keys.
 
