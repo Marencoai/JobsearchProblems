@@ -2,9 +2,9 @@
 
 ## Canonical renderer
 
-**Renderer key:** `executive-brief-two-page-v1`
+**Renderer key:** `executive-brief-two-page-v2`
 
-**Implementation:** `renderers/resume/executive_brief_two_page_v1.py`
+**Implementation:** `renderers/resume/executive_brief_two_page_v2.py`
 
 This is the canonical visual renderer for newly generated resumes unless an active Application Template explicitly selects a later renderer version.
 
@@ -87,6 +87,6 @@ Before candidate delivery:
 
 Do not silently change this renderer.
 
-Any material visual change becomes a new renderer key, for example `executive-brief-two-page-v2`.
+Any material visual change becomes a new renderer key, for example `executive-brief-two-page-v3`.
 
-Historical materials created with `modern-sidebar-v1` or other prior renderer versions remain reproducible and are not retroactively rewritten.
+Production resumes contain no visible footer text or internal QA/version labels. Historical materials created with `modern-sidebar-v1`, `executive-brief-two-page-v1`, or other prior renderer versions remain reproducible and are not retroactively rewritten.
