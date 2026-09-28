@@ -288,12 +288,14 @@ When the completed Evaluation recommends pursuit and Diana chooses to proceed:
 2. create or reuse the Application Package;
 3. prepare the Application Brief;
 4. retrieve confirmed Candidate Knowledge based on the completed Evaluation;
-5. compose opportunity-specific resume content;
-6. render the resume using the approved PDF visual specification in `docs/03-design/resume-pdf-rendering-spec.md`;
-7. run visual QA and ATS parse-back QA;
-8. save the generated resume as a versioned Application Material linked to its supporting evidence;
-9. place the material in candidate review;
-10. do not mark an Application submitted until Diana explicitly confirms submission.
+5. compose opportunity-specific resume content using the approved two-page content budgets;
+6. resolve the active Application Template and renderer key;
+7. for current production templates, use `executive-brief-two-page-v1`;
+8. render Page 1 as the executive brief (summary, capabilities, impact, projects/systems, supporting information) and Page 2 as Professional Experience only;
+9. run visual QA and ATS parse-back QA;
+10. save the generated resume as a new immutable/versioned Application Material linked to its supporting evidence;
+11. place the material in candidate review;
+12. do not mark an Application submitted until Diana explicitly confirms submission.
 
 See `docs/03-design/resume-generation-workflow.md` for the full handoff.
 
