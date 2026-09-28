@@ -27,7 +27,7 @@ V1 processes at most 4 new Evaluations per run.
    - verify draft inputs persisted;
    - finalize in a separate statement;
    - transition draft to complete.
-6. Mark the Internal Task completed with the Evaluation ID/result summary.
+6. Return to Owner/orchestrator context and mark the Internal Task completed with the Evaluation ID/result summary.
 7. Do not create an Application Package.
 8. Do not notify Diana for every completed Evaluation. The later Morning Planner ranks completed evaluations into the Daily Work Queue.
 
@@ -40,3 +40,16 @@ V1 processes at most 4 new Evaluations per run.
 - Do not modify Opportunity facts as Evaluation Agent.
 - Do not submit applications.
 - Do not send outreach.
+
+
+## Scheduled Queue Orchestration
+
+The Evaluation Agent does not require `internal_task.execute`.
+
+For scheduled processing:
+
+1. Owner/orchestrator context selects and transitions the machine task;
+2. Evaluation Agent performs only Evaluation-domain reads/writes;
+3. Owner/orchestrator records the completed/blocked task state after the agent finishes.
+
+Do not broaden Evaluation Agent permissions merely to simplify queue execution.
