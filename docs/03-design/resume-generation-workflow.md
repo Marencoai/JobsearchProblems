@@ -24,7 +24,7 @@ Structured resume content
         ↓
 Content/evidence validation
         ↓
-executive-brief-two-page-v1 renderer
+executive-brief-two-page-v2 renderer
         ↓
 DOCX intermediate
         ↓
@@ -80,7 +80,7 @@ If content is too long, remove or shorten lower-priority material before changin
 
 The canonical renderer is:
 
-`executive-brief-two-page-v1`
+`executive-brief-two-page-v2`
 
 See:
 - `docs/03-design/resume-pdf-rendering-spec.md`
