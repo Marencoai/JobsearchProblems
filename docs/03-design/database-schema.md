@@ -6902,6 +6902,14 @@ Design note:
 
 JSONB is appropriate here because settings are heterogeneous and evolve more quickly than the core relational model. Frequently queried settings may later be promoted to typed columns if needed.
 
+Deployed V1 note (2026-09-28):
+
+The current `candidate_settings` implementation uses typed top-level preference groups including `candidate_profile`, `role_preferences`, `location_preferences`, `compensation_preferences`, `company_preferences`, `work_style_preferences`, `travel_preferences`, `queue_preferences`, and `application_defaults`.
+
+`application_defaults` stores reusable application-form facts that should not be inferred repeatedly, such as confirmed contact information and candidate-confirmed work authorization, sponsorship, and start availability. Travel and relocation are not duplicated there; application answers should derive from `travel_preferences` and `location_preferences` when the question can be answered safely from those settings.
+
+Unknown or sensitive application defaults remain marked for candidate review rather than inferred.
+
 9.2 automation_policies
 
 Represents the allowed autonomy level for a specific class of action.
