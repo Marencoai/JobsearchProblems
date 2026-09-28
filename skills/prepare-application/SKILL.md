@@ -83,3 +83,19 @@ Do not redesign the resume per Opportunity. Only content selection, wording, hea
 - Never add visible footer text, renderer/version labels, or internal QA markers to the candidate-facing resume.
 - Never silently mutate approved/submitted historical Materials.
 - Never approve or submit an Application.
+
+
+## Scheduled Queue Orchestration
+
+When this skill is invoked from the scheduled Application Queue:
+
+1. the Owner/orchestrator selects and manages the `prepare_application_package` Internal Task;
+2. the task must contain explicit candidate pursuit authority, normally:
+   - `trigger_type = candidate_action`
+   - `trigger_reference = candidate_decided_to_pursue`;
+3. the Application Agent performs only application-preparation writes permitted by `application.prepare`;
+4. the Application Agent does not need and must not be granted `internal_task.execute`;
+5. after preparation succeeds, the Owner/orchestrator records the Internal Task result and completes the task;
+6. the package stops at `ready_for_review` and remains a human approval gate.
+
+This preserves the distinction between machine orchestration authority and the Application Agent's narrow business authority.
