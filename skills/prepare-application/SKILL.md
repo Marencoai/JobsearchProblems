@@ -42,7 +42,7 @@ The agent must not have:
 5. Create/update the Application Brief as a versioned Material.
 6. Compose the resume using confirmed evidence only.
 7. Apply the Template's renderer key.
-8. Current production renderer is `executive-brief-two-page-v1`.
+8. Current production renderer is `executive-brief-two-page-v2`.
 9. Render:
    - Page 1: Professional Summary, Core Capabilities, Selected Impact, Selected Projects & Systems, Supporting Information.
    - Page 2: Professional Experience only.
@@ -80,5 +80,6 @@ Do not redesign the resume per Opportunity. Only content selection, wording, hea
 - Never use unconfirmed evidence as proof.
 - Never shrink typography to force fit.
 - Never allow a third page without revising composition.
+- Never add visible footer text, renderer/version labels, or internal QA markers to the candidate-facing resume.
 - Never silently mutate approved/submitted historical Materials.
 - Never approve or submit an Application.
