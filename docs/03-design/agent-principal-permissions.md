@@ -165,6 +165,60 @@ Historical note:
 - do not rename old deployed files or run migration-history repair casually to make the timestamps look identical;
 - reconcile reproducible local bootstrap separately before relying on a from-scratch migration replay.
 
+## Application Agent
+
+**Status:** IDENTITY + PERMISSION BOUNDARY IMPLEMENTED 2026-09-28
+
+Auth identity:
+- `applicationuser@marencoai.com`
+
+Principal:
+- type: `agent`
+- name: `Application Agent`
+
+Workspace role:
+- `Application Agent`
+
+Current production permissions:
+- `workspace.read`
+- `company.read`
+- `job_family.read`
+- `opportunity.read`
+- `opportunity_source.read`
+- `company_intelligence.read`
+- `candidate_knowledge.read`
+- `settings.read`
+- `evaluation.read`
+- `application_gap.read`
+- `application.read`
+- `application.prepare`
+
+Explicitly not granted:
+- `application.approve`
+- `application.submit`
+- `application.confirm`
+- `application_template.manage`
+- Candidate Knowledge modification
+- Opportunity modification
+- Workspace role administration
+
+Permission smoke test verified:
+- authenticated identity resolves to Application Agent Principal;
+- `application.read` = true;
+- `application.prepare` = true;
+- `application.approve` = false;
+- `application.submit` = false;
+- `application.confirm` = false;
+- `application_template.manage` = false;
+- `candidate_knowledge.update` = false;
+- `opportunity.update` = false;
+- `workspace.roles.manage` = false.
+
+Migration:
+- `20260928173528_application_agent_identity.sql`
+
+The first clean workflow proof should use SoundHound AI — Account Manager, Enterprise and should end at candidate review, not submission.
+
 ## Future Agent Pattern
 
 Repeat the same structure for:
