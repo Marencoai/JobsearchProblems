@@ -151,15 +151,19 @@ Least privilege is a database authorization concern, not a model-context concern
 
 The agent should not need to enumerate or reason through permissions on every run. Once the identity, role, and permissions are configured, normal workflows simply authenticate and execute. Permission-matrix checks belong in setup, tests, and diagnostics rather than routine candidate-facing execution.
 
-## Repository / Migration Drift
+## Repository / Migration History Note
 
-Production migration history includes:
+Resolved 2026-09-27:
 
-- `20260926184412 evaluation_agent_identity`
+- production migration `20260926184412 evaluation_agent_identity` retained the exact SQL statement in Supabase migration history;
+- that exact SQL was restored to GitHub as `supabase/migrations/20260926184412_evaluation_agent_identity.sql`;
+- production was not re-run or repaired because the migration was already correctly applied.
 
-The matching migration SQL file is not currently present under `supabase/migrations/` in the GitHub repository.
+Historical note:
 
-Do not fabricate a replacement migration from memory. Reconcile this drift before relying on a clean local rebuild or migration-history replay.
+- migrations 001-022 in GitHub use different filename timestamps from the corresponding applied Supabase migration-history timestamps, although their names and chronological order align;
+- do not rename old deployed files or run migration-history repair casually to make the timestamps look identical;
+- reconcile reproducible local bootstrap separately before relying on a from-scratch migration replay.
 
 ## Future Agent Pattern
 
