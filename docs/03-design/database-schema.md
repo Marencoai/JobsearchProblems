@@ -7497,6 +7497,53 @@ Applications represent actual submission history.
 
 Submitted materials should remain immutable historical records.
 
+9.7.1 Reusable Candidate Application Data
+
+Build in V1:
+
+work_experience_application_details
+professional_references
+work_experience_references
+
+These tables support reusable ATS/application facts that should not be reconstructed for every application.
+
+work_experience_application_details stores one approved application-facing record per Work Experience, including:
+
+reason_for_leaving
+may_contact_employer
+employer_contact_note
+validation_status
+source provenance
+
+professional_references stores reusable reference contacts, including:
+
+name
+email
+phone
+reference title/company context
+relationship summary
+contact permission
+preferred contact method
+status
+validation status
+
+work_experience_references links a professional reference to one or more Work Experiences and stores:
+
+relationship type
+title at the time when known
+relationship context
+primary-reference designation
+active state
+validation status
+
+Security:
+
+These tables use the candidate_application_data permission domain. Owners have read/create/update/validate authority. Application Agent roles receive read-only access. This keeps reference PII and application-only facts out of the Evaluation Agent's Candidate Knowledge read surface.
+
+Application behavior:
+
+When an ATS asks for reason for leaving, employer-contact permission, or references, the Application workflow should use confirmed candidate application data first. It must never invent missing contact details, titles, exit reasons, or contact permission.
+
 9.8 Deferred After Core V1
 
 The following tables remain part of the intended architecture but should not be required before the core V1 workflow is operational.
