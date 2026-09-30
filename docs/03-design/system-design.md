@@ -2904,3 +2904,36 @@ Reason:
 The purpose is not to generate more tasks, applications, messages, or notifications.
 
 The purpose is to identify and prepare the highest-leverage work so human judgment and action are spent where they create the most value.
+
+
+8.29 Reusable Candidate Application Data
+
+Decision:
+
+Application-specific candidate facts that are reusable across employers should be stored as structured data rather than reconstructed from chat history or buried inside one Application Package.
+
+This includes:
+
+- reason for leaving a Work Experience
+- whether an employer may be contacted
+- employer-contact notes
+- professional reference identity and contact details
+- which Work Experiences a reference can verify
+- the relationship type between the candidate and reference
+- the preferred/primary reference for a Work Experience
+
+These records are application inputs, not proof of professional capability. They therefore remain separate from Evidence Stories, Projects, Skills, and Tools.
+
+Current V1 structures:
+
+- work_experience_application_details
+- professional_references
+- work_experience_references
+
+Access rule:
+
+The Owner may create, update, and validate these records. The Application Agent may read confirmed records for application preparation but may not modify them. Evaluation agents do not need access to reference contact data.
+
+Reason:
+
+Real ATS forms repeatedly request employment-exit reasons, employer-contact permission, and references. Storing approved answers once prevents repeated candidate interruptions and prevents agents from inventing application facts.
