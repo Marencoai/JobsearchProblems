@@ -57,8 +57,15 @@ reviewed prep/child freeze, specific action reconciliation and denied deletion.
 
 Synthetic browser QA at 390×844: document width=390; desktop and mobile show the
 same role workspace. Start prep and manual reviewed save visibly update the fixture.
-Cheat-sheet content and exact local data-download href are unit-tested; IAB download-event capture and downloadMedia timed out,
-so actual browser file download completion remains an explicit QA limitation. No remote artifact service is involved.
+Actual browser download completion is verified with temporary Playwright1.58.2 and
+an isolated headless Chrome154.0.8037.93 profile. The synthetic 638-byte UTF-8 file
+`interview-synthetic-interview-cheat-sheet.txt` saved successfully, with no download
+failure and exact generated-content equality. SHA256:
+`25c124209932013033de8b6a5f97f32fb20bc648d83df2810988cec1cc33963a`.
+The anchor uses `data:text/plain;charset=utf-8`, so HTTP response headers do not apply.
+External requests are blocked; no signed-in profile, unrelated files or remote
+artifact service is involved. [Screenshot](qa-evidence/interview/verified-download-desktop.png).
+The earlier IAB timeout is superseded by this actual isolated browser acceptance.
 
 Evidence: [desktop](qa-evidence/interview/desktop.jpg), [mobile](qa-evidence/interview/mobile.jpg).
 
@@ -104,3 +111,30 @@ previously recorded interviewer research/freshness when those fields are not edi
 Conflicting metadata on an already matched source is rejected. Known candidate
 Stories are read through existing candidate_knowledge RLS; story titles/content
 and validation state appear only when accessible. No new knowledge permission grant.
+
+## Native PostgreSQL17.6 verification
+
+`node scripts/interview-concurrency-check.mjs /absolute/postgres/bin /absolute/psql`
+uses the established disposable private-socket harness, TCP disabled, no inherited
+DB credentials, and25 unchanged non-identity baseline migrations plus Interview001.
+Four two-connection races explicitly observe Session B waiting on Session A's
+Opportunity lock: identical source retry, identical prep-start retry, competing
+final prep reviews, and reused request ID with changed source input. Identical
+requests return equal results with one effect; stale/mismatched losers reject.
+Private ledger checks deny foreign tenants, same-Workspace other Owners, agents,
+suspended membership, missing domain manage permission and forged actor inserts;
+UPDATE/DELETE are denied and generic Activity contains no sensitive marker.
+The owned cluster is stopped and removed in finally. Native binaries are the
+pinned test-only `@embedded-postgres/darwin-arm64@17.6.0-beta.15` package; only its
+missing package-local library aliases were restored, with no global service changes.
+
+Reproduce browser acceptance with an explicitly supplied temporary Playwright module
+and Chrome binary while synthetic loopback development QA is running on3023:
+`node scripts/interview-download-check.mjs /absolute/playwright/index.mjs /absolute/chrome`.
+Temporary generated download bytes are verified and deleted; the synthetic screenshot
+is the only retained browser file. No new production package dependency is introduced.
+
+This remains a human-reviewed manual source-record adapter. Gmail/calendar ingest,
+worker reconciliation and new agent authority are not delivered by this proposal.
+Outreach002 integration remains pinned to the recorded2af79c2 commit/hash; final
+integration green awaits the parent's final Outreach dependency confirmation.
