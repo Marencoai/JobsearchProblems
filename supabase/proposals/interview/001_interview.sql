@@ -168,7 +168,7 @@ begin
   if payload->>'verified' is distinct from 'true' or nullif(trim(payload->>'source_reference'),'') is null or nullif(trim(payload->>'source_system'),'') is null or nullif(trim(payload->>'interview_type'),'') is null then raise exception 'Explicit reviewed source and interview type required'; end if;
   select * into i from public.interviews where workspace_id=target_workspace_id and source_system=payload->>'source_system' and source_reference=payload->>'source_reference';
   if found then
-   if i.opportunity_id<>target_opportunity_id or i.interview_type is distinct from payload->>'interview_type' or i.scheduled_start_at is distinct from (payload->>'scheduled_start_at')::timestamptz then raise exception 'Source already linked; review existing interview'; end if;
+   if i.opportunity_id<>target_opportunity_id or i.interview_type is distinct from payload->>'interview_type' or i.scheduled_start_at is distinct from (payload->>'scheduled_start_at')::timestamptz or i.scheduled_end_at is distinct from (payload->>'scheduled_end_at')::timestamptz or i.stage_name is distinct from payload->>'stage_name' or i.meeting_url is distinct from payload->>'meeting_url' or i.format is distinct from payload->>'format' or i.instructions is distinct from payload->>'instructions' then raise exception 'Source already linked; review existing interview'; end if;
    result:=jsonb_build_object('interview_id',i.id,'matched',true);
    select id into event_id from public.activity_events where workspace_id=target_workspace_id and source_system='hq' and source_reference=i.id::text and event_type='interview_record_verified_interview' order by created_at limit 1;
    if event_id is null then raise exception 'Existing source lacks attributed history; reconcile before matching'; end if;
@@ -203,7 +203,7 @@ begin
     values(target_workspace_id,question_id,(q->>'evidence_story_id')::uuid,(q->>'project_id')::uuid,(q->>'skill_id')::uuid,q->>'relevance_summary');
    end if;
   end loop;
-  update public.interview_preparations set summary=payload->>'summary',what_they_are_likely_evaluating=payload->>'what_they_are_likely_evaluating',company_context=payload->>'company_context',interviewer_research=payload->>'interviewer_research',known_risks=payload->>'known_risks',candidate_questions=payload->>'candidate_questions',research_as_of=(payload->>'research_as_of')::timestamptz,status=case when payload->>'reviewed'='true' then 'reviewed' else 'ready' end where workspace_id=target_workspace_id and id=prep.id;
+  update public.interview_preparations set summary=payload->>'summary',what_they_are_likely_evaluating=payload->>'what_they_are_likely_evaluating',company_context=payload->>'company_context',interviewer_research=case when payload ? 'interviewer_research' then payload->>'interviewer_research' else interviewer_research end,known_risks=payload->>'known_risks',candidate_questions=payload->>'candidate_questions',research_as_of=case when payload ? 'research_as_of' then (payload->>'research_as_of')::timestamptz else research_as_of end,status=case when payload->>'reviewed'='true' then 'reviewed' else 'ready' end where workspace_id=target_workspace_id and id=prep.id;
   update public.interviews set preparation_status='ready' where workspace_id=target_workspace_id and id=i.id;
   prep_id:=prep.id;
   if payload->>'reviewed'='true' then

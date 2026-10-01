@@ -556,3 +556,27 @@ it("local security catalog audit confirms caller-rights RPC and denied anonymous
     ).toBe(false);
   }
 });
+
+it("manual prep saves preserve previously recorded research unless explicitly supplied", async () => {
+  await rpc("record_verified_interview", source());
+  const i = await row("select * from interviews");
+  await rpc("start_prep", {
+    interview_id: i.id,
+    interview_updated_at: i.updated_at,
+  });
+  await row(
+    "update interview_preparations set interviewer_research='Recorded researcher findings',research_as_of='2026-10-01T12:00:00Z' returning id",
+  );
+  const prep = await row("select * from interview_preparations");
+  await rpc("save_prep", {
+    interview_id: i.id,
+    preparation_id: prep.id,
+    preparation_updated_at: prep.updated_at,
+    summary: "Human concise purpose",
+    reviewed: false,
+  });
+  expect(
+    (await row("select interviewer_research from interview_preparations"))
+      .interviewer_research,
+  ).toBe("Recorded researcher findings");
+});
