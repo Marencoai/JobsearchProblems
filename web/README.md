@@ -4,6 +4,8 @@ Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW
 
 **Acceptance update · October 1, 2026:** Diana explicitly accepted Phase 1 after signing in and reviewing multiple real opportunities. [PHASE1_QA.md](PHASE1_QA.md) records that approval; the [requirements document](../docs/02-requirements/requirements.md#job-hunt-hq-deferred-product-improvements) tracks her two deferred, non-blocking improvements. The next gate is explicit Phase 2 production migration approval, which Diana has withheld. The migration and human-action flag remain inactive.
 
+**Subsequent rollout update · October 1, 2026:** Diana approved the exact Phase 2 migration reviewed at `3b047da`. Live preflight matches the reviewed database assumptions, but actual hosted worker installation/version-verification targets are not yet discoverable. Per her safeguards, no apply was attempted. The migration remains unapplied and human-action activation remains unauthorized. See the updated [review](PHASE2_REVIEW.md#approved-rollout-preflight--october-1-2026) and its exact preflight inventory.
+
 Read-only Next.js candidate workspace over the existing Supabase Auth/principal/workspace/RLS model. The existing worker workflows, schema, migrations, permissions, renderer, and job data are unchanged.
 
 ## Run locally
