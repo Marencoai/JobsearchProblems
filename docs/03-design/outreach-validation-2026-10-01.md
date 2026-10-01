@@ -5,7 +5,7 @@ This report validates the proposed Outreach package, not a production rollout or
 ## Exact reviewed files
 
 - Forward proposal: `supabase/proposals/outreach/20261001230000_outreach_domain.sql`
-- SHA-256: `6a271fc6647cc281d37ef7690af21bdb6a7ea35de9945444a36d2c43ba17ddf6`
+- SHA-256: `b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906`
 - Forward write-disable: `supabase/proposals/outreach/disable_outreach_writes.sql`
 - SHA-256: `534c5e3e233f2dfa208fe5c71114f9cf56eb8ecbc147bb08032e9e3ffffaf910`
 
@@ -15,7 +15,7 @@ Both files are outside the automatic migration inventory. Production approval/ap
 
 | Check                            | Verified result                                                                                                                                                |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entire repository frontend suite | **187 tests pass in 9 files**, including 56 Outreach SQL cases and 17 Outreach worker/CLI cases; all 114 existing Phase 1/2 tests pass                         |
+| Entire repository frontend suite | **188 tests pass in 9 files**, including 57 Outreach SQL cases and 17 Outreach worker/CLI cases; all 114 existing Phase 1/2 tests pass                         |
 | SQL execution                    | Existing real migrations/policies/triggers plus the proposal run in isolated PGlite PostgreSQL 17.5                                                            |
 | Worker integration               | Actual queued SQL task/link/engagement/message rows pass through pure routing helpers; exact documented CLI preparation/wait modes run as real child processes |
 | Native SQL/concurrency           | PostgreSQL **17.6**, 25 unchanged non-identity migrations plus exact proposal, including pgcrypto                                                              |
@@ -38,6 +38,8 @@ The native script creates an owned synthetic cluster under `/tmp`, restricts its
 Test binaries: pinned Node 22.23.3 and test-only registry package `@embedded-postgres/darwin-arm64@17.6.0-beta.15`; no global server/service/security setting was installed or changed. The PGlite harness omits only its unavailable pgcrypto extension declaration (UUID generation exists in core) and skips the two historical migrations tied to real production agent identities. Native PostgreSQL replays the other SQL unchanged with pgcrypto. Auth is represented by a synthetic UUID-claim interface; no real password/token is used.
 
 ## Practical limits and remaining gates
+
+The privacy regression verifies that a generic Activity-only reader sees summaries/structured IDs while exact communications remain protected by Outreach read permissions. Retry bodies are in an append-only, RLS-enabled private ledger with no normal caller grants; they are absent from generic Activity details. Native catalog checks include this ledger's RLS/access boundary and FK indexes.
 
 No production migration, permission change, data backfill, contact import, real message, Auth update, workflow deployment or main-branch merge occurred. Hosted advisors cannot inspect unapplied objects; they remain a post-approval deployment check. Docker is unavailable, so the full local Supabase container stack was not run.
 

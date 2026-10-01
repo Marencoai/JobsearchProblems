@@ -1119,6 +1119,28 @@ describe("proposed Outreach schema and controlled transactions", () => {
       edit("save_draft", { channel: "email", content: "No write permission" }),
     ).rejects.toThrow("permission");
   });
+  it("generic activity readers cannot obtain exact message/contact payloads or the private retry ledger", async () => {
+    await draft({ content: "PRIVATE OUTREACH CONTENT sentinel" });
+    const viewer = await newPrincipal("human", [
+      "workspace.read",
+      "activity.read",
+    ]);
+    await asUser(viewer.uid);
+    const details = (
+      await db.query<Data>("select details from activity_events")
+    ).rows;
+    expect(details.length).toBeGreaterThan(0);
+    expect(JSON.stringify(details)).not.toContain(
+      "PRIVATE OUTREACH CONTENT sentinel",
+    );
+    expect(JSON.stringify(details)).not.toContain("recruiter@example.invalid");
+    await expect(
+      attempt(() => db.exec("select * from private.outreach_action_requests")),
+    ).rejects.toThrow("permission denied");
+    expect(
+      (await row("select count(*)::int as n from outreach_messages")).n,
+    ).toBe(0);
+  });
   it("an inactive member sees no domain rows even with read capabilities", async () => {
     const viewer = await newPrincipal("human", [
       "workspace.read",

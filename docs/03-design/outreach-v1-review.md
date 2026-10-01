@@ -26,6 +26,8 @@ The existing backend Opportunity lifecycle, derived seven-stage UX, human approv
 
 ## Controlled operations
 
+An additional non-exposed `private.outreach_action_requests` ledger retains bounded request/result objects for exact retries. It has RLS, no normal caller grants or read policy, tenant/actor/request uniqueness, indexed tenant FKs and append-only history protection. Generic Activity details retain only command/request identity and structured result IDs, never exact message bodies, recipient addresses or note text. A role with only existing `activity.read` cannot bypass the separate Contact/Outreach read permissions through the timeline. This does not add an exposed domain table or new permission.
+
 `public.hq_outreach_action(workspace_uuid, request_uuid, command, payload)` is a small SECURITY INVOKER wrapper. Its controlled writer resides in the existing non-exposed `private` schema with SECURITY DEFINER and an empty search path. It authenticates the actual Principal, active membership and active Workspace, checks every command's explicit domain and existing workflow capabilities, and never accepts a client-supplied actor. All new table DML is revoked from normal callers, including Owner. No database password/service role is needed by the UI or worker.
 
 | Command                                                       | Result                                                                                                                                       |

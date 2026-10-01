@@ -426,7 +426,7 @@ try {
   // Local equivalents of applicable advisor checks for proposed objects. The
   // hosted advisors cannot inspect a migration that is deliberately not live.
   const proposed =
-    "('contacts','opportunity_contacts','outreach_engagements','outreach_engagement_opportunities','outreach_messages','outreach_message_evidence','outreach_interactions','relationship_notes','outreach_task_links')";
+    "('contacts','opportunity_contacts','outreach_engagements','outreach_engagement_opportunities','outreach_messages','outreach_message_evidence','outreach_interactions','relationship_notes','outreach_task_links','outreach_action_requests')";
   assert.equal(
     await query(
       `select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ${proposed} and not c.relrowsecurity;`,
@@ -449,6 +449,24 @@ try {
     `select c.relname||':'||fk.conname from pg_constraint fk join pg_class c on c.oid=fk.conrelid where fk.contype='f' and c.relname in ${proposed} and not exists(select 1 from pg_index i where i.indrelid=fk.conrelid and i.indisvalid and i.indpred is null and (i.indkey::smallint[])[0:array_length(fk.conkey,1)-1] @> fk.conkey);`,
   );
   assert.equal(missing, "");
+  assert.equal(
+    await query(
+      "select relrowsecurity from pg_class where oid='private.outreach_action_requests'::regclass;",
+    ),
+    "t",
+  );
+  assert.equal(
+    await query(
+      "select has_table_privilege('authenticated','private.outreach_action_requests','SELECT');",
+    ),
+    "f",
+  );
+  assert.equal(
+    await query(
+      "select count(*) from activity_events where event_type like 'outreach_%' and details::jsonb ? 'request';",
+    ),
+    "0",
+  );
   console.log(
     "PASS local security/performance catalog checks: all new tables RLS, no anon/raw writes/public definer, all new FKs indexed",
   );

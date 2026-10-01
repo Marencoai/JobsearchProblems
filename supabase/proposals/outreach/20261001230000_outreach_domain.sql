@@ -211,6 +211,22 @@ create index outreach_messages_preparer_idx on public.outreach_messages(prepared
 create index outreach_messages_approver_idx on public.outreach_messages(approved_by_principal_id);
 create index outreach_messages_sender_idx on public.outreach_messages(sent_by_principal_id);
 
+-- Retry bodies may contain exact private professional messages/addresses. Keep
+-- them out of generic Activity details, whose read permission is intentionally
+-- separate from outreach.read. This ledger has no normal caller grants/policy.
+create table private.outreach_action_requests (
+ workspace_id uuid not null references public.workspaces(id) on delete restrict,
+ actor_principal_id uuid not null references public.principals(id) on delete restrict,
+ request_id uuid not null, request jsonb not null, result jsonb not null,
+ activity_event_id uuid not null, created_at timestamptz not null default now(),
+ primary key(workspace_id,actor_principal_id,request_id),
+ foreign key(workspace_id,activity_event_id) references public.activity_events(workspace_id,id) on delete restrict
+);
+create index outreach_action_requests_actor_idx on private.outreach_action_requests(actor_principal_id);
+create index outreach_action_requests_event_idx on private.outreach_action_requests(workspace_id,activity_event_id);
+alter table private.outreach_action_requests enable row level security;
+revoke all on table private.outreach_action_requests from public,anon,authenticated;
+
 -- All exposed new tables fail closed even if Supabase default grants exist.
 do $$ declare name text; begin
  foreach name in array array['contacts','opportunity_contacts','outreach_engagements',
@@ -259,6 +275,8 @@ begin
  return new;
 end $$;
 revoke all on function private.outreach_history_guard() from public,anon,authenticated;
+create trigger outreach_request_history before update or delete on private.outreach_action_requests
+for each row execute function private.outreach_history_guard();
 do $$ declare name text; begin
  foreach name in array array['contacts','opportunity_contacts','outreach_engagements',
   'outreach_engagement_opportunities','outreach_messages','outreach_message_evidence',
@@ -299,7 +317,7 @@ create function private.hq_outreach_action(
 declare
  actor uuid := public.current_principal_id(); human boolean := public.current_principal_is_human();
  required text[] := array['workspace.read','activity.read','activity.create']; permission_key text;
- input jsonb; previous public.activity_events%rowtype; result jsonb := '{}'::jsonb;
+ input jsonb; previous private.outreach_action_requests%rowtype; result jsonb := '{}'::jsonb;
  contact public.contacts%rowtype; engagement public.outreach_engagements%rowtype; message public.outreach_messages%rowtype;
  task public.internal_tasks%rowtype; route public.outreach_task_links%rowtype;
  op public.opportunities%rowtype; ref_op uuid := (payload->>'opportunity_id')::uuid;
@@ -363,11 +381,11 @@ begin
  -- reconciliation with one lock order, including two different retry IDs.
  perform id from public.workspaces where id=target_workspace_id for update;
  input:=jsonb_build_object('command',command,'payload',payload);
- select * into previous from public.activity_events where workspace_id=target_workspace_id
- and idempotency_key='hq-outreach:'||actor::text||':'||request_id::text;
+ select * into previous from private.outreach_action_requests r where r.workspace_id=target_workspace_id
+ and r.actor_principal_id=actor and r.request_id=hq_outreach_action.request_id;
  if found then
-  if previous.details::jsonb->'request' is distinct from input then raise exception 'Request ID was used with different input'; end if;
-  return previous.details::jsonb->'result';
+  if previous.request is distinct from input then raise exception 'Request ID was used with different input'; end if;
+  return previous.result;
  end if;
 
  if ref_op is not null then
@@ -693,7 +711,7 @@ begin
  insert into public.activity_events(workspace_id,opportunity_id,event_type,event_timestamp,actor_principal_id,summary,details,source_system,
   source_reference,idempotency_key,created_by_principal_id)
  values(target_workspace_id,ref_op,'outreach_'||command,coalesce(occurred,now()),actor,summary,
-  jsonb_build_object('request',input,'result',result)::text,
+  jsonb_build_object('command',command,'result',result,'request_id',request_id)::text,
   case when command in ('record_received','record_interaction') then payload->>'source_system' else 'job_hunt_hq' end,
   case when command='record_received' then payload->>'external_reference' when command='record_interaction' then payload->>'source_reference' else request_id::text end,
   'hq-outreach:'||actor::text||':'||request_id::text,actor) returning id into event_id;
@@ -710,6 +728,8 @@ begin
   select target_workspace_id,event_id,'opportunity',opportunity_id from public.outreach_engagement_opportunities
    where workspace_id=target_workspace_id and outreach_engagement_id=engagement.id and is_current;
  end if;
+ insert into private.outreach_action_requests(workspace_id,actor_principal_id,request_id,request,result,activity_event_id)
+ values(target_workspace_id,actor,request_id,input,result,event_id);
  return result;
 end $$;
 revoke all on function private.hq_outreach_action(uuid,uuid,text,jsonb) from public,anon,authenticated;
