@@ -1,0 +1,46 @@
+# Job Hunt HQ · Phase 1
+
+Read-only Next.js candidate workspace over the existing Supabase Auth/principal/workspace/RLS model. The existing worker workflows, schema, migrations, permissions, renderer, and job data are unchanged.
+
+## Run locally
+
+Use the pinned Node version in `.nvmrc` (22.23.3), then:
+
+```sh
+cd web
+npm ci --ignore-scripts
+npm run dev
+```
+
+Supply `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` through the local process environment or an ignored `.env.local` based on `.env.example`. Use only the existing project's modern `sb_publishable_…` public key. Never supply an admin/service-role key. The current Mac preview supplies public configuration only in process memory; no configuration or credential file is created.
+
+Open `http://127.0.0.1:3000/jobs`, then sign in through the browser form. Sessions and passwords are not persisted, logged, sent to Next.js, or placed in URLs. Supabase Auth receives the normal password sign-in directly. Browser memory retains the authenticated session across in-app navigation; full page reload, sign-out, or expiry requires sign-in again. No background refresh or account-management flow is enabled in this preview.
+
+## Data boundaries
+
+- Auth `getUser` resolves exactly one active human principal, active memberships, accessible workspaces, and roles. Access is rechecked before reading a workspace. Switching clears old workspace data immediately; request generations prevent a late response overwriting the selected workspace.
+- Every workspace read has an explicit `workspace_id` filter and still passes through the authenticated user's existing RLS. Next Actions are limited to the current principal or unassigned actions. Task reads expose routing/status fields, and activity reads expose summaries rather than machine logs.
+- The fetch boundary allows password sign-in, verified Auth reads, local sign-out, and GET requests to a curated table allowlist. It rejects database writes, RPCs, admin routes, token refresh, foreign origins, cookie credentials, and redirects before network access. No privileged connector is used by the app or its tests.
+- Lists paginate in stable ID order. A read error fails the whole workspace; no partial, fixture, or cached data substitutes for it. Workspaces over 10,000 rows in a queried table fail explicitly pending a focused query design.
+- All seven stages are derived UI views. Backend opportunity stages remain unchanged. Each active opportunity appears once; closed/inactive records have a separate inspectable history. A score never authorizes pursuit, and submission never invents outreach work.
+- Evaluate uses the latest completed evaluation, its evidence/gaps/research snapshots, and separate candidate/opportunity fit scores. Missing scores show an em dash. Company/listing facts and freshness show only recorded values.
+- Recorded packages, material versions, application attempts, and exact submission snapshots are inspectable. Text content remains escaped; artifact links appear only when a safe URL is recorded. No missing PDF is invented.
+
+Mutation controls are intentionally disabled in Phase 1. `Reload data` only rereads existing data. Research refresh and preparation must queue the existing workers in the next phase; browser code must not reproduce their logic. Outreach, Interview, and Offer currently show existing lifecycle/activity only, with explicit empty states for their pending structured domains.
+
+## Checks and QA
+
+```sh
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Tests cover stage precedence, history, score/authorization separation, version selection, linked activity, pagination, fail-closed identity resolution, workspace filters, SDK integration with a mocked network, transport write rejection, and UI search/tabs/material previews/disabled actions. Tests never create production fixtures. These tests validate client boundaries; authenticated live browser QA is required to establish production RLS behavior.
+
+For synthetic visual QA only, launch development with `HQ_QA_FIXTURES=1` and open `/qa`. The page is clearly labelled a synthetic workspace and uses the same UI components. `/jobs` continues to require real authentication. `/qa` always returns 404 in a production build, regardless of that flag. Fixtures are never a data-loading fallback.
+
+## Approval gates
+
+Complete live authenticated Phase 1 acceptance before introducing production changes. Future human actions must preserve immutable versions, submission snapshots, worker ownership, and human authorization. Each new structured domain must have one review package containing its proposed migration, RLS/permission impact, tests, data/backfill impact, and rollback strategy; obtain one domain approval before applying its production migration. No deployment, external application, outreach message, or offer action is performed by this phase.
