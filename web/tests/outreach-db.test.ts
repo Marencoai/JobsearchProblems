@@ -11,6 +11,14 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import type { PGlite } from "@electric-sql/pglite";
 import { databaseHarness } from "./database-harness";
+import {
+  outreachPreparationTarget,
+  outreachFollowUpDisposition,
+  type OutreachTask,
+  type OutreachTaskLink,
+  type OutreachEngagement,
+  type OutreachMessage,
+} from "../../worker-support/outreach-contracts";
 
 type Data = Record<string, unknown>;
 let db: PGlite;
@@ -377,6 +385,133 @@ describe("proposed Outreach schema and controlled transactions", () => {
       sent_at: null,
       approved_by_principal_id: principal,
     });
+  });
+  it("retains the original exact-version approver when another human records the send", async () => {
+    const d = await draft();
+    await edit("approve_message", {
+      message_id: d.message_id,
+      confirmed: true,
+    });
+    const other = await newPrincipal("human", [
+      ...workflow,
+      "outreach.approve",
+      "outreach.record_sent",
+    ]);
+    await asUser(other.uid);
+    await markSent(d.message_id);
+    expect(
+      await row(
+        "select approved_by_principal_id,sent_by_principal_id from outreach_messages where id=$1",
+        [d.message_id],
+      ),
+    ).toEqual({
+      approved_by_principal_id: principal,
+      sent_by_principal_id: other.person,
+    });
+  });
+  it("requires the exact subject as well as body for messages with a subject", async () => {
+    const d = await draft({ subject: "Synthetic referral request" });
+    await expect(markSent(d.message_id)).rejects.toThrow("subject");
+    await markSent(d.message_id, {
+      exact_subject: "Synthetic referral request",
+    });
+    expect(
+      (
+        await row("select subject from outreach_messages where id=$1", [
+          d.message_id,
+        ])
+      ).subject,
+    ).toBe("Synthetic referral request");
+  });
+  it("explicit follow-up resolution preserves sent history and claims no new message", async () => {
+    const d = await draft(),
+      s = await markSent(d.message_id);
+    await edit("resolve_follow_up", {
+      task_id: s.follow_up_task_id,
+      reason: "No follow-up needed for this relationship",
+    });
+    expect(
+      (
+        await row("select status from internal_tasks where id=$1", [
+          s.follow_up_task_id,
+        ])
+      ).status,
+    ).toBe("completed");
+    expect(
+      (
+        await row(
+          "select next_follow_up_at from outreach_engagements where id=$1",
+          [engagement],
+        )
+      ).next_follow_up_at,
+    ).toBeNull();
+    expect(
+      (await row("select count(*)::int as n from outreach_messages")).n,
+    ).toBe(1);
+  });
+  it("a newly attested follow-up resolves only the exact previous waiting task", async () => {
+    const first = await draft(),
+      wait = await markSent(first.message_id);
+    const next = await draft();
+    await markSent(next.message_id, {
+      resolves_follow_up_task_id: wait.follow_up_task_id,
+    });
+    expect(
+      (
+        await row("select status from internal_tasks where id=$1", [
+          wait.follow_up_task_id,
+        ])
+      ).status,
+    ).toBe("completed");
+    expect(
+      (
+        await row(
+          "select count(*)::int as n from internal_tasks where task_type='outreach_follow_up' and status='waiting'",
+        )
+      ).n,
+    ).toBe(1);
+    expect(
+      (
+        await row(
+          "select count(*)::int as n from outreach_messages where message_status='sent'",
+        )
+      ).n,
+    ).toBe(2);
+  });
+  it("preserves candidate evidence provenance and fails a foreign evidence reference atomically", async () => {
+    const skill = (
+      await row(
+        "insert into skills(workspace_id,name) values($1,'Synthetic skill') returning id",
+        [workspace],
+      )
+    ).id;
+    const d = await draft({
+      evidence: [
+        {
+          type: "skill",
+          id: skill,
+          usage_context: "Relevant professional proof",
+        },
+      ],
+    });
+    expect(
+      (
+        await row(
+          "select skill_id from outreach_message_evidence where outreach_message_id=$1",
+          [d.message_id],
+        )
+      ).skill_id,
+    ).toBe(skill);
+    await expect(
+      draft({
+        evidence: [
+          { type: "skill", id: randomUUID(), usage_context: "Invalid proof" },
+        ],
+      }),
+    ).rejects.toThrow("foreign key");
+    expect(
+      (await row("select count(*)::int as n from outreach_messages")).n,
+    ).toBe(1);
   });
   it("explicit mark-sent atomically confirms exact content, recipient, role, actor and wait task", async () => {
     const d = await draft();
@@ -783,6 +918,30 @@ describe("proposed Outreach schema and controlled transactions", () => {
       [worker.person, t.task_id],
     );
     await asUser(worker.uid);
+    const taskRow = await row("select * from internal_tasks where id=$1", [
+      t.task_id,
+    ]);
+    const linkRow = await row(
+      "select * from outreach_task_links where internal_task_id=$1",
+      [t.task_id],
+    );
+    const engagementRow = await row(
+      "select * from outreach_engagements where id=$1",
+      [engagement],
+    );
+    expect(
+      outreachPreparationTarget(
+        worker.person as string,
+        taskRow as unknown as OutreachTask,
+        linkRow as unknown as OutreachTaskLink,
+        engagementRow as unknown as OutreachEngagement,
+        [],
+      ),
+    ).toMatchObject({
+      disposition: "prepare",
+      task_id: t.task_id,
+      engagement_id: engagement,
+    });
     const d = await edit("complete_draft", {
       opportunity_id: opportunity,
       task_id: t.task_id,
@@ -852,6 +1011,29 @@ describe("proposed Outreach schema and controlled transactions", () => {
       "update internal_tasks set not_before=now()-interval '1 minute' where id=$1",
       [s.follow_up_task_id],
     );
+    const taskRow = await row("select * from internal_tasks where id=$1", [
+      s.follow_up_task_id,
+    ]);
+    const linkRow = await row(
+      "select * from outreach_task_links where internal_task_id=$1",
+      [s.follow_up_task_id],
+    );
+    const engagementRow = await row(
+      "select * from outreach_engagements where id=$1",
+      [engagement],
+    );
+    const messages = (await db.query<Data>("select * from outreach_messages"))
+      .rows;
+    expect(
+      outreachFollowUpDisposition(
+        worker.person as string,
+        taskRow as unknown as OutreachTask,
+        linkRow as unknown as OutreachTaskLink,
+        engagementRow as unknown as OutreachEngagement,
+        messages as unknown as OutreachMessage[],
+        new Date().toISOString(),
+      ).disposition,
+    ).toBe("candidate_review");
     const first = await rpc("reconcile_follow_up", {
       task_id: s.follow_up_task_id,
     });
@@ -936,6 +1118,82 @@ describe("proposed Outreach schema and controlled transactions", () => {
     await expect(
       edit("save_draft", { channel: "email", content: "No write permission" }),
     ).rejects.toThrow("permission");
+  });
+  it("an inactive member sees no domain rows even with read capabilities", async () => {
+    const viewer = await newPrincipal("human", [
+      "workspace.read",
+      "contact.read",
+      "outreach.read",
+    ]);
+    await db.exec("reset role");
+    await db.query(
+      "update workspace_memberships set status='inactive' where principal_id=$1",
+      [viewer.person],
+    );
+    await db.exec("set local role authenticated");
+    await asUser(viewer.uid);
+    expect((await row("select count(*)::int as n from contacts")).n).toBe(0);
+    await expect(
+      rpc("save_contact", {
+        full_name: "Inactive member",
+        source_system: "candidate",
+      }),
+    ).rejects.toThrow("active workspace");
+  });
+  it("does not complete an outreach action assigned to another human", async () => {
+    const d = await draft();
+    const other = await newPrincipal("human", [
+      "workspace.read",
+      "contact.read",
+      "outreach.read",
+    ]);
+    await db.query(
+      "update next_actions set assigned_to_principal_id=$1 where id=$2",
+      [other.person, d.review_action_id],
+    );
+    await expect(markSent(d.message_id)).rejects.toThrow(
+      "unavailable to this human",
+    );
+    expect(
+      (
+        await row("select message_status from outreach_messages where id=$1", [
+          d.message_id,
+        ])
+      ).message_status,
+    ).toBe("review");
+  });
+  it("forward write-disable revokes both RPC entry points while retaining exact readable history", async () => {
+    const d = await draft();
+    await markSent(d.message_id);
+    await db.exec("reset role");
+    const sql = await readFile(
+      new URL(
+        "../../supabase/proposals/outreach/disable_outreach_writes.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    // Keep the suite's existing synthetic transaction so afterEach can restore
+    // privileges without touching any other test. Statements remain unchanged.
+    await db.exec(sql.replace(/^begin;$/m, "").replace(/^commit;$/m, ""));
+    await db.exec("set local role authenticated");
+    expect(
+      (
+        await row("select content from outreach_messages where id=$1", [
+          d.message_id,
+        ])
+      ).content,
+    ).toBe("Exact synthetic outreach v1");
+    await expect(draft()).rejects.toThrow("permission denied");
+    await expect(
+      attempt(() =>
+        db.query("select private.hq_outreach_action($1,$2,'save_contact',$3)", [
+          workspace,
+          randomUUID(),
+          { full_name: "Private bypass", source_system: "candidate" },
+        ]),
+      ),
+    ).rejects.toThrow("permission denied");
   });
   it("cross-workspace authenticated users see no new rows and cannot call the writer", async () => {
     await db.exec("reset role");

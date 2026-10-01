@@ -113,7 +113,7 @@ create table public.outreach_messages (
  revision integer not null default 1 check(revision>0),
  created_by_principal_id uuid not null references public.principals(id) on delete restrict,
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
- unique(workspace_id,id), unique(workspace_id,draft_series_id,version_number),
+ unique(workspace_id,id), unique(workspace_id,outreach_engagement_id,id), unique(workspace_id,draft_series_id,version_number),
  foreign key(workspace_id,outreach_engagement_id,contact_id) references public.outreach_engagements(workspace_id,id,contact_id) on delete restrict,
  foreign key(workspace_id,outreach_engagement_id,opportunity_id) references public.outreach_engagement_opportunities(workspace_id,outreach_engagement_id,opportunity_id) on delete restrict,
  foreign key(workspace_id,supersedes_message_id) references public.outreach_messages(workspace_id,id) on delete restrict,
@@ -190,10 +190,11 @@ create table public.outreach_task_links (
  created_at timestamptz not null default now(), unique(workspace_id,id), unique(workspace_id,internal_task_id),
  foreign key(workspace_id,internal_task_id) references public.internal_tasks(workspace_id,id) on delete restrict,
  foreign key(workspace_id,outreach_engagement_id) references public.outreach_engagements(workspace_id,id) on delete restrict,
- foreign key(workspace_id,outreach_message_id) references public.outreach_messages(workspace_id,id) on delete restrict
+ foreign key(workspace_id,outreach_engagement_id,outreach_message_id) references public.outreach_messages(workspace_id,outreach_engagement_id,id) on delete restrict
 );
 create index outreach_task_links_engagement_idx on public.outreach_task_links(workspace_id,outreach_engagement_id);
 create index outreach_task_links_message_idx on public.outreach_task_links(workspace_id,outreach_message_id);
+create index outreach_task_links_context_idx on public.outreach_task_links(workspace_id,outreach_engagement_id,outreach_message_id);
 
 -- Cover every new FK, including historical Principal audit attribution.
 create index outreach_messages_contact_idx on public.outreach_messages(workspace_id,outreach_engagement_id,contact_id);
@@ -335,7 +336,9 @@ begin
   allowed:=array['engagement_id','expected_revision','message_id','confirmed'];
  when 'mark_sent' then required:=required||array['contact.read','outreach.read','outreach.approve','outreach.record_sent','opportunity.read',
   'internal_task.read','internal_task.create','internal_task.update','next_action.read','next_action.complete'];
-  allowed:=array['engagement_id','expected_revision','message_id','confirmed','exact_content','recipient','sent_at','follow_up_at','follow_up_choice','external_reference'];
+  allowed:=array['engagement_id','expected_revision','message_id','confirmed','exact_content','exact_subject','recipient','sent_at','follow_up_at','follow_up_choice','external_reference','resolves_follow_up_task_id'];
+ when 'resolve_follow_up' then required:=required||array['outreach.read','outreach.manage','internal_task.read','internal_task.update','next_action.read','next_action.complete'];
+  allowed:=array['engagement_id','expected_revision','task_id','reason'];
  when 'record_received' then required:=required||array['contact.read','outreach.read','outreach.record_received','opportunity.read',
   'internal_task.read','internal_task.create','internal_task.update','next_action.read','next_action.create','next_action.update'];
   allowed:=array['engagement_id','expected_revision','opportunity_id','channel','subject','content','received_at','external_reference','response_to_message_id','source_system'];
@@ -347,7 +350,7 @@ begin
   allowed:=array['task_id'];
  else raise exception 'Unsupported Outreach command'; end case;
  if exists(select 1 from jsonb_object_keys(payload) k where not k=any(allowed)) then raise exception 'Unexpected Outreach input field'; end if;
- if command in ('approve_message','mark_sent','request_draft','select_primary_contact') and not human then
+ if command in ('approve_message','mark_sent','request_draft','select_primary_contact','resolve_follow_up') and not human then
   raise exception using errcode='42501',message='Explicit human action is required';
  end if;
  foreach permission_key in array required loop
@@ -415,7 +418,7 @@ begin
   end if;
   result:=jsonb_build_object('contact_id',new_id); entity_id:=new_id;entity_type:='contact';summary:='Professional contact saved';
  elsif command='link_contact' then
-  if contact.id is null or ref_op is null then raise exception 'Contact and opportunity are required'; end if;
+  if contact.id is null or contact.status<>'active' or ref_op is null then raise exception 'Active contact and opportunity are required'; end if;
   if payload->>'selection_method'='manual' and not human then raise exception 'Manual selection requires a human'; end if;
   insert into public.opportunity_contacts(workspace_id,opportunity_id,contact_id,relationship_role,is_primary,selection_method,
    relevance,source_system,source_reference,notes,created_by_principal_id)
@@ -462,6 +465,7 @@ begin
    select * into task from public.internal_tasks where workspace_id=target_workspace_id and id=route.internal_task_id;
    if route.purpose is distinct from 'draft' or route.outreach_engagement_id is distinct from engagement.id
     or task.domain is distinct from 'outreach' or task.task_type is distinct from 'prepare_outreach_draft'
+    or task.trigger_type is distinct from 'candidate_action' or task.trigger_reference is distinct from 'candidate_requested_outreach_draft'
     or task.status is distinct from 'running' or task.owner_principal_id is distinct from actor
     or task.opportunity_id is distinct from ref_op or route.outreach_message_id is distinct from message.id then
     raise exception 'Exact running Outreach preparation task owned by this worker is required';
@@ -489,7 +493,7 @@ begin
   update public.outreach_messages set review_next_action_id=action_id where workspace_id=target_workspace_id and id=new_id;
   if payload ? 'evidence' then
    if jsonb_typeof(payload->'evidence')<>'array' or jsonb_array_length(payload->'evidence')>30 then raise exception 'Evidence must be a bounded array'; end if;
-   foreach permission_key in array array['evidence_story.read','project.read','skill.read'] loop
+   foreach permission_key in array array['candidate_knowledge.read'] loop
     if not public.has_permission(target_workspace_id,permission_key) then raise exception 'Candidate knowledge read permission is required'; end if;
    end loop;
    for evidence in select value from jsonb_array_elements(payload->'evidence') loop
@@ -546,6 +550,7 @@ begin
     raise exception 'Choose a future follow-up time or explicitly choose no follow-up';
    end if;
    if payload->>'exact_content' is distinct from message.content then raise exception 'Exact sent content must match this saved version; save edits as a new version'; end if;
+   if message.subject is not null and payload->>'exact_subject' is distinct from message.subject then raise exception 'Exact sent subject must match the saved subject'; end if;
    if contact.status<>'active' then raise exception 'An active recipient contact is required'; end if;
    recipient:=payload->'recipient';
    if jsonb_typeof(recipient) is distinct from 'object' or recipient->>'name' is distinct from contact.full_name
@@ -557,11 +562,23 @@ begin
     where workspace_id=target_workspace_id and id=coalesce(message.send_next_action_id,message.review_next_action_id)
     and status='open' and (assigned_to_principal_id is null or assigned_to_principal_id=actor);
    if not found then raise exception 'The exact outreach action is unavailable to this human'; end if;
-   update public.outreach_messages set message_status='sent',approval_status='approved',approved_by_principal_id=actor,
+   update public.outreach_messages set message_status='sent',approval_status='approved',approved_by_principal_id=coalesce(approved_by_principal_id,actor),
     approved_at=coalesce(approved_at,now()),sent_by_principal_id=actor,sent_at=occurred,response_status='waiting',
     recipient_snapshot=recipient,opportunity_snapshot=case when ref_op is not null then jsonb_build_object('id',op.id,'title',op.title,'company_id',op.company_id) end,
     external_reference=nullif(payload->>'external_reference',''),revision=revision+1,updated_at=now()
     where workspace_id=target_workspace_id and id=message.id;
+   if payload->>'resolves_follow_up_task_id' is not null then
+    select t.* into task from public.internal_tasks t join public.outreach_task_links l on l.workspace_id=t.workspace_id and l.internal_task_id=t.id
+     where t.workspace_id=target_workspace_id and t.id=(payload->>'resolves_follow_up_task_id')::uuid
+      and l.outreach_engagement_id=engagement.id and l.purpose='follow_up' and t.opportunity_id is not distinct from ref_op
+      and t.task_type='outreach_follow_up' and t.domain='outreach' and t.status not in ('completed','cancelled');
+    if not found then raise exception 'Exact previous follow-up task is unavailable'; end if;
+    if exists(select 1 from public.next_actions where workspace_id=target_workspace_id and internal_task_id=task.id and status='open'
+     and assigned_to_principal_id is not null and assigned_to_principal_id<>actor) then raise exception 'Follow-up action belongs to another human'; end if;
+    update public.next_actions set status='completed',completed_at=now() where workspace_id=target_workspace_id and internal_task_id=task.id and status='open';
+    update public.internal_tasks set status='completed',completed_at=now(),result_summary='Human recorded an exact subsequent outreach message'
+     where workspace_id=target_workspace_id and id=task.id;
+   end if;
    select internal_task_id into task_id from public.outreach_task_links where workspace_id=target_workspace_id and outreach_message_id=message.id and purpose='review';
    update public.internal_tasks set status='completed',completed_at=now(),result_summary='Human recorded the exact sent outreach'
     where workspace_id=target_workspace_id and id=task_id and status not in ('completed','cancelled');
@@ -579,6 +596,18 @@ begin
    result:=jsonb_build_object('message_id',message.id,'follow_up_task_id',task_id);summary:='Human confirmed exact outreach was sent externally';
   end if;
   entity_id:=message.id;entity_type:='outreach_message';
+ elsif command='resolve_follow_up' then
+  if engagement.id is null or nullif(btrim(payload->>'reason'),'') is null then raise exception 'Engagement and follow-up decision reason are required'; end if;
+  select t.* into task from public.internal_tasks t join public.outreach_task_links l on l.workspace_id=t.workspace_id and l.internal_task_id=t.id
+   where t.workspace_id=target_workspace_id and t.id=(payload->>'task_id')::uuid and l.outreach_engagement_id=engagement.id
+    and l.purpose='follow_up' and t.domain='outreach' and t.task_type='outreach_follow_up' and t.status not in ('completed','cancelled');
+  if not found then raise exception 'Exact follow-up task is unavailable'; end if;
+  if exists(select 1 from public.next_actions where workspace_id=target_workspace_id and internal_task_id=task.id and status='open'
+   and assigned_to_principal_id is not null and assigned_to_principal_id<>actor) then raise exception 'Follow-up action belongs to another human'; end if;
+  update public.next_actions set status='completed',completed_at=now() where workspace_id=target_workspace_id and internal_task_id=task.id and status='open';
+  update public.internal_tasks set status='completed',completed_at=now(),result_summary='Human resolved follow-up review: '||btrim(payload->>'reason')
+   where workspace_id=target_workspace_id and id=task.id;
+  ref_op:=task.opportunity_id;result:=jsonb_build_object('task_id',task.id);entity_id:=task.id;entity_type:='internal_task';summary:='Human resolved outreach follow-up without claiming a send';
  elsif command='record_received' then
   if engagement.id is null or nullif(btrim(payload->>'source_system'),'') is null or nullif(btrim(payload->>'external_reference'),'') is null then raise exception 'Engagement and verified external source reference are required'; end if;
   occurred:=(payload->>'received_at')::timestamptz;
@@ -664,7 +693,10 @@ begin
  insert into public.activity_events(workspace_id,opportunity_id,event_type,event_timestamp,actor_principal_id,summary,details,source_system,
   source_reference,idempotency_key,created_by_principal_id)
  values(target_workspace_id,ref_op,'outreach_'||command,coalesce(occurred,now()),actor,summary,
-  jsonb_build_object('request',input,'result',result)::text,'job_hunt_hq',request_id::text,'hq-outreach:'||actor::text||':'||request_id::text,actor) returning id into event_id;
+  jsonb_build_object('request',input,'result',result)::text,
+  case when command in ('record_received','record_interaction') then payload->>'source_system' else 'job_hunt_hq' end,
+  case when command='record_received' then payload->>'external_reference' when command='record_interaction' then payload->>'source_reference' else request_id::text end,
+  'hq-outreach:'||actor::text||':'||request_id::text,actor) returning id into event_id;
  insert into public.activity_event_links(workspace_id,activity_event_id,entity_type,entity_id,relationship_type)
  values(target_workspace_id,event_id,entity_type,entity_id,'outreach_domain');
  if engagement.id is not null and entity_type<>'outreach_engagement' then
