@@ -90,3 +90,18 @@ references only. All new-table privileges are explicitly revoked before adding t
 narrow authenticated grants, protecting against hosted default privileges. Catalog
 tests confirm RLS, denied anonymous RPC execution and SECURITY INVOKER. New FK/audit
 references have supporting indexes. Hosted advisors remain a rollout gate.
+
+## Native PostgreSQL17.6 verification
+
+`node scripts/offer-concurrency-check.mjs /absolute/postgres/bin /absolute/psql`
+uses the shared owned disposable private-socket harness, TCP disabled, no inherited
+DB credentials,25 unchanged non-identity migrations plus Offer001. Five races observe
+Session B waiting on Session A's Opportunity lock: identical receipt retry, competing
+term revisions, competing Accept/Decline, identical terminal retry and request-ID
+reuse with changed input. Assertions prove one effect, one new version, one immutable
+exact-terms terminal decision, equal retry results and rejection of stale/mismatched
+losers. Private-ledger tests also deny foreign tenants, other same-Workspace Owners,
+agents, suspended memberships, missing domain manage permissions, forged actor
+inserts and UPDATE/DELETE; generic Activity contains no sensitive request marker.
+The owned cluster is stopped and removed in finally; package/binary details are in
+the independent Interview review. No production connection or offer communication.
