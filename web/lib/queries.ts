@@ -76,6 +76,7 @@ export async function loadWorkspace(
   workspaceId: string,
   principalId: string,
   humanActions = false,
+  materialDelivery = false,
 ): Promise<WorkspaceData> {
   const paged = <T>(
     query: (from: number, to: number) => PromiseLike<ReadResult>,
@@ -216,7 +217,7 @@ export async function loadWorkspace(
       client
         .from("internal_tasks")
         .select(
-          "id,opportunity_id,task_type,domain,status,trigger_type,trigger_reference",
+          "id,opportunity_id,task_type,domain,status,trigger_type,trigger_reference,source_activity_event_id",
         )
         .eq("workspace_id", workspaceId)
         .order("id")
@@ -241,7 +242,18 @@ export async function loadWorkspace(
         .range(a, b),
     ),
   ]);
+  const artifacts = materialDelivery
+    ? await paged<NonNullable<WorkspaceData["artifacts"]>[number]>((a, b) =>
+        client
+          .from("application_material_artifacts")
+          .select("*")
+          .eq("workspace_id", workspaceId)
+          .order("id")
+          .range(a, b),
+      )
+    : [];
   return {
+    artifacts,
     opportunities,
     companies,
     evaluations,

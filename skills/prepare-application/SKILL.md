@@ -159,3 +159,19 @@ node --experimental-strip-types worker-support/cli.mts preparation < synthetic-o
 Pass JSON with `task` (workspace, opportunity, task type/domain, explicit candidate trigger, title/description) and accessible `packages` (IDs, workspace/opportunity, package number, status, candidate notes). Pass the validated resulting Package ID and notes to the Application Agent; the agent does not need Internal Task read/execute permission. `reuse` means prepare that exact draft/working Package, `create` preserves the initial-pursuit creation flow, and `already_ready` means reuse existing reviewed results without regenerating. Missing/foreign/archived/superseded revision targets or missing candidate authority fail closed. This helper does not compose materials, write data, or change authority. Retain the existing worker workflow and permissions. Use Node 22 or newer, with no credentials in the input.
 
 This preserves the distinction between machine orchestration authority, narrow Application Agent authority, and the candidate's authority to approve and submit.
+
+## Proposed exact-file publication (not deployed)
+
+After the separately proposed intake/material-delivery migration and actual worker adoption are approved, publish exact files while the selected Material is a current `draft`, before moving it to `candidate_review`. Existing `application.prepare` authority is sufficient; no approval, submission, task-execution or service credential is added.
+
+Keep the canonical renderer unchanged. Serialize exact renderer input, render DOCX, convert that exact DOCX to PDF, visually inspect every page and parse PDF text. Resume QA requires exactly two pages with `executive-brief-two-page-v2`. Bind QA to SHA-256 of exact input, DOCX and PDF plus renderer key/page count. Never attest to uninspected bytes.
+
+Where the actual runtime has the repository and Node 22+, this optional helper produces the two registration rows:
+
+```sh
+node --experimental-strip-types worker-support/material-artifacts.mts context.json renderer-input.json final.docx final.pdf qa.json
+```
+
+It does not render, QA, upload, approve or write. Without that runtime, follow its self-contained provenance contract. Context contains exact Material ID, Workspace, type/status/current-version state and renderer key. QA contains `visual_pass`, `parse_back_pass`, integral `page_count`, `renderer_key`, `input_sha256`, `docx_sha256`, `pdf_sha256` for the exact bytes.
+
+Upload privately to `hq-materials` at `{workspace}/{material}/{sha256}.docx` and `.pdf`, correct MIME and no upsert. Read back and verify bytes using the same narrow prepare identity. Insert immutable `application_material_artifacts` rows, preferably together in one transaction; reread and verify both share provenance. Publication failure keeps the package preparing with a clear blocker. Uncertain retries reuse exact paths/bytes and reread existing registrations, never overwrite. Corrected content/conversion creates a new Material version. Historical registrations and bytes remain unchanged when later approved/submitted.

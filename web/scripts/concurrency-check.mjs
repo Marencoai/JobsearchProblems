@@ -187,7 +187,14 @@ try {
   );
   started = true;
   assert.equal(await query("show listen_addresses;"), "");
-  await query(`create role anon; create role authenticated; create schema auth;
+  await query(`create role anon; create role authenticated;
+    create schema storage;
+    create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+    create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text,metadata jsonb,unique(bucket_id,name));
+    alter table storage.objects enable row level security;
+    grant usage on schema storage to authenticated;
+    grant select,insert,update,delete on storage.objects to authenticated;
+    create schema auth;
     create table auth.users(id uuid primary key,email text);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid; $$;
     create function auth.jwt() returns jsonb language sql stable as $$ select '{}'::jsonb; $$;
@@ -217,6 +224,64 @@ try {
       `select set_config('request.jwt.claim.sub',${literal(user)},false); select json_build_object('id',public.current_principal_id());`,
     )
   ).id;
+
+  // Prove the request-scoped advisory lock serializes separate connections.
+  async function intakeRace(changed = false) {
+    const request = randomUUID(),
+      key = "hq:manual-intake:" + principal + ":" + request;
+    const evidence = {
+      mode: "url",
+      url: "https://example.invalid/native-role",
+    };
+    const intakeCall = (input) =>
+      `select hq_request_job_intake(${literal(workspace)},${literal(request)},${literal(JSON.stringify(input))}::jsonb);`;
+    const first = query(
+      `begin; ${auth()} select pg_advisory_xact_lock(hashtextextended(${literal(workspace + key)},0)); select pg_sleep(1); ${intakeCall(evidence)} commit;`,
+      "hq-intake-first",
+    );
+    const firstHandled = first.then(
+      (value) => ({ status: "fulfilled", value }),
+      (reason) => ({ status: "rejected", reason }),
+    );
+    await waitFor("hq-intake-first", "Timeout");
+    const second = query(
+      `begin; ${auth()} ${intakeCall(changed ? { ...evidence, url: "https://example.invalid/different" } : evidence)} commit;`,
+      "hq-intake-second",
+    );
+    const secondHandled = second.then(
+      (value) => ({ status: "fulfilled", value }),
+      (reason) => ({ status: "rejected", reason }),
+    );
+    await waitFor("hq-intake-second", "Lock");
+    const results = await Promise.all([firstHandled, secondHandled]);
+    assert.equal(results[0].status, "fulfilled");
+    if (changed) {
+      assert.equal(results[1].status, "rejected");
+      assert.match(results[1].reason.message, /different intake evidence/);
+    } else {
+      assert.equal(results[1].status, "fulfilled");
+      assert.deepEqual(rpcResult(results[0]), rpcResult(results[1]));
+    }
+    assert.equal(
+      await query(
+        `select count(*) from activity_events where idempotency_key=${literal(key)};`,
+      ),
+      "1",
+    );
+    assert.equal(
+      await query(
+        `select count(*) from internal_tasks where idempotency_key=${literal(key + ":task")};`,
+      ),
+      "1",
+    );
+    console.log(
+      changed
+        ? "PASS conflicting manual intake retry: second payload rejected; one event/task"
+        : "PASS identical manual intake retry: same result and one event/task; second connection observed Lock wait",
+    );
+  }
+  await intakeRace();
+  await intakeRace(true);
 
   const pursuit = await evaluatedFixture();
   let results = await race(

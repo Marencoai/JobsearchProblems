@@ -1793,3 +1793,98 @@ small {
   gap: 10px;
   margin-top: 24px;
 }
+
+.intake-body,
+.artifact-delivery {
+  padding: 24px;
+}
+.intake-body {
+  display: grid;
+  gap: 20px;
+}
+.intake-body label {
+  display: grid;
+  gap: 8px;
+}
+.intake-body input,
+.intake-body textarea,
+.intake-body select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cad7e3;
+  border-radius: 8px;
+  font: inherit;
+}
+.intake-body textarea {
+  resize: vertical;
+}
+.artifact-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.artifact-preview {
+  width: 100%;
+  max-height: 52vh;
+  overflow: auto;
+  border: 1px solid #cad7e3;
+  margin-top: 16px;
+  padding: 12px;
+}
+.intake-dialog .modal-footer {
+  flex-wrap: wrap;
+}
+.pending-intake {
+  margin: 12px 24px;
+  padding: 16px;
+  border: 1px solid #d9e2ea;
+  border-radius: 12px;
+  background: white;
+}
+.pending-intake p {
+  margin: 6px 0;
+}
+
+.pdf-pages canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 12px;
+  background: white;
+  border: 1px solid #d9e2ea;
+}
+.pdf-text {
+  padding: 12px;
+}
+.pdf-text summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.artifact-preview p {
+  padding: 8px;
+}
+
+.material-dialog {
+  overflow: hidden;
+}
+.modal-header,
+.modal-footer {
+  flex-shrink: 0;
+}
+.material-content {
+  min-height: 0;
+}
+.material-dialog:has(.artifact-delivery) .material-content {
+  min-height: 75px;
+  max-height: 20vh;
+  flex-shrink: 0;
+}
+.artifact-delivery {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.intake-dialog form {
+  min-height: 0;
+  overflow: auto;
+}

@@ -8,6 +8,8 @@ export function GET() {
     // Enable only after live Phase 1 acceptance and approval/deployment of the
     // reviewed migration. The default remains the existing read-only preview.
     humanActions: process.env["HQ_HUMAN_ACTIONS"] === "1",
+    manualIntake: process.env["HQ_MANUAL_INTAKE"] === "1",
+    materialDelivery: process.env["HQ_MATERIAL_DELIVERY"] === "1",
   };
   const headers = { "Cache-Control": "private, no-store" };
   if (!validConfig(config))

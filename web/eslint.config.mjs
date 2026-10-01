@@ -10,5 +10,6 @@ export default defineConfig([
     "coverage/**",
     "next-env.d.ts",
     "lib/database.types.ts",
+    "public/pdf.worker.min.mjs",
   ]),
 ]);

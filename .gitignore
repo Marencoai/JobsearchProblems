@@ -1,4 +1,4 @@
-web/node_modules/
+web/node_modules
 web/.next/
 web/coverage/
 web/.env*
@@ -8,3 +8,5 @@ web/test-results/
 web/playwright-report/
 .DS_Store
 supabase/.temp/
+
+web/public/pdf.worker.min.mjs
