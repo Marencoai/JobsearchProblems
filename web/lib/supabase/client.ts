@@ -1,3 +1,4 @@
+import { OFFER_TABLES } from "../offer";
 import { INTERVIEW_TABLES } from "../interview";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
@@ -27,6 +28,7 @@ export type PublicConfig = {
   key: string;
   humanActions?: boolean;
   interview?: boolean;
+  offer?: boolean;
 };
 export const READ_TABLES = new Set([
   "principals",
@@ -71,6 +73,7 @@ export function readOnlyFetch(
   nativeFetch: typeof fetch,
   humanActions = false,
   interview = false,
+  offer = false,
 ): typeof fetch {
   return async (input, init) => {
     const url = new URL(
@@ -98,7 +101,8 @@ export function readOnlyFetch(
     const dataRead =
       method === "GET" &&
       (READ_TABLES.has(table) ||
-        (interview && INTERVIEW_TABLES.includes(table)));
+        (interview && INTERVIEW_TABLES.includes(table)) ||
+        (offer && OFFER_TABLES.includes(table)));
     const humanRpc =
       humanActions &&
       method === "POST" &&
@@ -114,6 +118,10 @@ export function readOnlyFetch(
         logout ||
         dataRead ||
         humanRpc ||
+        (offer &&
+          method === "POST" &&
+          url.pathname === "/rest/v1/rpc/hq_offer_action" &&
+          !url.search) ||
         (interview &&
           method === "POST" &&
           url.pathname === "/rest/v1/rpc/hq_interview_action" &&
@@ -149,6 +157,7 @@ export function createHqClient(
         nativeFetch,
         config.humanActions === true,
         config.interview === true,
+        config.offer === true,
       ),
     },
   });

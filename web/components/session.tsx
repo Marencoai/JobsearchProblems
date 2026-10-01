@@ -1,4 +1,6 @@
 "use client";
+import { OfferContext } from "./offer-panel";
+import { offerService, type OfferService } from "@/lib/offer";
 import { InterviewContext } from "./interview-panel";
 import { interviewService, type InterviewService } from "@/lib/interview";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -41,6 +43,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState("");
   const [humanActions, setHumanActions] = useState(false);
   const [interview, setInterview] = useState<InterviewService | null>(null);
+  const [offer, setOffer] = useState<OfferService | null>(null);
   const refresh = useRef<() => Promise<void>>(async () => {});
   useEffect(() => {
     refresh.current = reload;
@@ -63,6 +66,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (config.interview === true)
           setInterview(
             interviewService(
+              instance,
+              () => workspaceRef.current,
+              async () => {
+                await refresh.current();
+              },
+            ),
+          );
+        if (config.offer === true)
+          setOffer(
+            offerService(
               instance,
               () => workspaceRef.current,
               async () => {
@@ -232,7 +245,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         ready,
         error,
         humanActions,
-        domainActions: !!interview,
+        domainActions: !!interview || !!offer,
         act,
         signIn,
         signOut,
@@ -241,7 +254,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       <InterviewContext.Provider value={identity ? interview : null}>
-        {children}
+        <OfferContext.Provider value={identity ? offer : null}>
+          {children}
+        </OfferContext.Provider>
       </InterviewContext.Provider>
     </Context.Provider>
   );
