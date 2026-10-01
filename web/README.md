@@ -1,5 +1,7 @@
 # Job Hunt HQ · Phase 1
 
+Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW.md](PHASE2_REVIEW.md). The default runtime remains read-only. Only after authenticated Phase 1 acceptance and explicit migration approval should the server environment set `HQ_HUMAN_ACTIONS=1`. That enables just the `hq_human_action` RPC and reads the new deferral column; it never permits direct table writes or other RPCs. Do not enable the flag against the pre-migration database.
+
 Read-only Next.js candidate workspace over the existing Supabase Auth/principal/workspace/RLS model. The existing worker workflows, schema, migrations, permissions, renderer, and job data are unchanged.
 
 ## Run locally
@@ -40,6 +42,8 @@ npm run build
 Tests cover stage precedence, history, score/authorization separation, version selection, linked activity, pagination, fail-closed identity resolution, workspace filters, SDK integration with a mocked network, transport write rejection, and UI search/tabs/material previews/disabled actions. Tests never create production fixtures. These tests validate client boundaries; authenticated live browser QA is required to establish production RLS behavior.
 
 For synthetic visual QA only, launch development with `HQ_QA_FIXTURES=1` and open `/qa`. The page is clearly labelled a synthetic workspace and uses the same UI components. `/jobs` continues to require real authentication. `/qa` always returns 404 in a production build, regardless of that flag. Fixtures are never a data-loading fallback.
+
+Add `&actions=1` to a synthetic QA job URL to preview action dialogs, such as `/qa?job=resume&actions=1`. The synthetic callback only displays a confirmation; it never connects to a database, executes a worker, or changes production. SQL transaction tests use an in-memory PostgreSQL 17 PGlite harness, replay actual foundational migrations with a synthetic Auth shim, and execute as `authenticated`. The two migrations provisioning production agent identities are excluded. No test connection string or persistent test database is used.
 
 ## Approval gates
 

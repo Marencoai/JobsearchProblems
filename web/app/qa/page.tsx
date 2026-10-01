@@ -4,13 +4,13 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ job?: string }>;
+  searchParams: Promise<{ job?: string; actions?: string }>;
 }) {
   if (
     process.env.NODE_ENV !== "development" ||
     process.env.HQ_QA_FIXTURES !== "1"
   )
     notFound();
-  const { job } = await searchParams;
-  return <QaScreen selectedId={job} />;
+  const { job, actions } = await searchParams;
+  return <QaScreen selectedId={job} actions={actions === "1"} />;
 }

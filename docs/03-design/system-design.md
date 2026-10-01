@@ -8,6 +8,22 @@ It describes how the major system components should work together, where authori
 
 The system should optimize for candidate attention rather than activity volume.
 
+## Job Hunt HQ human actions (proposed, 2026-10-01)
+
+The candidate UI keeps the existing Auth → human Principal → active Workspace membership → permissions/RLS chain. The seven UI stages remain derived views of existing records. A score does not authorize pursuit.
+
+The proposed `hq_human_action` SECURITY INVOKER RPC groups each explicit candidate action into one transaction. It uses existing table policies and lifecycle triggers, locks the Opportunity, checks reviewed record versions, and records an attributed Activity Event with an idempotency key. No role permissions or RLS policies change. The UI's human-action capability defaults off until authenticated Phase 1 acceptance and production migration approval.
+
+- Pursue completes the selected candidate decision, records pursuit, and queues the existing application worker using its candidate-action contract. There is no second strategy approval gate.
+- Pass requires a reason and closes the Opportunity using existing withdrawn semantics while preserving evaluations and history.
+- Save for later sets `next_actions.available_after`; the action stays open for deduplication but is excluded from current attention until that time. It never authorizes preparation.
+- Package approval confirms the exact current immutable Material IDs, respects unresolved blocking gaps, and reconciles application review/apply actions. Historical unlinked handoffs are resolved only when the candidate explicitly reviews that exact action.
+- Request changes creates a new draft Package and queues the existing worker. Approved and submitted artifacts are preserved; submitted Packages cannot be reopened through this action.
+- Positioning notes may change on a working Package. Approved positioning requires a new Package.
+- Submission is a separate explicit confirmation after the candidate completes the employer application. Existing triggers attribute the human and snapshot the exact submitted Materials. The browser does not submit to an employer.
+
+The review package, tests, rollout gates, and rollback strategy are in [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md). This proposal has not been applied to production. Research refresh remains owned by the research worker; no new browser research engine is introduced.
+
 1. System Components
 
 1.1 Opportunity Activity Feed

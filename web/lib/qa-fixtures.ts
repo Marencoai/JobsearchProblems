@@ -125,6 +125,7 @@ export function action(id = "decide", changes: Partial<Action> = {}): Action {
     priority: 70,
     due_at: null,
     status: "open",
+    updated_at: "2026-10-01T12:00:00Z",
     ...changes,
   };
 }

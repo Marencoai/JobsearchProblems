@@ -33,6 +33,10 @@ Before each run read:
 14. If priorities materially changed, create/activate a new version so the old plan is preserved.
 15. Deliver the candidate-facing Morning Queue.
 
+## HQ Deferral Contract (pending migration rollout)
+
+Once `next_actions.available_after` is deployed, keep all open actions in the deduplication set. Exclude actions with a future `available_after` from ranking, Today's One Thing, new Plan Items, and candidate-facing delivery, including items in an existing active Plan. Null means available now. Resume eligibility on the same action when that time arrives; never create a replacement to bypass deferral. Preserve historical Plan snapshots and the existing versioning rule. Do not query this proposed column before its migration is applied.
+
 ## Opportunity Review Action
 
 A `decide` action asks Diana to review the Evaluation and choose Pursue / Pass / Defer.

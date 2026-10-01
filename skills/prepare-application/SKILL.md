@@ -146,4 +146,8 @@ When this skill is invoked from the scheduled Application Queue:
 6. after preparation succeeds, the Owner/orchestrator records the Internal Task result and completes the task;
 7. the package stops at `ready_for_review` and remains a human approval gate.
 
+## HQ Revision Requests
+
+The proposed HQ human-action RPC queues revisions through the same explicit candidate-action contract. A revision task description identifies the new draft Package and the candidate's requested changes. Validate that Package belongs to the task's Workspace and Opportunity, reuse that draft, read its `candidate_notes`, and prepare new Material versions there. Never choose the older approved Package or mutate its historical Materials. Initial pursuit tasks continue through the existing create/reuse flow. No additional pursuit or strategy approval is required.
+
 This preserves the distinction between machine orchestration authority, narrow Application Agent authority, and the candidate's authority to approve and submit.

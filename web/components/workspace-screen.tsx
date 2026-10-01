@@ -58,8 +58,11 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
             </p>
           )}
           <p className="login-note">
-            <ShieldCheck size={18} /> Read-only preview. Your session stays in
-            browser memory; reloading signs you out.
+            <ShieldCheck size={18} />{" "}
+            {session.humanActions
+              ? "Candidate workspace."
+              : "Read-only preview."}{" "}
+            Your session stays in browser memory; reloading signs you out.
           </p>
         </section>
       </main>
@@ -75,6 +78,7 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onWorkspace={(id) => void session.selectWorkspace(id)}
       onReload={() => void session.reload()}
       onSignOut={() => void session.signOut()}
+      onAction={session.humanActions ? session.act : undefined}
     />
   );
 }

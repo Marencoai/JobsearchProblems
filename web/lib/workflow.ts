@@ -30,6 +30,7 @@ export function deriveStage(
   actions: Action[],
   tasks: Task[],
   pkg?: Package,
+  now = new Date(),
 ): { stage: Stage | null; action?: Action; nextAction: string } {
   if (
     opportunity.opportunity_stage === "closed" ||
@@ -42,7 +43,13 @@ export function deriveStage(
     };
   }
   const open = actions
-    .filter((a) => a.opportunity_id === opportunity.id && a.status === "open")
+    .filter(
+      (a) =>
+        a.opportunity_id === opportunity.id &&
+        a.status === "open" &&
+        (!a.available_after ||
+          new Date(a.available_after).getTime() <= now.getTime()),
+    )
     .sort(actionOrder);
   const interviewAction = open.find(
     (a) => actionStage(a, tasks) === "Interview",
@@ -72,7 +79,22 @@ export function deriveStage(
     return { stage: "Resume", nextAction: "Review your application package" };
   if (opportunity.opportunity_stage === "pursuing")
     return { stage: "Pursue", nextAction: "Preparation is underway" };
-  return { stage: "Evaluate", nextAction: "Review fit and decide" };
+  const deferred = actions
+    .filter(
+      (a) =>
+        a.opportunity_id === opportunity.id &&
+        a.status === "open" &&
+        a.available_after &&
+        new Date(a.available_after) > now,
+    )
+    .sort((a, b) => a.available_after!.localeCompare(b.available_after!))[0];
+  return {
+    stage: "Evaluate",
+    nextAction: deferred
+      ? "Saved for later · review " +
+        new Date(deferred.available_after!).toLocaleDateString()
+      : "Review fit and decide",
+  };
 }
 export function buildJobViews(data: WorkspaceData): JobView[] {
   return data.opportunities
@@ -109,6 +131,21 @@ export function buildJobViews(data: WorkspaceData): JobView[] {
       if (workflow.stage === "Evaluate" && !evaluation)
         workflow.nextAction = "Evaluation is pending";
       return {
+        // An unlinked approval is surfaced with its title for explicit human
+        // reconciliation; it does not independently invent a Resume stage.
+        reviewAction: data.actions
+          .filter(
+            (a) =>
+              a.opportunity_id === opportunity.id &&
+              a.status === "open" &&
+              (a.action_type === "approve" || a.action_type === "review") &&
+              ((!a.internal_task_id && a.action_type === "approve") ||
+                data.tasks.some(
+                  (t) =>
+                    t.id === a.internal_task_id && t.domain === "application",
+                )),
+          )
+          .sort(actionOrder)[0],
         opportunity,
         company: data.companies.find((c) => c.id === opportunity.company_id),
         evaluation,

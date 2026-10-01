@@ -75,6 +75,7 @@ export async function loadWorkspace(
   client: HqClient,
   workspaceId: string,
   principalId: string,
+  humanActions = false,
 ): Promise<WorkspaceData> {
   const paged = <T>(
     query: (from: number, to: number) => PromiseLike<ReadResult>,
@@ -199,7 +200,8 @@ export async function loadWorkspace(
       client
         .from("next_actions")
         .select(
-          "id,opportunity_id,internal_task_id,source_activity_event_id,assigned_to_principal_id,action_type,title,context_summary,priority,due_at,status",
+          "id,opportunity_id,internal_task_id,source_activity_event_id,assigned_to_principal_id,action_type,title,context_summary,priority,due_at,status,updated_at" +
+            (humanActions ? ",available_after" : ""),
         )
         .eq("workspace_id", workspaceId)
         .or(
