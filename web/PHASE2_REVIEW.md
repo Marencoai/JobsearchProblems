@@ -85,8 +85,8 @@ Existing actions receive null `available_after`, meaning available now. No data 
 
 ## Approval and rollout gates
 
-1. Finish Phase 1 acceptance: Diana signs in normally at `http://127.0.0.1:3000/jobs` and browses real active opportunities, evaluation details, and history through her existing RLS. This is still pending; no password/session is copied from another app.
-2. Obtain explicit approval to apply this exact migration to Supabase project `JobsearchProblems` (`xhhfnxswwspejdxjyvzz`). The Master Build Brief §23 gates “applying production schema migrations”; the approved plan also gates production changes on authenticated Phase 1 acceptance.
+1. **Phase 1 accepted, October 1, 2026:** Diana confirmed normal sign-in as Diana and review of multiple real opportunities, stage organization, evaluation scores, tabs, navigation, and real Supabase data. She explicitly approved Phase 1 real-data acceptance. See [PHASE1_QA.md](PHASE1_QA.md). The two recorded later product improvements are non-blocking and have not been started.
+2. **Next gate · migration approval explicitly withheld:** Obtain explicit approval to apply this exact migration to Supabase project `JobsearchProblems` (`xhhfnxswwspejdxjyvzz`). Diana expressly instructed not to apply the Phase 2 production migration yet. Do not apply it or enable `HQ_HUMAN_ACTIONS`. The Master Build Brief §23 gates “applying production schema migrations”; Phase 1 acceptance satisfies its prerequisite but does not grant migration approval.
 3. Before applying, recheck migration inventory and PostgreSQL compatibility against the then-current project. Apply only the reviewed forward migration, never a reset or automatic push of unrelated migrations.
 4. Roll out the matching UI and worker consumer contracts; enable `HQ_HUMAN_ACTIONS=1` only after the RPC/column exist. Verify hosted human/agent boundaries without creating production test rows. Any test mutation requires separately identified non-production fixtures.
 5. Resume remaining v1 work under the existing approvals. Production domain migrations still need one consolidated approval per Outreach, Interview, and Offer domain.
@@ -97,4 +97,4 @@ Disable `HQ_HUMAN_ACTIONS` and restart only the HQ runtime to restore the existi
 
 ## Remaining v1 work
 
-This is the first production-gated human-action change, not completed v1. Hosted Phase 1 acceptance and hosted action validation remain pending. Durable PDF/DOCX delivery and the research-refresh worker request integration remain to finish. Manual intake, structured Outreach/Interview/Offer, and full end-to-end validation are subsequent phases. No completed-phase claim substitutes for those gates or checks.
+This is the first production-gated human-action change, not completed v1. Phase 1 is accepted; Phase 2 production migration approval remains explicitly withheld, and hosted action validation remains pending. Durable PDF/DOCX delivery and the research-refresh worker request integration remain to finish. Manual intake, structured Outreach/Interview/Offer, and full end-to-end validation are subsequent phases. The two deferred non-blocking product improvements are tracked in [`docs/02-requirements/requirements.md`](../docs/02-requirements/requirements.md#job-hunt-hq-deferred-product-improvements). No completed-phase claim substitutes for remaining gates or checks.

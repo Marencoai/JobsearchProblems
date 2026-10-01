@@ -2,6 +2,8 @@
 
 Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW.md](PHASE2_REVIEW.md). The default runtime remains read-only. Only after authenticated Phase 1 acceptance and explicit migration approval should the server environment set `HQ_HUMAN_ACTIONS=1`. That enables just the `hq_human_action` RPC and reads the new deferral column; it never permits direct table writes or other RPCs. Do not enable the flag against the pre-migration database.
 
+**Acceptance update · October 1, 2026:** Diana explicitly accepted Phase 1 after signing in and reviewing multiple real opportunities. [PHASE1_QA.md](PHASE1_QA.md) records that approval; the [requirements document](../docs/02-requirements/requirements.md#job-hunt-hq-deferred-product-improvements) tracks her two deferred, non-blocking improvements. The next gate is explicit Phase 2 production migration approval, which Diana has withheld. The migration and human-action flag remain inactive.
+
 Read-only Next.js candidate workspace over the existing Supabase Auth/principal/workspace/RLS model. The existing worker workflows, schema, migrations, permissions, renderer, and job data are unchanged.
 
 ## Run locally
