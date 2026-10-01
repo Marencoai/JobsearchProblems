@@ -7785,3 +7785,12 @@ interview actions. It supports human-reviewed source recording, prep start and
 prep save/review. Browser transport permits only this RPC when `HQ_INTERVIEW=1`;
 raw table writes remain blocked. Default is off and performs no new-table reads.
 No meeting invitation or external message is performed.
+
+
+Interview exact retry bodies live in `hq_interview_action_requests`, with SELECT
+and INSERT restricted to the current active human actor and interview.read/manage
+permissions. Generic Activity details retain safe references only. The ledger is
+outside frontend read allowlists, append-only, RLS enabled, and denies anonymous
+access. The separate approval package includes these proposed permission impacts.
+The Interview Contact dependency is pinned to Outreach PR3 commit
+`2af79c2dfa31611083bf3f233d02b82bf890b8fe` (`full_name`, nullable `title`, Workspace UUID FK).

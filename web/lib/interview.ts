@@ -45,6 +45,9 @@ export type InterviewEvidence = {
   project_id: string | null;
   skill_id: string | null;
   relevance_summary: string | null;
+  story_title?: string;
+  story_text?: string;
+  validation_status?: string;
 };
 export type InterviewPerson = {
   interview_id: string;
@@ -91,6 +94,7 @@ export const INTERVIEW_TABLES = [
   "interview_question_evidence",
   "interview_contacts",
   "contacts",
+  "evidence_stories",
 ];
 export function interviewService(
   client: HqClient,
@@ -157,21 +161,55 @@ export function interviewService(
           questions.map((q) => q.id),
           scope,
         ),
-        read<{ id: string; name: string; title: string | null }>(
+        read<{ id: string; full_name: string; title: string | null }>(
           "contacts",
           "id",
           links.map((l) => l.contact_id),
           scope,
         ),
       ]);
+      const stories = await read<{
+        id: string;
+        title: string;
+        situation: string | null;
+        actions_taken: string | null;
+        outcome: string | null;
+        quantitative_impact: string | null;
+        validation_status: string;
+      }>(
+        "evidence_stories",
+        "id",
+        evidence.flatMap((e) =>
+          e.evidence_story_id ? [e.evidence_story_id] : [],
+        ),
+        scope,
+      );
+      const enriched = evidence.map((e) => {
+        const story = stories.find((s) => s.id === e.evidence_story_id);
+        return story
+          ? {
+              ...e,
+              story_title: story.title,
+              story_text: [
+                story.situation,
+                story.actions_taken,
+                story.outcome,
+                story.quantitative_impact,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+              validation_status: story.validation_status,
+            }
+          : e;
+      });
       return {
         interviews,
         preparations,
         questions,
-        evidence,
+        evidence: enriched,
         people: links.map((l) => ({
           ...l,
-          name: contacts.find((c) => c.id === l.contact_id)?.name ?? null,
+          name: contacts.find((c) => c.id === l.contact_id)?.full_name ?? null,
           title: contacts.find((c) => c.id === l.contact_id)?.title ?? null,
         })),
       };
@@ -242,8 +280,11 @@ export function cheatSheet(
       .filter((e) => e.interview_question_id === q.id)
       .slice(0, 2))
       lines.push(
-        `Story/evidence: ${e.relevance_summary ?? "See linked knowledge"} [${e.evidence_story_id ?? e.project_id ?? e.skill_id}]`,
+        `Story/evidence: ${e.relevance_summary ?? "See linked knowledge"} ${e.story_title ?? ""} ${e.story_text ?? ""}`,
       );
   }
-  return lines.map((l) => l.slice(0, 800)).join("\n\n");
+  return lines
+    .map((l) => l.slice(0, 500))
+    .join("\n\n")
+    .slice(0, 10000);
 }

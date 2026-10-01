@@ -1,5 +1,5 @@
 import { beforeAll, afterAll, beforeEach, afterEach, it, expect } from "vitest";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import type { PGlite } from "@electric-sql/pglite";
 import { databaseHarness } from "./database-harness";
@@ -59,6 +59,22 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  if (process.env.HQ_OUTREACH_PROPOSAL) {
+    const dependency = await readFile(process.env.HQ_OUTREACH_PROPOSAL, "utf8");
+    expect(createHash("sha256").update(dependency).digest("hex")).toBe(
+      "b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906",
+    );
+    await db.exec(dependency);
+    await db.exec(
+      await readFile(
+        new URL(
+          "../../supabase/proposals/interview/002_interview_contacts.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+  }
 }, 30000);
 afterAll(async () => {
   await db.close();
@@ -333,7 +349,9 @@ it("denies inactive membership and inactive workspace", async () => {
   await db
     .query<{
       id: string;
-    }>("insert into principals(principal_type,name,status) values('human','Backup fixture','active') returning id")
+    }>(
+      "insert into principals(principal_type,name,status) values('human','Backup fixture','active') returning id",
+    )
     .then(async (result) => {
       await db.query(
         "insert into workspace_memberships(workspace_id,principal_id,role_id,status) select $1,$2,role_id,'active' from workspace_memberships where workspace_id=$1 limit 1",
@@ -360,4 +378,181 @@ it("denies inactive membership and inactive workspace", async () => {
   await expect(
     rpc("record_verified_interview", source(), randomUUID(), version),
   ).rejects.toThrow();
+});
+
+it.skipIf(!process.env.HQ_OUTREACH_PROPOSAL)(
+  "executes exact Outreach draft dependency and links reusable contacts without duplicating schema",
+  async () => {
+    await rpc("record_verified_interview", source());
+    const i = await row("select * from interviews");
+    const contact = (
+      await safe(
+        "select public.hq_outreach_action($1,$2,'save_contact',$3) as result",
+        [
+          workspace,
+          randomUUID(),
+          {
+            full_name: "Alex Synthetic",
+            title: "VP Sales",
+            source_system: "manual",
+          },
+        ],
+      )
+    ).result as Data;
+    await row(
+      "insert into interview_contacts(workspace_id,interview_id,contact_id,interviewer_role,is_primary) values($1,$2,$3,'hiring_manager',true) returning id",
+      [workspace, i.id, contact.contact_id],
+    );
+    expect(
+      await row("select full_name,title from contacts where id=$1", [
+        contact.contact_id,
+      ]),
+    ).toEqual({ full_name: "Alex Synthetic", title: "VP Sales" });
+    await expect(
+      safe(
+        "insert into interview_contacts(workspace_id,interview_id,contact_id) values($1,$2,$3)",
+        [workspace, i.id, contact.contact_id],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      safe(
+        "insert into interview_contacts(workspace_id,interview_id,contact_id) values($1,$2,$3)",
+        [workspace, i.id, randomUUID()],
+      ),
+    ).rejects.toThrow();
+    await db.exec("reset role");
+    await db.query("update principals set principal_type='agent' where id=$1", [
+      principal,
+    ]);
+    await db.exec("set local role authenticated");
+    await expect(
+      safe(
+        "insert into interview_contacts(workspace_id,interview_id,contact_id) values($1,$2,$3)",
+        [workspace, i.id, contact.contact_id],
+      ),
+    ).rejects.toThrow();
+  },
+);
+it.skipIf(!process.env.HQ_OUTREACH_PROPOSAL)(
+  "denies cross-tenant recruiter and interviewer links against actual contacts constraints",
+  async () => {
+    await rpc("record_verified_interview", source());
+    const i = await row("select * from interviews");
+    await db.exec("reset role");
+    const other = randomUUID();
+    await db.query(
+      "insert into auth.users(id,email) values($1,'foreign-contact@example.invalid')",
+      [other],
+    );
+    await db.query("select set_config('request.jwt.claim.sub',$1,true)", [
+      other,
+    ]);
+    const foreign = (
+      await row(
+        "select bootstrap_personal_workspace('Foreign contacts','foreign-contacts') as id",
+      )
+    ).id;
+    await db.exec("set local role authenticated");
+    const contact = (
+      await safe(
+        "select public.hq_outreach_action($1,$2,'save_contact',$3) as result",
+        [
+          foreign,
+          randomUUID(),
+          { full_name: "Foreign Synthetic", source_system: "manual" },
+        ],
+      )
+    ).result as Data;
+    await db.query("select set_config('request.jwt.claim.sub',$1,true)", [
+      user,
+    ]);
+    await expect(
+      safe(
+        "insert into interview_contacts(workspace_id,interview_id,contact_id) values($1,$2,$3)",
+        [workspace, i.id, contact.contact_id],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      safe(
+        "update interview_processes set recruiter_contact_id=$1 where id=$2 returning id",
+        [contact.contact_id, i.interview_process_id],
+      ),
+    ).rejects.toThrow();
+  },
+);
+it("keeps private prep/source retry input out of generic Activity permission", async () => {
+  await rpc("record_verified_interview", {
+    ...source(),
+    meeting_url: "https://example.invalid/private-room",
+  });
+  expect(
+    (await row("select details from activity_events")).details,
+  ).not.toContain("private-room");
+  expect(
+    (
+      await row(
+        "select request::text as body from hq_interview_action_requests",
+      )
+    ).body,
+  ).toContain("private-room");
+  await db.exec("reset role");
+  await db.exec(
+    "delete from role_permissions where permission_id in(select id from permissions where permission_key='interview.read')",
+  );
+  await db.exec("set local role authenticated");
+  expect(
+    (await row("select count(*)::int as n from hq_interview_action_requests"))
+      .n,
+  ).toBe(0);
+  expect((await row("select count(*)::int as n from activity_events")).n).toBe(
+    1,
+  );
+});
+it("local security catalog audit confirms caller-rights RPC and denied anonymous execution", async () => {
+  expect(
+    (
+      await row(
+        "select prosecdef from pg_proc where oid='public.hq_interview_action(uuid,uuid,timestamptz,uuid,text,jsonb)'::regprocedure",
+      )
+    ).prosecdef,
+  ).toBe(false);
+  expect(
+    (
+      await row(
+        "select has_function_privilege('anon','public.hq_interview_action(uuid,uuid,timestamptz,uuid,text,jsonb)','EXECUTE') as allowed",
+      )
+    ).allowed,
+  ).toBe(false);
+  for (const table of [
+    "interview_processes",
+    "interviews",
+    "interview_preparations",
+    "interview_questions",
+    "interview_question_evidence",
+    "hq_interview_action_requests",
+  ]) {
+    expect(
+      (
+        await row(
+          "select relrowsecurity from pg_class where oid=$1::regclass",
+          [table],
+        )
+      ).relrowsecurity,
+    ).toBe(true);
+    expect(
+      (
+        await row("select has_table_privilege('anon',$1,'SELECT') as allowed", [
+          table,
+        ])
+      ).allowed,
+    ).toBe(false);
+    expect(
+      (
+        await row(
+          "select has_table_privilege('authenticated',$1,'DELETE') as allowed",
+          [table],
+        )
+      ).allowed,
+    ).toBe(false);
+  }
 });

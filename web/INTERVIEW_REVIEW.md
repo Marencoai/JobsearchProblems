@@ -57,13 +57,44 @@ reviewed prep/child freeze, specific action reconciliation and denied deletion.
 
 Synthetic browser QA at 390×844: document width=390; desktop and mobile show the
 same role workspace. Start prep and manual reviewed save visibly update the fixture.
-Cheat-sheet content contract is unit-tested; IAB download-event capture timed out,
-so actual browser download completion is not claimed.
+Cheat-sheet content and exact local data-download href are unit-tested; IAB download-event capture and downloadMedia timed out,
+so actual browser file download completion remains an explicit QA limitation. No remote artifact service is involved.
 
 Evidence: [desktop](qa-evidence/interview/desktop.jpg), [mobile](qa-evidence/interview/mobile.jpg).
 
-Contacts contract is pending Outreach owner's final schema confirmation. The exact
-002 proposal must execute against that reviewed migration and pass contact tenant
-and agent-boundary tests before recommending production approval. Hosted Supabase
+The contacts dependency is Outreach PR3 commit
+`2af79c2dfa31611083bf3f233d02b82bf890b8fe`, migration
+`20261001230000_outreach_domain.sql`, SHA256
+`b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906`.
+It uses `full_name`, nullable `title`, UUID keys and UNIQUE(workspace_id,id).
+The exact dependency and contacts proposal execute successfully together: the
+actual Outreach RPC creates synthetic contacts, Interview can link them, and
+foreign-tenant recruiter/interviewer links, duplicate links and agent writes fail.
+The test pins the hash and reads the owner file via HQ_OUTREACH_PROPOSAL; no Outreach
+implementation is copied into this branch. Outreach production approval remains
+independent and is required before the dependent contacts migration. The exact
+002 proposal must follow that reviewed migration. Hosted Supabase
 Auth/PostgREST validation, advisors, worker rollout targets and flag activation
 remain production-gated. Local tests do not prove hosted rollout.
+
+### Retry privacy and explicit new-table permissions
+
+`hq_interview_action_requests` is append-only and scoped to the current active
+human, with interview.read/manage and active Workspace checks. It keeps exact
+source URLs and preparation text out of generic Activity Events. It is outside the
+frontend read allowlist; invoker RPCs need its narrowly scoped SELECT/INSERT grants.
+Generic Activity details retain only safe record references. Anonymous access and
+DELETE are explicitly revoked, even under hosted default grants. Catalog tests
+confirm RLS, denied anonymous RPC execution and SECURITY INVOKER.
+
+Reproduce complete dependency tests with supported Node 24.15 from web:
+
+```sh
+HQ_OUTREACH_PROPOSAL=/absolute/path/to/reviewed/20261001230000_outreach_domain.sql npm test
+```
+
+Without that explicit dependency, the two contacts tests report skipped; core
+Interview tests still run. Full run with the pinned hash is the approval evidence.
+No baseline files or migration history are rewritten. All new FK/audit references
+have supporting indexes; hosted advisors and PostgREST validation remain rollout
+checks because none of these objects is deployed.

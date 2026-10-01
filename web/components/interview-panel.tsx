@@ -146,12 +146,19 @@ export function InterviewPanel({ job }: { job: JobView }) {
                 {bundle.evidence
                   .filter((e) => e.interview_question_id === q.id)
                   .map((e) => (
-                    <p key={e.id}>
-                      {e.relevance_summary ?? "Linked candidate evidence"}{" "}
-                      <span className="record-caption">
-                        {e.evidence_story_id ?? e.project_id ?? e.skill_id}
-                      </span>
-                    </p>
+                    <div key={e.id}>
+                      <p>
+                        {e.relevance_summary ?? "Linked candidate evidence"}
+                      </p>
+                      {e.story_title && (
+                        <details>
+                          <summary>
+                            {e.story_title} · {e.validation_status}
+                          </summary>
+                          <p>{e.story_text}</p>
+                        </details>
+                      )}
+                    </div>
                   ))}
               </div>
             ))}
@@ -169,23 +176,13 @@ export function InterviewPanel({ job }: { job: JobView }) {
               </button>
             )}
             {prep && (
-              <button
+              <a
                 className="button secondary"
-                onClick={() => {
-                  const blob = new Blob(
-                    [cheatSheet(i, prep, questions, bundle.evidence, people)],
-                    { type: "text/plain;charset=utf-8" },
-                  );
-                  const href = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = href;
-                  a.download = `interview-${i.id}-cheat-sheet.txt`;
-                  a.click();
-                  URL.revokeObjectURL(href);
-                }}
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(cheatSheet(i, prep, questions, bundle.evidence, people))}`}
+                download={`interview-${i.id}-cheat-sheet.txt`}
               >
                 Download concise cheat sheet
-              </button>
+              </a>
             )}
             {prep && ["draft", "ready"].includes(prep.status) && (
               <PrepEditor

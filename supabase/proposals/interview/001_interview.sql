@@ -70,6 +70,7 @@ begin
 end $$;
 revoke all on function public.hq_interview_guard() from public;
 alter table public.interview_processes enable row level security;
+revoke all on public.interview_processes from public,anon,authenticated;
 grant select,insert,update on public.interview_processes to authenticated;
 create policy interview_processes_read on public.interview_processes for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interview_processes_create on public.interview_processes for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -78,6 +79,7 @@ create trigger a_guard before insert or update on public.interview_processes for
 create trigger b_actor before insert or update on public.interview_processes for each row execute function public.set_actor_audit_fields();
 create trigger c_updated before update on public.interview_processes for each row execute function public.set_updated_at();
 alter table public.interviews enable row level security;
+revoke all on public.interviews from public,anon,authenticated;
 grant select,insert,update on public.interviews to authenticated;
 create policy interviews_read on public.interviews for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interviews_create on public.interviews for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -86,6 +88,7 @@ create trigger a_guard before insert or update on public.interviews for each row
 create trigger b_actor before insert or update on public.interviews for each row execute function public.set_actor_audit_fields();
 create trigger c_updated before update on public.interviews for each row execute function public.set_updated_at();
 alter table public.interview_preparations enable row level security;
+revoke all on public.interview_preparations from public,anon,authenticated;
 grant select,insert,update on public.interview_preparations to authenticated;
 create policy interview_preparations_read on public.interview_preparations for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interview_preparations_create on public.interview_preparations for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -94,6 +97,7 @@ create trigger a_guard before insert or update on public.interview_preparations 
 create trigger b_actor before insert or update on public.interview_preparations for each row execute function public.set_actor_audit_fields();
 create trigger c_updated before update on public.interview_preparations for each row execute function public.set_updated_at();
 alter table public.interview_questions enable row level security;
+revoke all on public.interview_questions from public,anon,authenticated;
 grant select,insert,update on public.interview_questions to authenticated;
 create policy interview_questions_read on public.interview_questions for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interview_questions_create on public.interview_questions for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -102,6 +106,7 @@ create trigger a_guard before insert or update on public.interview_questions for
 create trigger b_actor before insert or update on public.interview_questions for each row execute function public.set_actor_audit_fields();
 create trigger c_updated before update on public.interview_questions for each row execute function public.set_updated_at();
 alter table public.interview_question_evidence enable row level security;
+revoke all on public.interview_question_evidence from public,anon,authenticated;
 grant select,insert,update on public.interview_question_evidence to authenticated;
 create policy interview_question_evidence_read on public.interview_question_evidence for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interview_question_evidence_create on public.interview_question_evidence for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -121,12 +126,26 @@ create index interview_preparations_evaluation_id_idx on public.interview_prepar
 
 -- Verified-source adapter contract: caller is an active human reviewing source,
 -- not an email/calendar worker. Agent ingestion authority is separately gated.
+-- Domain-private retry data: generic Activity readers must not receive exact prep/compensation input.
+create table public.hq_interview_action_requests(
+ workspace_id uuid not null references public.workspaces(id) on delete restrict,
+ actor_principal_id uuid not null references public.principals(id) on delete restrict,
+ request_id uuid not null,request jsonb not null,result jsonb not null,activity_event_id uuid not null,
+ created_at timestamptz not null default now(),primary key(workspace_id,actor_principal_id,request_id),
+ foreign key(workspace_id,activity_event_id) references public.activity_events(workspace_id,id) on delete restrict);
+alter table public.hq_interview_action_requests enable row level security;
+revoke all on public.hq_interview_action_requests from public,anon,authenticated;
+grant select,insert on public.hq_interview_action_requests to authenticated;
+create policy hq_interview_action_requests_read on public.hq_interview_action_requests for select to authenticated using(actor_principal_id=public.current_principal_id() and public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,actor_principal_id) and public.has_permission(workspace_id,'interview.read') and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
+create policy hq_interview_action_requests_insert on public.hq_interview_action_requests for insert to authenticated with check(actor_principal_id=public.current_principal_id() and public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,actor_principal_id) and public.has_permission(workspace_id,'interview.read') and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
+create index hq_interview_action_requests_actor_idx on public.hq_interview_action_requests(actor_principal_id);
+create index hq_interview_action_requests_event_idx on public.hq_interview_action_requests(workspace_id,activity_event_id);
 create function public.hq_interview_action(target_workspace_id uuid,target_opportunity_id uuid,expected_updated_at timestamptz,
  request_id uuid,command text,payload jsonb) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare
  actor uuid:=public.current_principal_id(); o public.opportunities%rowtype; i public.interviews%rowtype;
  e public.activity_events%rowtype; process_id uuid; prep_id uuid; event_id uuid; result jsonb;
- request jsonb; event_key text; permission text; prep public.interview_preparations%rowtype; q jsonb; question_id uuid;
+ replay public.hq_interview_action_requests%rowtype; request jsonb; event_key text; permission text; prep public.interview_preparations%rowtype; q jsonb; question_id uuid;
 begin
  if actor is null or not public.current_principal_is_human() or not public.is_active_workspace_human(target_workspace_id,actor) then raise exception using errcode='42501',message='Active workspace human required'; end if;
  if not exists(select 1 from public.workspaces where id=target_workspace_id and status='active') then raise exception using errcode='42501',message='Active workspace required'; end if;
@@ -138,10 +157,10 @@ begin
  if not found then raise exception 'Opportunity unavailable'; end if;
  event_key:='hq-interview:'||actor::text||':'||request_id::text;
  request:=jsonb_build_object('opportunity_id',target_opportunity_id,'version',expected_updated_at,'command',command,'payload',payload);
- select * into e from public.activity_events where workspace_id=target_workspace_id and idempotency_key=event_key;
+ select * into replay from public.hq_interview_action_requests where workspace_id=target_workspace_id and actor_principal_id=actor and hq_interview_action_requests.request_id=hq_interview_action.request_id;
  if found then
-  if e.details::jsonb->'request' is distinct from request then raise exception 'Request ID input mismatch'; end if;
-  return e.details::jsonb->'result';
+  if replay.request is distinct from request then raise exception 'Request ID input mismatch'; end if;
+  return replay.result;
  end if;
  if o.updated_at is distinct from expected_updated_at then raise exception using errcode='40001',message='Opportunity changed; reload'; end if;
  if not o.is_currently_active or o.opportunity_stage in ('closed','offer') then raise exception 'Interview opportunity is not active'; end if;
@@ -150,7 +169,11 @@ begin
   select * into i from public.interviews where workspace_id=target_workspace_id and source_system=payload->>'source_system' and source_reference=payload->>'source_reference';
   if found then
    if i.opportunity_id<>target_opportunity_id or i.interview_type is distinct from payload->>'interview_type' or i.scheduled_start_at is distinct from (payload->>'scheduled_start_at')::timestamptz then raise exception 'Source already linked; review existing interview'; end if;
-   return jsonb_build_object('interview_id',i.id,'matched',true);
+   result:=jsonb_build_object('interview_id',i.id,'matched',true);
+   select id into event_id from public.activity_events where workspace_id=target_workspace_id and source_system='hq' and source_reference=i.id::text and event_type='interview_record_verified_interview' order by created_at limit 1;
+   if event_id is null then raise exception 'Existing source lacks attributed history; reconcile before matching'; end if;
+   insert into public.hq_interview_action_requests(workspace_id,actor_principal_id,request_id,request,result,activity_event_id) values(target_workspace_id,actor,hq_interview_action.request_id,request,result,event_id);
+   return result;
   end if;
   select id into process_id from public.interview_processes where workspace_id=target_workspace_id and opportunity_id=target_opportunity_id and status='active';
   if process_id is null then insert into public.interview_processes(workspace_id,opportunity_id,started_at) values(target_workspace_id,target_opportunity_id,now()) returning id into process_id; end if;
@@ -190,14 +213,28 @@ begin
  result:=jsonb_build_object('interview_id',i.id,'preparation_id',prep_id);
  insert into public.activity_events(workspace_id,opportunity_id,event_type,summary,details,source_system,source_reference,idempotency_key)
  values(target_workspace_id,target_opportunity_id,'interview_'||command,case when command='start_prep' then 'Interview preparation started' else 'Verified interview recorded' end,
- jsonb_build_object('request',request,'result',result)::text,'hq',i.id::text,event_key) returning id into event_id;
+ jsonb_build_object('result',result)::text,'hq',i.id::text,event_key) returning id into event_id;
  -- Reconcile only this interview's explicit linked action; never unrelated workflows.
  if command<>'save_prep' and not exists(select 1 from public.next_actions a join public.activity_events ae on ae.workspace_id=a.workspace_id and ae.id=a.source_activity_event_id where a.workspace_id=target_workspace_id and a.opportunity_id=target_opportunity_id and a.status='open' and ae.source_system='hq' and ae.source_reference=i.id::text and ae.event_type like 'interview_%') then
   insert into public.next_actions(workspace_id,opportunity_id,source_activity_event_id,assigned_to_principal_id,action_type,title,context_summary,priority,due_at)
   values(target_workspace_id,target_opportunity_id,event_id,actor,'prepare','Prepare for interview','Review questions, evidence and company context',85,i.scheduled_start_at);
  end if;
+ insert into public.hq_interview_action_requests(workspace_id,actor_principal_id,request_id,request,result,activity_event_id) values(target_workspace_id,actor,hq_interview_action.request_id,request,result,event_id);
  return result;
 end $$;
 revoke all on function public.hq_interview_action(uuid,uuid,timestamptz,uuid,text,jsonb) from public,anon;
 grant execute on function public.hq_interview_action(uuid,uuid,timestamptz,uuid,text,jsonb) to authenticated;
+create index interview_processes_creator_idx on public.interview_processes(created_by_principal_id);
+create index interview_processes_updater_idx on public.interview_processes(updated_by_principal_id);
+create index interviews_creator_idx on public.interviews(created_by_principal_id);
+create index interviews_updater_idx on public.interviews(updated_by_principal_id);
+create index interview_preparations_creator_idx on public.interview_preparations(created_by_principal_id);
+create index interview_preparations_updater_idx on public.interview_preparations(updated_by_principal_id);
+create index interview_questions_creator_idx on public.interview_questions(created_by_principal_id);
+create index interview_questions_updater_idx on public.interview_questions(updated_by_principal_id);
+create index interview_question_evidence_creator_idx on public.interview_question_evidence(created_by_principal_id);
+create index interview_question_evidence_updater_idx on public.interview_question_evidence(updated_by_principal_id);
+create index interviews_opportunity_idx on public.interviews(workspace_id,opportunity_id);
+create index interview_preparations_preparer_idx on public.interview_preparations(prepared_by_principal_id);
+create index interview_processes_opportunity_idx on public.interview_processes(workspace_id,opportunity_id);
 commit;

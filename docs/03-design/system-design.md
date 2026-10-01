@@ -2953,3 +2953,13 @@ The Owner may create, update, and validate these records. The Application Agent 
 Reason:
 
 Real ATS forms repeatedly request employment-exit reasons, employer-contact permission, and references. Storing approved answers once prevents repeated candidate interruptions and prevents agents from inventing application facts.
+
+
+## Job Hunt HQ Interview proposal · October 1, 2026
+
+The local v1 Interview proposal extends the same role workspace and leaves the
+Opportunity lifecycle authoritative. Source recording is human-reviewed. Existing
+Gmail detection retains its activity/attention contract until a separately reviewed
+worker capability is installed. Manual structured prep does not invent agent output.
+Contact identity remains Outreach-owned. Production schema/permission approval and
+flag activation remain separately gated.

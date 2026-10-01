@@ -39,6 +39,7 @@ export function QaScreen({
         loading={false}
         error=""
         fixture
+        domainActions
         onWorkspace={() => {}}
         onReload={() => {}}
         onSignOut={() => {}}

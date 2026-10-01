@@ -15,6 +15,7 @@ type SessionState = {
   ready: boolean;
   error: string;
   humanActions: boolean;
+  domainActions: boolean;
   act: HumanActionHandler;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -40,6 +41,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState("");
   const [humanActions, setHumanActions] = useState(false);
   const [interview, setInterview] = useState<InterviewService | null>(null);
+  const refresh = useRef<() => Promise<void>>(async () => {});
+  useEffect(() => {
+    refresh.current = reload;
+  });
   const mutation = useRef(false);
   useEffect(() => {
     const activeGeneration = generation;
@@ -60,7 +65,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             interviewService(
               instance,
               () => workspaceRef.current,
-              async () => {},
+              async () => {
+                await refresh.current();
+              },
             ),
           );
         setHumanActions(config.humanActions === true);
@@ -225,6 +232,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         ready,
         error,
         humanActions,
+        domainActions: !!interview,
         act,
         signIn,
         signOut,

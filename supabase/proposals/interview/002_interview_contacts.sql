@@ -16,6 +16,7 @@ create table public.interview_contacts(
 );
 create index interview_contacts_contact_idx on public.interview_contacts(workspace_id,contact_id);
 alter table public.interview_contacts enable row level security;
+revoke all on public.interview_contacts from public,anon,authenticated;
 grant select,insert,update on public.interview_contacts to authenticated;
 create policy interview_contacts_read on public.interview_contacts for select to authenticated using(public.has_permission(workspace_id,'interview.read') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
 create policy interview_contacts_create on public.interview_contacts for insert to authenticated with check(public.current_principal_is_human() and public.is_active_workspace_human(workspace_id,public.current_principal_id()) and public.has_permission(workspace_id,'interview.manage') and exists(select 1 from public.workspaces w where w.id=workspace_id and w.status='active'));
@@ -23,4 +24,6 @@ create policy interview_contacts_update on public.interview_contacts for update 
 create trigger a_guard before insert or update on public.interview_contacts for each row execute function public.hq_interview_guard();
 create trigger b_actor before insert or update on public.interview_contacts for each row execute function public.set_actor_audit_fields();
 create trigger c_updated before update on public.interview_contacts for each row execute function public.set_updated_at();
+create index interview_contacts_creator_idx on public.interview_contacts(created_by_principal_id);
+create index interview_contacts_updater_idx on public.interview_contacts(updated_by_principal_id);
 commit;

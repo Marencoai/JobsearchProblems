@@ -91,3 +91,89 @@ it("transport blocks all domain reads and RPC when disabled and all raw writes w
   ).rejects.toThrow();
   expect(native).toHaveBeenCalledTimes(2);
 });
+
+it("renders the exact local cheat sheet as a download without remote delivery", async () => {
+  const service = interviewFixture();
+  render(
+    <InterviewContext.Provider value={service}>
+      <InterviewPanel job={job} />
+    </InterviewContext.Provider>,
+  );
+  const link = await screen.findByRole("link", {
+    name: "Download concise cheat sheet",
+  });
+  expect(link.getAttribute("download")).toBe(
+    "interview-synthetic-interview-cheat-sheet.txt",
+  );
+  const href = link.getAttribute("href")!;
+  expect(href.startsWith("data:text/plain;charset=utf-8,")).toBe(true);
+  expect(decodeURIComponent(href.split(",").slice(1).join(","))).toContain(
+    "predicted: Tell me about a pipeline",
+  );
+});
+it("SDK reads canonical full_name and RLS-scoped recorded stories in a fixed workspace", async () => {
+  const { createHqClient } = await import("@/lib/supabase/client");
+  const { interviewService } = await import("@/lib/interview");
+  const bundle = await interviewFixture().load(job);
+  const rows: Record<string, unknown[]> = {
+    interviews: bundle.interviews,
+    interview_preparations: bundle.preparations,
+    interview_questions: bundle.questions,
+    interview_question_evidence: bundle.evidence,
+    interview_contacts: bundle.people.map((p) => ({
+      interview_id: p.interview_id,
+      contact_id: p.contact_id,
+      interviewer_role: p.interviewer_role,
+    })),
+    contacts: [
+      {
+        id: "synthetic-contact",
+        full_name: "Canonical Alex",
+        title: "VP Sales",
+      },
+    ],
+    evidence_stories: [
+      {
+        id: "synthetic-story",
+        title: "Turnaround story",
+        situation: "Pipeline stalled",
+        actions_taken: "Reset operating cadence",
+        outcome: "Pipeline recovered",
+        quantitative_impact: "Synthetic metric",
+        validation_status: "confirmed",
+      },
+    ],
+  };
+  const native = vi
+    .fn()
+    .mockImplementation(
+      async (input) =>
+        new Response(
+          JSON.stringify(
+            rows[new URL(String(input)).pathname.split("/").at(-1)!] ?? [],
+          ),
+          { headers: { "Content-Type": "application/json" } },
+        ),
+    );
+  const client = createHqClient(
+    {
+      url: "https://xhhfnxswwspejdxjyvzz.supabase.co",
+      key: "sb_publishable_fixture_only",
+      interview: true,
+    },
+    native,
+  );
+  const result = await interviewService(
+    client,
+    () => job.opportunity.workspace_id,
+    async () => {},
+  ).load(job);
+  expect(result.people[0].name).toBe("Canonical Alex");
+  expect(result.evidence[0].story_title).toBe("Turnaround story");
+  expect(result.evidence[0].story_text).toContain("Reset operating cadence");
+  for (const [url] of native.mock.calls)
+    expect(new URL(String(url)).searchParams.get("workspace_id")).toBe(
+      "eq." + job.opportunity.workspace_id,
+    );
+  client.auth.stopAutoRefresh();
+});
