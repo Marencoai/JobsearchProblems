@@ -43,6 +43,7 @@ import type {
 import { STAGES } from "@/lib/types";
 import { buildJobViews } from "@/lib/workflow";
 import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
+import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
 import type { HumanActionHandler } from "@/lib/human-actions";
 
@@ -952,6 +953,13 @@ function StageRecords({
   onMaterial: (material: Material) => void;
   humanActions: boolean;
 }) {
+  if (stage === "Interview")
+    return (
+      <>
+        <InterviewPanel key={job.opportunity.id} job={job} />
+        <EventList job={job} filter="interview" />
+      </>
+    );
   if (stage === "Pursue")
     return (
       <div className="stage-records">

@@ -1,4 +1,6 @@
 "use client";
+import { InterviewContext } from "./interview-panel";
+import { interviewService, type InterviewService } from "@/lib/interview";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
@@ -37,6 +39,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [humanActions, setHumanActions] = useState(false);
+  const [interview, setInterview] = useState<InterviewService | null>(null);
   const mutation = useRef(false);
   useEffect(() => {
     const activeGeneration = generation;
@@ -52,6 +55,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         const instance = createHqClient(config);
         client.current = instance;
+        if (config.interview === true)
+          setInterview(
+            interviewService(
+              instance,
+              () => workspaceRef.current,
+              async () => {},
+            ),
+          );
         setHumanActions(config.humanActions === true);
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
@@ -221,7 +232,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         reload,
       }}
     >
-      {children}
+      <InterviewContext.Provider value={identity ? interview : null}>
+        {children}
+      </InterviewContext.Provider>
     </Context.Provider>
   );
 }

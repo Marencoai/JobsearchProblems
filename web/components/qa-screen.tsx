@@ -1,7 +1,9 @@
 "use client";
 import { HqShell } from "./hq-shell";
 import { fixtureIdentity, visualFixture } from "@/lib/qa-fixtures";
-import { useState } from "react";
+import { InterviewContext } from "./interview-panel";
+import { interviewFixture } from "@/lib/interview-fixture";
+import { useMemo, useState } from "react";
 export function QaScreen({
   selectedId,
   actions = false,
@@ -10,6 +12,7 @@ export function QaScreen({
   actions?: boolean;
 }) {
   const [result, setResult] = useState("");
+  const interview = useMemo(() => interviewFixture(), []);
   const data = visualFixture();
   if (actions) {
     data.applications = [];
@@ -21,7 +24,7 @@ export function QaScreen({
     });
   }
   return (
-    <>
+    <InterviewContext.Provider value={interview}>
       {actions && (
         <p role="status" className="notice">
           Synthetic action preview. No database connection or worker execution.{" "}
@@ -49,6 +52,6 @@ export function QaScreen({
             : undefined
         }
       />
-    </>
+    </InterviewContext.Provider>
   );
 }
