@@ -10,6 +10,13 @@ import {
 import { randomUUID } from "node:crypto";
 import type { PGlite } from "@electric-sql/pglite";
 import { databaseHarness } from "./database-harness";
+import {
+  plannerEligibility,
+  preparationTarget,
+  type PlannerAction,
+  type PreparationTask,
+  type PreparationPackage,
+} from "../../worker-support/hq-contracts";
 
 let db: PGlite;
 let workspace: string,
@@ -541,6 +548,131 @@ describe("human transactions against real migration policies and triggers", () =
         )
       ).count,
     ).toBe(0);
+  });
+  it("feeds real deferred rows through planner deduplication and delivery filtering", async () => {
+    await rpc(
+      "defer",
+      await decisionPayload({
+        available_after: new Date(Date.now() + 86400000).toISOString(),
+      }),
+    );
+    const action = await row(
+      "select id,workspace_id,assigned_to_principal_id,status,available_after from next_actions where id=$1",
+      [decision],
+    );
+    const selection = plannerEligibility(
+      workspace,
+      principal,
+      [action as unknown as PlannerAction],
+      [
+        {
+          id: "historical-item",
+          workspace_id: workspace,
+          next_action_id: decision,
+        },
+      ],
+      new Date().toISOString(),
+    );
+    expect(selection).toEqual({
+      deduplication_action_ids: [decision],
+      eligible_action_ids: [],
+      delivery_plan_item_ids: [],
+    });
+  });
+  it("hands a new revision package to a prepare-only agent under actual RLS", async () => {
+    const f = await packageFixture();
+    await rpc("approve_package", f.payload);
+    const approved = await row(
+      "select * from application_packages where id=$1",
+      [f.pkg.id],
+    );
+    const revision = await rpc("request_changes", {
+      ...f.payload,
+      package_updated_at: approved.updated_at,
+      notes: "Lead with confirmed systems evidence",
+    });
+    const queued = await row("select * from internal_tasks where id=$1", [
+      revision.task_id,
+    ]);
+    const available = (
+      await db.query<Data>("select * from application_packages")
+    ).rows;
+    const target = preparationTarget(
+      queued as unknown as PreparationTask,
+      available as unknown as PreparationPackage[],
+    );
+    expect(target.package_id).toBe(revision.package_id);
+    expect(target.disposition).toBe("reuse");
+    expect(target.candidate_notes).toContain("confirmed systems evidence");
+    // Synthetic identity with exactly the historical prepare-only role's 12
+    // permissions. No production Auth user or role is created or modified.
+    await db.exec("reset role");
+    const agentUser = randomUUID();
+    await db.query(
+      "insert into auth.users(id,email) values($1,'synthetic-preparer@example.invalid')",
+      [agentUser],
+    );
+    const agent = await row(
+      "insert into principals(principal_type,auth_user_id,name) values('agent',$1,'Synthetic Application Agent') returning id",
+      [agentUser],
+    );
+    const role = await row(
+      "insert into roles(workspace_id,name) values($1,'Synthetic prepare-only') returning id",
+      [workspace],
+    );
+    await db.query(
+      "insert into role_permissions(role_id,permission_id) select $1,id from permissions where permission_key in ('workspace.read','company.read','job_family.read','opportunity.read','opportunity_source.read','company_intelligence.read','candidate_knowledge.read','settings.read','evaluation.read','application_gap.read','application.read','application.prepare')",
+      [role.id],
+    );
+    await db.query(
+      "insert into workspace_memberships(workspace_id,principal_id,role_id) values($1,$2,$3)",
+      [workspace, agent.id, role.id],
+    );
+    await db.query("select set_config('request.jwt.claim.sub',$1,true)", [
+      agentUser,
+    ]);
+    await db.exec("set local role authenticated");
+    expect(
+      await row(
+        "select has_permission($1,'application.approve') as approve,has_permission($1,'application.submit') as submit,has_permission($1,'internal_task.execute') as execute",
+        [workspace],
+      ),
+    ).toEqual({ approve: false, submit: false, execute: false });
+    await db.query(
+      "update application_packages set status='preparing' where id=$1",
+      [target.package_id],
+    );
+    const material = await row(
+      "insert into application_materials(workspace_id,application_package_id,material_type,content_text) values($1,$2,'resume','Synthetic revised resume') returning id",
+      [workspace, target.package_id],
+    );
+    await db.query(
+      "update application_materials set status='candidate_review' where id=$1",
+      [material.id],
+    );
+    await db.query(
+      "update application_packages set status='ready_for_review' where id=$1",
+      [target.package_id],
+    );
+    expect(
+      await row("select * from application_packages where id=$1", [f.pkg.id]),
+    ).toEqual(approved);
+    expect(
+      await row(
+        "select content_text,status from application_materials where id=$1",
+        [f.material.id],
+      ),
+    ).toEqual({ content_text: "Original resume v1", status: "approved" });
+    await db.exec("savepoint agent_approval");
+    await expect(
+      db.query(
+        "update application_packages set status='approved' where id=$1",
+        [target.package_id],
+      ),
+    ).rejects.toThrow("application.approve");
+    await db.exec(
+      "rollback to savepoint agent_approval; release savepoint agent_approval",
+    );
   });
   it("requires explicit submission and reuses exact immutable database snapshots", async () => {
     const f = await packageFixture();

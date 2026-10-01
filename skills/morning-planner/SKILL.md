@@ -37,6 +37,14 @@ Before each run read:
 
 Once `next_actions.available_after` is deployed, keep all open actions in the deduplication set. Exclude actions with a future `available_after` from ranking, Today's One Thing, new Plan Items, and candidate-facing delivery, including items in an existing active Plan. Null means available now. Resume eligibility on the same action when that time arrives; never create a replacement to bypass deferral. Preserve historical Plan snapshots and the existing versioning rule. Do not query this proposed column before its migration is applied.
 
+Use the executable boundary helper from the repository root before ranking or delivery:
+
+```sh
+node --experimental-strip-types worker-support/cli.mts planner < synthetic-or-authorized-planner-input.json
+```
+
+Pass JSON containing `workspace_id`, `principal_id`, `now` (UTC ISO timestamp), live `actions` including workspace/assignee/status/deferral, and existing `plan_items` including workspace and `next_action_id`. The helper returns `deduplication_action_ids`, `eligible_action_ids`, and `delivery_plan_item_ids`. Deduplicate against the first set; rank/select One Thing/create new items only from the second; deliver existing items only from the third. It does no database access or ranking. Keep existing Auth/RLS and policy checks. If the helper fails, stop that planner run rather than reverting to unfiltered actions. Use pinned Node 22 or newer; do not put credentials in the input.
+
 ## Opportunity Review Action
 
 A `decide` action asks Diana to review the Evaluation and choose Pursue / Pass / Defer.

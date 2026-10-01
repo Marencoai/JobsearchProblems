@@ -58,6 +58,8 @@ After the approved human-action migration adds `next_actions.available_after`, a
 
 An existing active Plan may contain a newly deferred action. Filter that action from delivery against live Next Action state; preserve historical Plan snapshots. On the next planner run, version the Plan only if priorities materially changed. Roll out this consumer rule with the HQ migration; until then, do not query a column that does not exist.
 
+The skill now calls the tested `worker-support/cli.mts planner` helper before ranking or delivery. Its output separates open-action deduplication from current eligibility and filters existing Plan Item IDs against eligible live actions. It checks Workspace/assignee scope and fails closed on an invalid timestamp. The helper performs no ranking, database writes, or authority changes. The local integration test supplies actual deferred SQL rows; live scheduled adoption remains a rollout prerequisite.
+
 ## Application Next Actions
 
 When an Application Package exists:

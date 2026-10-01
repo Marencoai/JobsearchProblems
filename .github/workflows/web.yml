@@ -1,10 +1,10 @@
 name: Job Hunt HQ checks
 on:
   pull_request:
-    paths: ["web/**", "supabase/migrations/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", ".github/workflows/web.yml"]
   push:
     branches: [main]
-    paths: ["web/**", "supabase/migrations/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", ".github/workflows/web.yml"]
 permissions:
   contents: read
 jobs:
@@ -22,6 +22,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm run format:check
+      - run: npx --no-install prettier --check ../worker-support/*
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

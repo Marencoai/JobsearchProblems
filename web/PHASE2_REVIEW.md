@@ -43,13 +43,18 @@ Agents are explicitly denied even with a mistakenly broad role. A missing permis
 
 Preparation tasks retain `domain=application`, `task_type=prepare_application_package`, `trigger_type=candidate_action`, and `trigger_reference=candidate_decided_to_pursue`. Revisions identify their new draft Package in the task description; the updated Prepare Application skill requires the worker to validate/reuse that Package, read its notes, and create new Material versions there. The UI only queues work.
 
+The worker contracts now have executable, network-free helpers in [`worker-support/hq-contracts.ts`](../worker-support/hq-contracts.ts), called by the two skills through [`worker-support/cli.mts`](../worker-support/cli.mts). The planner helper returns separate deduplication, eligible-action, and existing-plan delivery ID sets. The preparation helper checks explicit candidate task authority, scopes the exact revision target to the Workspace/Opportunity, rejects missing/foreign/archived/superseded targets, and avoids regeneration on a completed preparation retry. These helpers do not rank actions, compose artifacts, write data, or change worker authority.
+
 Roll out the updated Morning Planner skill with the migration: future `available_after` actions remain in deduplication but are excluded from ranking, One Thing, Plan Items, and delivery. Filter existing Plan Items against live action state; historical Plan snapshots remain immutable. HQ also filters deferred actions and shows the review date. Pre-migration read-only mode never queries the new column.
 
 Linked application review actions are reconciled. Historical unlinked approval actions require their exact ID/version in the candidate dialog; unrelated unlinked approvals stay open.
 
 ## Local verification
 
-- 102 tests passed, including 19 SQL tests executing actual migrations, RLS policies, and triggers in PostgreSQL 17.5 through pinned PGlite. Production uses PostgreSQL 17.6.
+- 114 tests passed, including 21 SQL tests executing actual migrations, RLS policies, and triggers in PostgreSQL 17.5 through pinned PGlite. Production uses PostgreSQL 17.6.
+- Ten worker-contract tests cover future/exact-boundary deferral, existing-plan delivery filtering, tenant/assignee filtering, invalid inputs, initial preparation, exact revision routing, immutable history, invalid revision targets, and retry disposition. Two tests execute the exact CLI commands named by the skills.
+- SQL integration tests feed actual deferred rows to the planner helper and pass the actual queued revision/new Package through the preparation helper. A synthetic Application Agent with exactly the historical prepare-only role's 12 permissions creates new Materials and reaches `ready_for_review`; the approved original remains unchanged and the agent's approval attempt is denied. No `internal_task.execute`, approval, or submission permission is added.
+- Five additional native PostgreSQL **17.6** concurrency scenarios pass in a disposable database on a private Unix socket with TCP disabled. Each observes Session B waiting on a PostgreSQL Lock held by Session A: identical Pursue, competing Pursue/Pass, competing revisions, identical approval, and identical submission. The checks assert one authorized task/event, one revision draft/task, one apply action, and one application/snapshot/event as appropriate. All 25 non-identity migrations replay unchanged, including pgcrypto. The owned cluster is stopped and removed after the run.
 - SQL tests cover human/agent boundaries, inactive membership/Workspace, cross-Workspace denial, missing permissions, exact-once retries, mismatched retry IDs, stale records, explicit decisions, deferral, pass history, blocking gaps, atomic rollback, selected review reconciliation, positioning freeze, new revision Packages, submitted-history protection, exact snapshots, and snapshot immutability.
 - Component and SDK tests cover explicit confirmation, cancellation, retry IDs, concurrent-click prevention, exact Material IDs, stage controls, default read-only behavior, and a transport allowlist permitting only the proposed RPC when enabled.
 - Lint, TypeScript, formatting, and optimized production build pass.
@@ -60,7 +65,17 @@ Evidence: [desktop submission dialog](qa-evidence/submission-desktop.png), [mobi
 
 ### Limits of verification
 
-The database harness has no network, connection string, persistent data directory, or production rows. It uses a synthetic hosted-Auth claim shim, omits the unavailable pgcrypto extension declaration (core UUID generation is present), and skips the two historical migrations provisioning specific production agent identities. It validates actual policies/triggers but does not replace hosted authenticated acceptance or a multi-connection concurrency test. The local Docker daemon is unavailable, so full Supabase-container testing has not been performed.
+The PGlite harness has no network, connection string, persistent data directory, or production rows. It uses a synthetic hosted-Auth claim shim, omits the unavailable pgcrypto extension declaration (core UUID generation is present), and skips the two historical migrations provisioning specific production agent identities. The native PostgreSQL concurrency suite uses the same synthetic hosted-Auth claim interface and skips the same identity provisions, but replays the other SQL unchanged. Its PostgreSQL 17.6 binary is pinned to the test-only registry package `@embedded-postgres/darwin-arm64@17.6.0-beta.15`; no global service was installed or started.
+
+Local native concurrency is now verified; it does not replace hosted Supabase Auth/PostgREST validation or prove live scheduled workers have adopted the new helpers. That adoption still requires rollout of the matching repository/skills, followed by authorized hosted validation. The local Docker daemon is unavailable, so full Supabase-container testing has not been performed.
+
+To reproduce native concurrency with existing test binaries, run from `web`:
+
+```sh
+node scripts/concurrency-check.mjs /absolute/postgres/bin /absolute/psql
+```
+
+The script creates only its own synthetic cluster, ignores inherited database credentials, uses a private Unix socket with no TCP listener, verifies observed lock waits, and stops/removes the owned cluster in `finally`. It cannot target an existing database via a connection string.
 
 Read-only production advisor baseline on October 1: one security warning for disabled leaked-password protection; performance information includes 95 unindexed foreign keys and 26 unused indexes. Those are existing conditions outside this proposal. No Auth or unrelated index setting was changed.
 
