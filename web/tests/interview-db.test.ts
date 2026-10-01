@@ -580,3 +580,39 @@ it("manual prep saves preserve previously recorded research unless explicitly su
       .interviewer_research,
   ).toBe("Recorded researcher findings");
 });
+it("manual preparation attaches exact reusable Story evidence through the atomic RPC", async () => {
+  await rpc("record_verified_interview", source());
+  const i = await row("select * from interviews");
+  await rpc("start_prep", {
+    interview_id: i.id,
+    interview_updated_at: i.updated_at,
+  });
+  const prep = await row("select * from interview_preparations");
+  const story = await row(
+    "insert into evidence_stories(workspace_id,title,validation_status) values($1,'Synthetic turnaround','confirmed') returning id",
+    [workspace],
+  );
+  await rpc("save_prep", {
+    interview_id: i.id,
+    preparation_id: prep.id,
+    preparation_updated_at: prep.updated_at,
+    summary: "Prepare for hiring manager",
+    reviewed: true,
+    questions: [
+      {
+        question_text: "How did you restore pipeline?",
+        question_source: "predicted",
+        evidence_story_id: story.id,
+        relevance_summary: "Turnaround evidence",
+      },
+    ],
+  });
+  expect(
+    await row(
+      "select evidence_story_id,relevance_summary from interview_question_evidence",
+    ),
+  ).toEqual({
+    evidence_story_id: story.id,
+    relevance_summary: "Turnaround evidence",
+  });
+});

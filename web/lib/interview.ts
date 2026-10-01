@@ -63,7 +63,16 @@ export type InterviewBundle = {
   evidence: InterviewEvidence[];
   people: InterviewPerson[];
 };
+export type PrepQuestion = {
+  question_text: string;
+  question_source: "predicted";
+  evidence_story_id?: string;
+  project_id?: string;
+  skill_id?: string;
+  relevance_summary?: string;
+};
 export type PrepInput = {
+  questions?: PrepQuestion[];
   summary: string;
   what_they_are_likely_evaluating: string;
   company_context: string;

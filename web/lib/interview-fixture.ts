@@ -70,6 +70,26 @@ export function interviewFixture(): InterviewService {
     load: async () => structuredClone(bundle),
     start: async () => {},
     save: async (_job, _interview, prep, input) => {
+      for (const q of input.questions ?? []) {
+        const id = crypto.randomUUID();
+        bundle.questions.push({
+          id,
+          interview_id: prep.interview_id,
+          interview_preparation_id: prep.id,
+          question_text: q.question_text,
+          question_source: q.question_source,
+          what_they_are_evaluating: null,
+        });
+        if (q.evidence_story_id || q.project_id || q.skill_id)
+          bundle.evidence.push({
+            id: crypto.randomUUID(),
+            interview_question_id: id,
+            evidence_story_id: q.evidence_story_id ?? null,
+            project_id: q.project_id ?? null,
+            skill_id: q.skill_id ?? null,
+            relevance_summary: q.relevance_summary ?? null,
+          });
+      }
       Object.assign(bundle.preparations.find((p) => p.id === prep.id)!, input, {
         status: input.reviewed ? "reviewed" : "ready",
         updated_at: new Date().toISOString(),

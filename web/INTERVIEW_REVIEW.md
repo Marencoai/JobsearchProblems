@@ -13,7 +13,7 @@ Processes, rounds/time/format/link, contact associations, preparation, questions
 and story/project/skill evidence follow canonical schema §7. The role workspace
 shows round, localized date/time, interviewers, source-distinguished questions,
 recorded context/research freshness, evidence, risks and questions to ask. It
-starts manual prep, saves a structured concise preparation, freezes explicitly
+starts manual prep, saves a structured concise preparation, adds human-authored predicted questions with exact recorded candidate evidence, freezes explicitly
 reviewed versions and downloads a bounded plain-text cheat sheet. No facts are
 invented and no automatic research/preparation is represented as completed.
 
@@ -98,3 +98,9 @@ Interview tests still run. Full run with the pinned hash is the approval evidenc
 No baseline files or migration history are rewritten. All new FK/audit references
 have supporting indexes; hosted advisors and PostgREST validation remain rollout
 checks because none of these objects is deployed.
+
+Final manual-prep checks also verify that saving the editable brief preserves
+previously recorded interviewer research/freshness when those fields are not edited.
+Conflicting metadata on an already matched source is rejected. Known candidate
+Stories are read through existing candidate_knowledge RLS; story titles/content
+and validation state appear only when accessible. No new knowledge permission grant.

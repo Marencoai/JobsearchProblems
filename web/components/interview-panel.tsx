@@ -8,7 +8,7 @@ import {
   type Preparation,
   type PrepInput,
 } from "@/lib/interview";
-import type { JobView } from "@/lib/types";
+import type { JobView, Evidence } from "@/lib/types";
 import { safeUrl, date } from "@/lib/format";
 export const InterviewContext = createContext<InterviewService | null>(null);
 export function InterviewPanel({ job }: { job: JobView }) {
@@ -102,8 +102,12 @@ export function InterviewPanel({ job }: { job: JobView }) {
             <p>
               {i.scheduled_start_at
                 ? new Date(i.scheduled_start_at).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    timeZoneName: "short",
                   })
                 : "Time not recorded"}
               {i.scheduled_end_at
@@ -188,6 +192,12 @@ export function InterviewPanel({ job }: { job: JobView }) {
               <PrepEditor
                 key={prep.id + prep.updated_at}
                 prep={prep}
+                suggestedEvidence={job.evidence.filter(
+                  (e) =>
+                    [e.evidence_story_id, e.project_id, e.skill_id].filter(
+                      Boolean,
+                    ).length === 1,
+                )}
                 onSave={async (input, id) => {
                   if (!service) return;
                   await service.save(job, i, prep, input, id);
@@ -211,8 +221,10 @@ export function InterviewPanel({ job }: { job: JobView }) {
 function PrepEditor({
   prep,
   onSave,
+  suggestedEvidence,
 }: {
   prep: Preparation;
+  suggestedEvidence: Evidence[];
   onSave: (input: PrepInput, id: string) => Promise<void>;
 }) {
   const [input, setInput] = useState<PrepInput>({
@@ -223,6 +235,8 @@ function PrepEditor({
     known_risks: prep.known_risks ?? "",
     reviewed: false,
   });
+  const [question, setQuestion] = useState(""),
+    [evidenceId, setEvidenceId] = useState("");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const request = useRef<{ id: string; input: PrepInput } | null>(null),
@@ -244,7 +258,23 @@ function PrepEditor({
           pending.current = true;
           setBusy(true);
           setError("");
-          request.current ??= { id: crypto.randomUUID(), input };
+          const evidence = suggestedEvidence.find((e) => e.id === evidenceId);
+          const reviewedInput: PrepInput = {
+            ...input,
+            questions: question.trim()
+              ? [
+                  {
+                    question_text: question.trim(),
+                    question_source: "predicted",
+                    evidence_story_id: evidence?.evidence_story_id ?? undefined,
+                    project_id: evidence?.project_id ?? undefined,
+                    skill_id: evidence?.skill_id ?? undefined,
+                    relevance_summary: evidence?.relevance_summary ?? undefined,
+                  },
+                ]
+              : [],
+          };
+          request.current ??= { id: crypto.randomUUID(), input: reviewedInput };
           try {
             await onSave(request.current.input, request.current.id);
             request.current = null;
@@ -270,6 +300,32 @@ function PrepEditor({
             />
           </label>
         ))}
+        <label>
+          New likely question (optional)
+          <textarea
+            maxLength={1200}
+            value={question}
+            disabled={busy || !!error}
+            onChange={(e) => setQuestion(e.target.value)}
+          />
+        </label>
+        {suggestedEvidence.length > 0 && (
+          <label>
+            Recorded evidence for this question
+            <select
+              value={evidenceId}
+              disabled={busy || !!error}
+              onChange={(e) => setEvidenceId(e.target.value)}
+            >
+              <option value="">Choose evidence (optional)</option>
+              {suggestedEvidence.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.relevance_summary ?? "Recorded candidate evidence"}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           <input
             type="checkbox"

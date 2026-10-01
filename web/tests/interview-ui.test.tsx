@@ -177,3 +177,38 @@ it("SDK reads canonical full_name and RLS-scoped recorded stories in a fixed wor
     );
   client.auth.stopAutoRefresh();
 });
+it("saves a human-authored predicted question with exact recorded evidence reference", async () => {
+  const service = interviewFixture();
+  service.save = vi.fn().mockResolvedValue(undefined);
+  const evidence = {
+    ...visualFixture().evidence[0],
+    id: "selected-evidence",
+    evidence_story_id: "synthetic-story",
+    project_id: null,
+    skill_id: null,
+    relevance_summary: "Pipeline turnaround proof",
+  };
+  render(
+    <InterviewContext.Provider value={service}>
+      <InterviewPanel job={{ ...job, evidence: [evidence] }} />
+    </InterviewContext.Provider>,
+  );
+  await screen.findByLabelText("New likely question (optional)");
+  fireEvent.change(screen.getByLabelText("New likely question (optional)"), {
+    target: { value: "How do you diagnose pipeline quality?" },
+  });
+  fireEvent.change(
+    screen.getByLabelText("Recorded evidence for this question"),
+    { target: { value: "selected-evidence" } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save preparation" }));
+  await waitFor(() => expect(service.save).toHaveBeenCalledTimes(1));
+  expect(vi.mocked(service.save).mock.calls[0][3].questions?.[0]).toMatchObject(
+    {
+      question_text: "How do you diagnose pipeline quality?",
+      question_source: "predicted",
+      evidence_story_id: "synthetic-story",
+      relevance_summary: "Pipeline turnaround proof",
+    },
+  );
+});
