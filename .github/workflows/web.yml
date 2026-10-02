@@ -1,10 +1,10 @@
 name: Job Hunt HQ checks
 on:
   pull_request:
-    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", "supabase/proposals/**", ".github/workflows/web.yml"]
   push:
     branches: [main]
-    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", ".github/workflows/web.yml"]
+    paths: ["web/**", "worker-support/**", "skills/morning-planner/**", "skills/prepare-application/**", "supabase/migrations/**", "supabase/proposals/**", ".github/workflows/web.yml"]
 permissions:
   contents: read
 jobs:

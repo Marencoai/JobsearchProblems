@@ -1,0 +1,62 @@
+# Outreach proposal · local validation · October 1, 2026
+
+This report validates the proposed Outreach schema/worker contract and gated local interface, not a production rollout or hosted authenticated domain acceptance. The UI addendum was completed under the October 2 continuation. Branch `codex/job-hunt-hq-outreach` is isolated from the Phase 1 preview and Phase 2 rollout. Base snapshot: `a18ff51`. The shared Contacts contract published at `f76a275` remains unchanged (`full_name`, nullable `title`, UUID keys and `UNIQUE(workspace_id,id)`).
+
+## Exact reviewed files
+
+- Forward proposal: `supabase/proposals/outreach/20261001230000_outreach_domain.sql`
+- SHA-256: `7340bd4bc0f71d12b88fd20d6e3fe46f15ffab460ac697341e7a7ab23708bcd0`
+- Forward write-disable: `supabase/proposals/outreach/disable_outreach_writes.sql`
+- SHA-256: `534c5e3e233f2dfa208fe5c71114f9cf56eb8ecbc147bb08032e9e3ffffaf910`
+
+Both files are outside the automatic migration inventory. Production approval/application is not implied by their presence or by local test success.
+
+## Automated acceptance evidence
+
+| Check                            | Verified result                                                                                                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entire repository frontend suite | **226 tests pass in 12 files**: 61 Outreach SQL, 17 worker/CLI, 10 SDK/transport, 20 UI and 4 session cases; all 114 existing Phase 1/2 tests pass                                    |
+| SQL execution                    | Existing real migrations/policies/triggers plus the proposal run in isolated PGlite PostgreSQL 17.5                                                                                   |
+| Worker integration               | Actual queued SQL task/link/engagement/message rows pass through pure routing helpers; exact documented CLI preparation/wait modes run as real child processes                        |
+| Native SQL/concurrency           | PostgreSQL **17.6**, 25 unchanged non-identity migrations plus exact proposal, including pgcrypto                                                                                     |
+| Concurrent identical draft       | Session B observed waiting on Lock; identical result with one exact message/review task/action                                                                                        |
+| Concurrent competing revisions   | Session B observed waiting on Lock; stale loser rejected, one current version and preserved previous version                                                                          |
+| Concurrent identical mark-sent   | Session B observed waiting on Lock; one sent record, one wait task and one attributed Activity                                                                                        |
+| Mark-sent versus edit            | Session B observed waiting on Lock; exact sent version commits, competing edit rejected without history drift                                                                         |
+| Concurrent incoming records      | Session B observed waiting on Lock; one exact inbound record and contextual review                                                                                                    |
+| Native tenant checks             | Foreign Workspace sees zero Contact rows and cannot call the writer against another tenant                                                                                            |
+| Local security catalog           | All 9 new tables have RLS; no anonymous SELECT or authenticated raw DML; exposed RPC is SECURITY INVOKER; private definer functions have fixed search paths                           |
+| Local performance catalog        | Every new FK has a usable nonpartial index                                                                                                                                            |
+| Native disable/rollback          | Both public and private write entry points lose authenticated execute; all exact message history remains                                                                              |
+| Source quality                   | TypeScript, ESLint, Prettier (including worker support), `git diff --check` pass                                                                                                      |
+| Existing frontend regression     | Optimized Next.js production build passes; live Outreach flag defaults off; production `/qa?outreach=1` returns 404 even with the fixture flag set                                    |
+| Browser acceptance               | Isolated fresh headless profiles: installed Chrome **154.0.8037.93** and pinned Chromium **145.0.7632.6**; zero external requests and zero uncaught page errors                       |
+| Responsive QA                    | **1536×1024, 1280×900, 768×1024, 390×844, 320×720**: seven stages and no document horizontal overflow; narrow message controls remain usable                                          |
+| Exact human gate                 | Desktop/390/320 dialog checks cover no dialog overflow, readable attestation, focus containment, Escape/cancel with no sent transition and focus return                               |
+| Browser functional checks        | Exact clipboard body, unsent cancellation, whole replacement → v3/history, queue-only revision, explicit synthetic mark-sent, manual target, general networking and mobile navigation |
+
+SQL coverage includes reusable/multi-role and general relationships, manual/recommended alternatives and primary selection, immutable exact body/subject/version/recipient/role snapshots, optional approval without sending, direct human attestation without a second approval gate, historical sent times, explicit no-follow-up, record-specific wait resolution, exact incoming replies and deterministic external-reference deduplication, warming interactions, confirmed professional notes, evidence provenance/FK rollback, stale revisions, idempotency conflicts, raw DML denial, Owner/read-only/agent/anonymous/inactive/foreign-tenant boundaries, safe contact URLs, unknown Activity types, authoritative wait timestamps, task ownership and preservation after role closure.
+
+The native script creates an owned synthetic cluster under `/tmp`, restricts its directory to the current user, starts only a private Unix socket with `listen_addresses=''`, ignores inherited DB credentials, and stops/removes that cluster in `finally`. It cannot target a production connection string. All fixture names/addresses are synthetic (`.invalid`). The existing Phase 1 checkout and its temporary browser smoke files remain untouched.
+
+Test binaries: pinned Node 22.23.3 and test-only registry package `@embedded-postgres/darwin-arm64@17.6.0-beta.15`; no global server/service/security setting was installed or changed. The PGlite harness omits only its unavailable pgcrypto extension declaration (UUID generation exists in core) and skips the two historical migrations tied to real production agent identities. Native PostgreSQL replays the other SQL unchanged with pgcrypto. Auth is represented by a synthetic UUID-claim interface; no real password/token is used.
+
+Native mixed-domain validation additionally reproduces the old Workspace `FOR UPDATE` / unchanged Phase 2 Opportunity-first deadlock in the disposable cluster, restores the exact proposed `FOR NO KEY UPDATE` implementation, and verifies both overlap orders with actual Phase 2 `save_positioning` and Outreach `link_contact` RPCs. Both corrected operations commit after an observed real lock wait. The approved Phase 2 SQL is unchanged.
+
+## Practical limits and remaining gates
+
+The privacy regression verifies that a generic Activity-only reader sees summaries/structured IDs while exact communications remain protected by Outreach read permissions. Retry bodies are in an append-only, RLS-enabled private ledger with no normal caller grants; they are absent from generic Activity details. Native catalog checks include this ledger's RLS/access boundary and FK indexes.
+
+No production migration, permission change, data backfill, contact import, real message, Auth update, workflow deployment or main-branch merge occurred. Hosted advisors cannot inspect unapplied objects; they remain a post-approval deployment check. Docker is unavailable, so the full local Supabase container stack was not run.
+
+The local Outreach form is wired behind the off-by-default capability, with a separate development-only memory adapter. Production and the unchanged Phase 1 worktree remain independent. Hosted Auth/PostgREST acceptance, narrow worker provisioning/adoption and full live end-to-end acceptance still require the production/schema gate. The standalone isolated browser script needs no credentials/configuration, allows only `127.0.0.1:3104`, blocks external requests and never attaches to the user's browser profile.
+
+Checked-in evidence: [`browser-results.json`](../../web/qa-evidence/outreach/browser-results.json) for pinned Chromium and [`browser-results-chrome154.json`](../../web/qa-evidence/outreach/browser-results-chrome154.json) for installed Chrome. Visual review uses the supported pinned browser's screenshots: [desktop](../../web/qa-evidence/outreach/outreach-1536.png), [mobile message](../../web/qa-evidence/outreach/outreach-message-390.png), [desktop attestation](../../web/qa-evidence/outreach/outreach-sent-confirmation-1536.png), [390px attestation](../../web/qa-evidence/outreach/outreach-sent-confirmation-390.png), [320px attestation](../../web/qa-evidence/outreach/outreach-sent-confirmation-320.png), and [sent history](../../web/qa-evidence/outreach/outreach-sent-history.png). Dialogs scroll vertically at narrow sizes; exact text remains inspectable and the controls are reachable. The newer installed Chrome produced a tiled capture artifact on some narrow screenshots; pinned Chromium regenerated clean final artifacts. Installed-Chrome behavioral checks still passed. Visual QA caught and fixed the checkbox width issue before final acceptance.
+
+Preview: `http://127.0.0.1:3104/qa?outreach=1`; directory `JobsearchProblems-outreach/web`. This is synthetic and needs no sign-in. The Phase 1 preview on `127.0.0.1:3000/jobs` was found stopped during this resumed task and restored from its existing unchanged production build; both pages return HTTP 200. No Phase 1 source/configuration or temporary smoke-test files were changed.
+
+SQL difference from checkpoint `2af79c2`: two additive human-only controlled commands, `add_manual_target` and `start_engagement`, plus their permission/field matrices and human gate; and an FK-compatible Workspace lock-mode change from `FOR UPDATE` to `FOR NO KEY UPDATE`, retaining Workspace-first ordering. The first command creates a manual Contact/role junction/workstream atomically; the second reuses the active role-linked workstream. Four SQL regressions cover creation/idempotency, atomic rollback, workstream reuse and unlinked/agent rejection. The native mixed tests reproduce the former deadlock and verify both corrected overlap orders against actual unchanged Phase 2 RPCs. No Contacts table, key, field, RLS/grant, worker contract or existing migration changed. Dependent Interview/Offer tests must pin the final new commit/hash above.
+
+The independent combined review also requires Interview/Offer mixed-race verification and reconciliation of shared frontend capability arguments. Those are parent-coordinated integration gates, not a claim made by this per-domain suite. Production approval remains pending until their final hashes/combined checks are ready.
+
+Production requires one explicit domain approval covering the exact forward SQL/hash, nine proposed new Owner capabilities, table policies and controlled-writer/Activity-link extension. Interview depends on this canonical Contacts table and must be ordered after it. The parent coordinates the combined approval request; this local validation does not itself grant permission to apply anything.

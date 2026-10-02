@@ -2,12 +2,49 @@ import { OFFER_TABLES } from "../offer";
 import { INTERVIEW_TABLES } from "../interview";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
+import type {
+  Contact,
+  OpportunityContact,
+  Engagement,
+  EngagementOpportunity,
+  OutreachMessage,
+  OutreachEvidence,
+  OutreachInteraction,
+  RelationshipNote,
+  OutreachTaskLink,
+} from "../outreach-types";
+type ProposedTable<T> = {
+  Row: T;
+  Insert: never;
+  Update: never;
+  Relationships: [];
+};
 
 // Draft RPC contract overlays live generated types until migration approval.
 // Regenerate database.types.ts from the deployed project after that gate.
 type HqDatabase = Database & {
   public: {
+    Tables: {
+      contacts: ProposedTable<Contact>;
+      opportunity_contacts: ProposedTable<OpportunityContact>;
+      outreach_engagements: ProposedTable<Engagement>;
+      outreach_engagement_opportunities: ProposedTable<EngagementOpportunity>;
+      outreach_messages: ProposedTable<OutreachMessage>;
+      outreach_message_evidence: ProposedTable<OutreachEvidence>;
+      outreach_interactions: ProposedTable<OutreachInteraction>;
+      relationship_notes: ProposedTable<RelationshipNote>;
+      outreach_task_links: ProposedTable<OutreachTaskLink>;
+    };
     Functions: {
+      hq_outreach_action: {
+        Args: {
+          target_workspace_id: string;
+          request_id: string;
+          command: string;
+          payload: Json;
+        };
+        Returns: Json;
+      };
       hq_human_action: {
         Args: {
           target_workspace_id: string;
@@ -29,7 +66,19 @@ export type PublicConfig = {
   humanActions?: boolean;
   interview?: boolean;
   offer?: boolean;
+  outreach?: boolean;
 };
+export const OUTREACH_READ_TABLES = new Set([
+  "contacts",
+  "opportunity_contacts",
+  "outreach_engagements",
+  "outreach_engagement_opportunities",
+  "outreach_messages",
+  "outreach_message_evidence",
+  "outreach_interactions",
+  "relationship_notes",
+  "outreach_task_links",
+]);
 export const READ_TABLES = new Set([
   "principals",
   "workspace_memberships",
@@ -72,9 +121,9 @@ export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
   humanActions = false,
-  interview = false,
-  offer = false,
+  capabilities: {outreach?: boolean;interview?: boolean;offer?: boolean} = {},
 ): typeof fetch {
+  const {outreach=false,interview=false,offer=false}=capabilities;
   return async (input, init) => {
     const url = new URL(
       typeof input === "string"
@@ -100,9 +149,14 @@ export function readOnlyFetch(
       url.search === "?scope=local";
     const dataRead =
       method === "GET" &&
-      (READ_TABLES.has(table) ||
-        (interview && INTERVIEW_TABLES.includes(table)) ||
-        (offer && OFFER_TABLES.includes(table)));
+      (READ_TABLES.has(table) || (outreach && OUTREACH_READ_TABLES.has(table)) || (interview && INTERVIEW_TABLES.includes(table)) || (offer && OFFER_TABLES.includes(table)));
+    const outreachRpc =
+      outreach &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_outreach_action" &&
+      !url.search;
+    const interviewRpc=interview && method==="POST" && url.pathname==="/rest/v1/rpc/hq_interview_action" && !url.search;
+    const offerRpc=offer && method==="POST" && url.pathname==="/rest/v1/rpc/hq_offer_action" && !url.search;
     const humanRpc =
       humanActions &&
       method === "POST" &&
@@ -112,21 +166,7 @@ export function readOnlyFetch(
       url.origin !== origin ||
       url.username ||
       url.password ||
-      !(
-        authRead ||
-        login ||
-        logout ||
-        dataRead ||
-        humanRpc ||
-        (offer &&
-          method === "POST" &&
-          url.pathname === "/rest/v1/rpc/hq_offer_action" &&
-          !url.search) ||
-        (interview &&
-          method === "POST" &&
-          url.pathname === "/rest/v1/rpc/hq_interview_action" &&
-          !url.search)
-      )
+      !(authRead || login || logout || dataRead || humanRpc || outreachRpc || interviewRpc || offerRpc)
     ) {
       throw new Error("This preview permits authenticated reads only.");
     }
@@ -156,8 +196,7 @@ export function createHqClient(
         new URL(config.url).origin,
         nativeFetch,
         config.humanActions === true,
-        config.interview === true,
-        config.offer === true,
+        config,
       ),
     },
   });

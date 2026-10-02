@@ -8,6 +8,11 @@ import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
 import type { Identity, WorkspaceData } from "@/lib/types";
 import { runHumanAction, type HumanActionHandler } from "@/lib/human-actions";
+import {
+  loadOutreach,
+  runOutreachAction,
+  type OutreachHandler,
+} from "@/lib/outreach";
 
 type SessionState = {
   identity: Identity | null;
@@ -18,6 +23,8 @@ type SessionState = {
   error: string;
   humanActions: boolean;
   domainActions: boolean;
+  outreach: boolean;
+  actOutreach: OutreachHandler;
   act: HumanActionHandler;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -48,6 +55,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refresh.current = reload;
   });
+  const [outreach, setOutreach] = useState(false);
   const mutation = useRef(false);
   useEffect(() => {
     const activeGeneration = generation;
@@ -84,6 +92,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             ),
           );
         setHumanActions(config.humanActions === true);
+        setOutreach(config.outreach === true);
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -142,6 +151,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         profile.principal.id,
         humanActions,
       );
+      if (run !== generation.current) return;
+      if (outreach) rows.outreach = await loadOutreach(instance, id);
       if (run === generation.current) setData(rows);
     } catch (e) {
       if (run === generation.current) {
@@ -235,6 +246,61 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       mutation.current = false;
     }
   };
+  const actOutreach: OutreachHandler = async (command, payload, requestId) => {
+    const instance = client.current,
+      profile = identityRef.current,
+      target = workspaceRef.current;
+    if (!outreach || !instance || !profile || !target)
+      throw new Error("Outreach is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    const run = generation.current;
+    mutation.current = true;
+    try {
+      const verified = await resolveIdentity(instance);
+      if (
+        run !== generation.current ||
+        workspaceRef.current !== target ||
+        verified.principal.id !== profile.principal.id ||
+        !verified.workspaces.some((w) => w.id === target)
+      )
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      const result = await runOutreachAction(
+        instance,
+        target,
+        command,
+        payload,
+        requestId,
+      );
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      // Keep the role/stage and exact confirmation mounted during refresh.
+      // Workspace changes/sign-out still invalidate this whole read generation.
+      const rows = await loadWorkspace(
+        instance,
+        target,
+        profile.principal.id,
+        humanActions,
+      );
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      rows.outreach = await loadOutreach(instance, target);
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      setData(rows);
+      return result;
+    } finally {
+      mutation.current = false;
+    }
+  };
   return (
     <Context.Provider
       value={{
@@ -246,6 +312,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         error,
         humanActions,
         domainActions: !!interview || !!offer,
+        outreach,
+        actOutreach,
         act,
         signIn,
         signOut,

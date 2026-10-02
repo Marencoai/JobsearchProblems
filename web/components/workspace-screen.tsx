@@ -80,6 +80,7 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onSignOut={() => void session.signOut()}
       domainActions={session.domainActions}
       onAction={session.humanActions ? session.act : undefined}
+      onOutreach={session.outreach ? session.actOutreach : undefined}
     />
   );
 }

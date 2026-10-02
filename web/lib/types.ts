@@ -1,4 +1,5 @@
 import type { Database } from "./database.types";
+import type { OutreachData } from "./outreach-types";
 export type Row<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 export type Principal = Pick<
@@ -77,6 +78,7 @@ export type Identity = {
   roles: Role[];
 };
 export type WorkspaceData = {
+  outreach?: OutreachData;
   opportunities: Opportunity[];
   companies: Company[];
   evaluations: Evaluation[];

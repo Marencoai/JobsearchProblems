@@ -10,6 +10,8 @@ export function GET() {
     offer: process.env["HQ_OFFER"] === "1",
     interview: process.env["HQ_INTERVIEW"] === "1",
     humanActions: process.env["HQ_HUMAN_ACTIONS"] === "1",
+    // OFF until the separately approved Outreach migration and rollout.
+    outreach: process.env["HQ_OUTREACH"] === "1",
   };
   const headers = { "Cache-Control": "private, no-store" };
   if (!validConfig(config))

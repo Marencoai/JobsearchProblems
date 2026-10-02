@@ -47,6 +47,9 @@ import { OfferPanel } from "./offer-panel";
 import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
 import type { HumanActionHandler } from "@/lib/human-actions";
+import type { OutreachHandler } from "@/lib/outreach";
+import type { OutreachData } from "@/lib/outreach-types";
+import { OutreachPanel } from "./outreach-panel";
 
 type ShellProps = {
   identity: Identity;
@@ -61,6 +64,7 @@ type ShellProps = {
   fixture?: boolean;
   domainActions?: boolean;
   onAction?: HumanActionHandler;
+  onOutreach?: OutreachHandler;
 };
 const stageIcons = [
   Target,
@@ -116,7 +120,7 @@ export function HqShell(props: ShellProps) {
   const role = identity.roles.find((r) => r.id === roleId)?.name ?? "Member";
   const jobLink = (id: string) =>
     props.fixture
-      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}`
+      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}${data?.outreach ? "&outreach=1" : ""}`
       : `/jobs/${encodeURIComponent(id)}`;
   return (
     <div className="app-shell">
@@ -350,9 +354,7 @@ export function HqShell(props: ShellProps) {
           <span className="access-badge">
             <ShieldCheck size={13} />
             {role} ·{" "}
-            {props.onAction || props.domainActions
-              ? "Candidate workspace"
-              : "Read-only"}
+            {props.onAction || props.onOutreach || props.domainActions ? "Candidate workspace" : "Read-only"}
             {props.fixture ? " · QA fixture" : ""}
           </span>
           <button
@@ -403,6 +405,9 @@ export function HqShell(props: ShellProps) {
               job={selected}
               onAction={props.onAction}
               domainActions={props.domainActions}
+              outreach={data?.outreach}
+              tasks={data?.tasks ?? []}
+              onOutreach={props.onOutreach}
             />
           )}
           {!loading && data && (
@@ -472,10 +477,16 @@ function JobWorkspace({
   job,
   onAction,
   domainActions,
+  outreach,
+  tasks,
+  onOutreach,
 }: {
   job: JobView;
   onAction?: HumanActionHandler;
   domainActions?: boolean;
+  outreach?: OutreachData;
+  tasks: WorkspaceData["tasks"];
+  onOutreach?: OutreachHandler;
 }) {
   const [stage, setStage] = useState<Stage>(job.stage ?? "Evaluate");
   const [tab, setTab] = useState("Overview");
@@ -863,12 +874,21 @@ function JobWorkspace({
             </>
           ) : (
             <>
-              <StageRecords
-                stage={stage}
-                job={job}
-                onMaterial={setMaterial}
-                humanActions={!!onAction}
-              />
+              {stage === "Outreach" && outreach ? (
+                <OutreachPanel
+                  job={job}
+                  data={outreach}
+                  tasks={tasks}
+                  onAction={onOutreach}
+                />
+              ) : (
+                <StageRecords
+                  stage={stage}
+                  job={job}
+                  onMaterial={setMaterial}
+                  humanActions={!!onAction}
+                />
+              )}
               {onAction && (
                 <HumanActions job={job} stage={stage} onAction={onAction} />
               )}
@@ -887,7 +907,7 @@ function JobWorkspace({
           </details>
           <p className="record-caption panel-caption">
             Backend lifecycle: {label(job.opportunity.opportunity_stage)} ·
-            {onAction || domainActions
+            {onAction || onOutreach || domainActions
               ? "Candidate workspace"
               : "Read-only preview"}
           </p>
