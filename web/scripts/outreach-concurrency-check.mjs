@@ -128,7 +128,7 @@ async function race(
   secondId = firstId,
 ) {
   const first = query(
-    `begin;${auth()}select id from workspaces where id=${literal(workspace)} for update;select pg_sleep(0.7);${call(firstCommand, firstPayload, firstId)}commit;`,
+    `begin;${auth()}select id from workspaces where id=${literal(workspace)} for no key update;select pg_sleep(0.7);${call(firstCommand, firstPayload, firstId)}commit;`,
     "outreach-race-first",
   );
   const allFirst = Promise.allSettled([first]);
@@ -147,6 +147,63 @@ async function count(table, condition) {
   return Number(
     await query(`select count(*) from ${table} where ${condition};`),
   );
+}
+async function phase2Overlap(mode, reverse = false) {
+  const mixed = await json(
+    `begin;${auth()}insert into opportunities(workspace_id,company_id,title,opportunity_stage) values(${literal(workspace)},${literal(company)},'Synthetic mixed-domain role','pursuing') returning json_build_object('id',id,'updated_at',updated_at);commit;`,
+  );
+  const pkg = await json(
+    `begin;${auth()}insert into application_packages(workspace_id,opportunity_id) values(${literal(workspace)},${literal(mixed.id)}) returning json_build_object('id',id,'updated_at',updated_at);commit;`,
+  );
+  const person = await rpc("save_contact", {
+    full_name: "Synthetic mixed-domain contact",
+    source_system: "candidate",
+  });
+  const outreach = call("link_contact", {
+    opportunity_id: mixed.id,
+    contact_id: person.contact_id,
+    selection_method: "manual",
+    relevance: "Synthetic cross-domain race",
+    source_system: "candidate",
+  });
+  const human = `select public.hq_human_action(${literal(workspace)},${literal(mixed.id)},${literal(mixed.updated_at)}::timestamptz,${literal(randomUUID())},'save_positioning',${literal(JSON.stringify({ package_id: pkg.id, package_updated_at: pkg.updated_at, notes: "Exact mixed-race positioning" }))}::jsonb);`;
+  let first, second;
+  if (!reverse) {
+    first = query(
+      `begin;${auth()}select id from workspaces where id=${literal(workspace)} for ${mode};select pg_sleep(0.3);${outreach}commit;`,
+      "mixed-outreach",
+    );
+    const pendingFirst = Promise.allSettled([first]);
+    await waitFor("mixed-outreach", "Timeout");
+    second = query(
+      `begin;${auth()}select id from opportunities where id=${literal(mixed.id)} for update;select pg_sleep(0.6);${human}commit;`,
+      "mixed-phase2",
+    );
+    const pendingSecond = Promise.allSettled([second]);
+    await waitFor("mixed-phase2", "Timeout");
+    await waitFor("mixed-outreach", "Lock");
+    return {
+      results: [...(await pendingFirst), ...(await pendingSecond)],
+      mixed,
+      pkg,
+      person,
+    };
+  }
+  first = query(
+    `begin;${auth()}select id from opportunities where id=${literal(mixed.id)} for update;select pg_sleep(0.3);${human}commit;`,
+    "mixed-phase2",
+  );
+  const pendingFirst = Promise.allSettled([first]);
+  await waitFor("mixed-phase2", "Timeout");
+  second = query(`begin;${auth()}${outreach}commit;`, "mixed-outreach");
+  const pendingSecond = Promise.allSettled([second]);
+  await waitFor("mixed-outreach", "Lock");
+  return {
+    results: [...(await pendingFirst), ...(await pendingSecond)],
+    mixed,
+    pkg,
+    person,
+  };
 }
 try {
   console.log(
@@ -405,6 +462,62 @@ try {
   );
 
   // Native adversarial tenant read and controlled writer denial.
+  // Prove the reviewed failure in this owned synthetic cluster, then restore
+  // the exact candidate implementation and exercise real unchanged Phase 2 RPCs.
+  const implementation = (
+    await json(
+      "select json_build_object('definition',pg_get_functiondef('private.hq_outreach_action(uuid,uuid,text,jsonb)'::regprocedure));",
+    )
+  ).definition;
+  const historical = implementation.replace(
+    "where id=target_workspace_id for no key update;",
+    "where id=target_workspace_id for update;",
+  );
+  assert.notEqual(historical, implementation);
+  await query(historical);
+  const oldCycle = await phase2Overlap("update");
+  assert.equal(
+    oldCycle.results.filter(
+      (r) =>
+        r.status === "rejected" && /deadlock detected/.test(r.reason.message),
+    ).length,
+    1,
+  );
+  assert.equal(
+    oldCycle.results.filter((r) => r.status === "fulfilled").length,
+    1,
+  );
+  console.log(
+    "PASS reproduced historical Workspace UPDATE / unchanged Phase 2 Opportunity UPDATE deadlock in isolated cluster",
+  );
+  await query(implementation);
+  for (const reverse of [false, true]) {
+    const mixed = await phase2Overlap("no key update", reverse);
+    assert.ok(
+      mixed.results.every((r) => r.status === "fulfilled"),
+      JSON.stringify(
+        mixed.results.map((r) =>
+          r.status === "rejected" ? r.reason.message : r.status,
+        ),
+      ),
+    );
+    assert.equal(
+      await count(
+        "opportunity_contacts",
+        `opportunity_id=${literal(mixed.mixed.id)} and contact_id=${literal(mixed.person.contact_id)}`,
+      ),
+      1,
+    );
+    assert.equal(
+      await query(
+        `select candidate_notes from application_packages where id=${literal(mixed.pkg.id)};`,
+      ),
+      "Exact mixed-race positioning",
+    );
+    console.log(
+      `PASS mixed Outreach / unchanged Phase 2 RPC (${reverse ? "Phase 2 starts first" : "Outreach starts first"}): observed Lock wait; both exact operations committed without deadlock`,
+    );
+  }
   const foreign = randomUUID();
   await query(
     `insert into auth.users values(${literal(foreign)},'foreign-native@example.invalid');select set_config('request.jwt.claim.sub',${literal(foreign)},false);select public.bootstrap_personal_workspace('Foreign native','synthetic-foreign-native');`,

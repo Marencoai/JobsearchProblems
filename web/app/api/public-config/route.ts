@@ -8,6 +8,8 @@ export function GET() {
     // Enable only after live Phase 1 acceptance and approval/deployment of the
     // reviewed migration. The default remains the existing read-only preview.
     humanActions: process.env["HQ_HUMAN_ACTIONS"] === "1",
+    // OFF until the separately approved Outreach migration and rollout.
+    outreach: process.env["HQ_OUTREACH"] === "1",
   };
   const headers = { "Cache-Control": "private, no-store" };
   if (!validConfig(config))

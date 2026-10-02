@@ -1,0 +1,48 @@
+{
+  "browser": "145.0.7632.6",
+  "viewports": [
+    {
+      "width": 1536,
+      "height": 1024,
+      "viewport": 1536,
+      "dialogCount": 0
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "viewport": 1280,
+      "dialogCount": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "viewport": 768,
+      "dialogCount": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "viewport": 390,
+      "dialogCount": 0
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "viewport": 320,
+      "dialogCount": 0
+    }
+  ],
+  "checks": [
+    "Five responsive widths have seven stages and no document horizontal overflow",
+    "Copy preserves review status; exact synthetic text matches clipboard",
+    "Opening, unconfirmed submission and Escape preserve unsent version",
+    "Whole replacement creates v3 and preserves historical bodies",
+    "Revision requests stay queued; fixture does not generate or send",
+    "Explicit synthetic attestation records one frozen sent version with no follow-up",
+    "Manual contact is immediately available with an independent linked workstream",
+    "General reusable relationship creates a draft without Opportunity context",
+    "Mobile navigation opens and Escape returns to the role"
+  ],
+  "externalRequests": 0,
+  "pageErrors": []
+}

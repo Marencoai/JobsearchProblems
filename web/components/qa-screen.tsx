@@ -1,16 +1,37 @@
 "use client";
 import { HqShell } from "./hq-shell";
 import { fixtureIdentity, visualFixture } from "@/lib/qa-fixtures";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { outreachFixture, applyOutreachFixture } from "@/lib/outreach-fixtures";
+import type { Json } from "@/lib/database.types";
 export function QaScreen({
   selectedId,
   actions = false,
+  outreach = false,
 }: {
   selectedId?: string;
   actions?: boolean;
+  outreach?: boolean;
 }) {
   const [result, setResult] = useState("");
+  const [outreachData, setOutreachData] = useState(outreachFixture);
+  const savedRequests = useRef(
+    new Map<string, { input: string; result: Json }>(),
+  );
   const data = visualFixture();
+  if (outreach) {
+    data.outreach = outreachData;
+    data.actions = data.actions.map((a) =>
+      a.opportunity_id === "outreach"
+        ? { ...a, action_type: "review", title: "Review this exact draft" }
+        : a,
+    );
+    data.tasks = data.tasks.map((t) =>
+      t.id === "outreach-task"
+        ? { ...t, status: "waiting", task_type: "review_outreach_message" }
+        : t,
+    );
+  }
   if (actions) {
     data.applications = [];
     data.materials.push({
@@ -22,7 +43,7 @@ export function QaScreen({
   }
   return (
     <>
-      {actions && (
+      {(actions || outreach) && (
         <p role="status" className="notice">
           Synthetic action preview. No database connection or worker execution.{" "}
           {result}
@@ -39,6 +60,34 @@ export function QaScreen({
         onWorkspace={() => {}}
         onReload={() => {}}
         onSignOut={() => {}}
+        onOutreach={
+          outreach
+            ? async (command, payload, requestId) => {
+                const input = JSON.stringify({ command, payload });
+                const previous = savedRequests.current.get(requestId);
+                if (previous) {
+                  if (previous.input !== input)
+                    throw new Error("Synthetic retry input changed");
+                  return previous.result;
+                }
+                const next = applyOutreachFixture(
+                  outreachData,
+                  command,
+                  payload,
+                  requestId,
+                );
+                savedRequests.current.set(requestId, {
+                  input,
+                  result: next.result,
+                });
+                setOutreachData(next.data);
+                setResult(
+                  "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
+                );
+                return next.result;
+              }
+            : undefined
+        }
         onAction={
           actions
             ? async (_job, command) => {

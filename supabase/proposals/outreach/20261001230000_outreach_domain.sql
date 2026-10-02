@@ -334,6 +334,10 @@ begin
  case command
  when 'save_contact' then required:=required||array['contact.read','contact.manage','company.read'];
   allowed:=array['contact_id','expected_revision','company_id','full_name','title','email','linkedin_url','phone','location_text','relationship_type','relationship_context','source_system','source_reference','status'];
+ when 'add_manual_target' then required:=required||array['contact.read','contact.manage','outreach.read','outreach.manage','opportunity.read'];
+  allowed:=array['opportunity_id','full_name','title','email','linkedin_url','reason'];
+ when 'start_engagement' then required:=required||array['contact.read','outreach.read','outreach.manage','opportunity.read'];
+  allowed:=array['opportunity_id','contact_id'];
  when 'link_contact' then required:=required||array['contact.read','contact.manage','opportunity.read'];
   allowed:=array['contact_id','opportunity_id','relationship_role','is_primary','selection_method','relevance','source_system','source_reference','notes'];
  when 'select_primary_contact' then required:=required||array['contact.read','contact.manage','opportunity.read'];
@@ -368,7 +372,7 @@ begin
   allowed:=array['task_id'];
  else raise exception 'Unsupported Outreach command'; end case;
  if exists(select 1 from jsonb_object_keys(payload) k where not k=any(allowed)) then raise exception 'Unexpected Outreach input field'; end if;
- if command in ('approve_message','mark_sent','request_draft','select_primary_contact','resolve_follow_up') and not human then
+ if command in ('approve_message','mark_sent','request_draft','select_primary_contact','resolve_follow_up','add_manual_target','start_engagement') and not human then
   raise exception using errcode='42501',message='Explicit human action is required';
  end if;
  foreach permission_key in array required loop
@@ -379,7 +383,10 @@ begin
  -- Coarse workspace serialization is intentional for low-volume V1 relationship
  -- transitions. It protects creation, version allocation, idempotency and queue
  -- reconciliation with one lock order, including two different retry IDs.
- perform id from public.workspaces where id=target_workspace_id for update;
+ -- Non-key fields/children only: serialize writers while allowing existing
+ -- Opportunity-first workflows' Workspace FK KEY SHARE checks to finish.
+ -- All new domain writers take this lock before their Opportunity locks.
+ perform id from public.workspaces where id=target_workspace_id for no key update;
  input:=jsonb_build_object('command',command,'payload',payload);
  select * into previous from private.outreach_action_requests r where r.workspace_id=target_workspace_id
  and r.actor_principal_id=actor and r.request_id=hq_outreach_action.request_id;
@@ -415,7 +422,33 @@ begin
    and draft_series_id=message.draft_series_id and version_number>message.version_number) then raise exception 'Review the latest message version'; end if;
  end if;
 
- if command='save_contact' then
+ if command='add_manual_target' then
+  if ref_op is null or nullif(btrim(payload->>'full_name'),'') is null then raise exception 'Opportunity and contact name are required'; end if;
+  insert into public.contacts(workspace_id,company_id,full_name,title,email,linkedin_url,source_system,created_by_principal_id,updated_by_principal_id)
+  values(target_workspace_id,op.company_id,btrim(payload->>'full_name'),nullif(btrim(payload->>'title'),''),
+   nullif(btrim(payload->>'email'),''),nullif(btrim(payload->>'linkedin_url'),''),'candidate',actor,actor) returning * into contact;
+  insert into public.opportunity_contacts(workspace_id,opportunity_id,contact_id,relationship_role,selection_method,relevance,source_system,created_by_principal_id)
+  values(target_workspace_id,ref_op,contact.id,'outreach_target','manual',coalesce(nullif(btrim(payload->>'reason'),''),'Selected by the candidate'),'candidate',actor);
+  insert into public.outreach_engagements(workspace_id,contact_id,company_id,goal,created_by_principal_id,updated_by_principal_id)
+  values(target_workspace_id,contact.id,op.company_id,'Explore this opportunity',actor,actor) returning * into engagement;
+  insert into public.outreach_engagement_opportunities(workspace_id,outreach_engagement_id,opportunity_id,relationship_type,created_by_principal_id)
+  values(target_workspace_id,engagement.id,ref_op,'outreach_target',actor);
+  result:=jsonb_build_object('contact_id',contact.id,'engagement_id',engagement.id);summary:='Candidate added a manual outreach target';
+ elsif command='start_engagement' then
+  if ref_op is null or contact.id is null or contact.status<>'active' or not exists(select 1 from public.opportunity_contacts
+   where workspace_id=target_workspace_id and opportunity_id=ref_op and contact_id=contact.id) then raise exception 'An active linked contact is required'; end if;
+  select e.* into engagement from public.outreach_engagements e join public.outreach_engagement_opportunities l
+   on l.workspace_id=e.workspace_id and l.outreach_engagement_id=e.id
+   where e.workspace_id=target_workspace_id and e.contact_id=contact.id and e.status='active' and l.opportunity_id=ref_op and l.is_current
+   order by e.created_at,e.id limit 1;
+  if not found then
+   insert into public.outreach_engagements(workspace_id,contact_id,company_id,goal,created_by_principal_id,updated_by_principal_id)
+   values(target_workspace_id,contact.id,op.company_id,'Explore this opportunity',actor,actor) returning * into engagement;
+   insert into public.outreach_engagement_opportunities(workspace_id,outreach_engagement_id,opportunity_id,relationship_type,created_by_principal_id)
+   values(target_workspace_id,engagement.id,ref_op,'outreach_target',actor);
+  end if;
+  result:=jsonb_build_object('engagement_id',engagement.id);summary:='Candidate opened an outreach relationship';
+ elsif command='save_contact' then
   if payload->>'company_id' is not null and not exists(select 1 from public.companies
    where workspace_id=target_workspace_id and id=(payload->>'company_id')::uuid) then raise exception 'Company is unavailable'; end if;
   if nullif(btrim(payload->>'full_name'),'') is null or nullif(btrim(payload->>'source_system'),'') is null then raise exception 'Contact name and source are required'; end if;

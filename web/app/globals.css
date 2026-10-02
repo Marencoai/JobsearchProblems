@@ -7,6 +7,316 @@
   --surface: #f5f9fd;
   --font: Arial, Helvetica, sans-serif;
 }
+/* Outreach keeps the existing stage shell, hierarchy and restrained palette. */
+.outreach-panel {
+  margin-top: 18px;
+}
+.outreach-intro {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.outreach-intro h3 {
+  font-size: 16px;
+}
+.outreach-grid {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.78fr) minmax(0, 1.7fr);
+  gap: 20px;
+}
+.outreach-grid > *,
+.outreach-workspace,
+.contact-select > span {
+  min-width: 0;
+}
+.outreach-targets {
+  padding-right: 18px;
+  border-right: 1px solid var(--line);
+}
+.outreach-heading,
+.outreach-recipient {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.outreach-help {
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+.contact-card {
+  padding: 13px;
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.contact-card.selected {
+  border-color: #94b4fa;
+  background: #f4f8ff;
+  box-shadow: inset 3px 0 var(--blue);
+}
+.contact-select {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  padding: 0;
+  color: var(--ink);
+  background: none;
+  border: none;
+  text-align: left;
+}
+.contact-select small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.contact-avatar {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e5edfd;
+  font-weight: bold;
+  color: var(--blue);
+}
+.contact-tag {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--muted);
+  background: #edf3fb;
+  border-radius: 5px;
+  padding: 4px 7px;
+}
+.contact-card > .contact-tag {
+  margin: 12px 0 7px;
+}
+.contact-card > p {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.outreach-inline {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+}
+.outreach-inline a {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 12px;
+}
+.text-button {
+  border: 0;
+  background: none;
+  color: var(--blue);
+  padding: 4px 0;
+  font-size: 12px;
+  text-align: left;
+}
+.text-button:hover {
+  text-decoration: underline;
+}
+.outreach-wide {
+  width: 100%;
+  justify-content: center;
+}
+.outreach-panel .button:disabled {
+  opacity: 0.5;
+}
+.outreach-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 25px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  line-height: 1.6;
+}
+.outreach-empty h3,
+.outreach-empty h4 {
+  color: var(--ink);
+  margin: 8px 0;
+}
+.outreach-empty .button {
+  margin-top: 12px;
+}
+.outreach-recipient {
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.outreach-recipient h3 {
+  font-size: 18px;
+}
+.outreach-recipient .eyebrow {
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+.outreach-fields {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 12px;
+}
+.outreach-panel label,
+.outreach-dialog label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+.outreach-panel input:not([type="checkbox"]),
+.outreach-panel select,
+.outreach-panel textarea,
+.outreach-dialog input:not([type="checkbox"]),
+.outreach-dialog select,
+.outreach-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d7e1ef;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: normal;
+}
+.outreach-panel textarea,
+.outreach-dialog textarea {
+  resize: vertical;
+  line-height: 1.6;
+  font-family: var(--font);
+}
+.message-body {
+  min-height: 235px;
+}
+.composer-actions .button {
+  font-size: 12px;
+}
+.outreach-sent-gate {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+.outreach-sent-gate .button {
+  justify-self: start;
+  color: var(--green);
+  border-color: #b7dcd1;
+}
+.relationship-history {
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.outreach-history-item {
+  margin: 10px 0;
+  padding: 12px;
+  background: #f8faff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow-wrap: anywhere;
+}
+.outreach-history-item summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.outreach-history-item p,
+.outreach-history-item h4 {
+  margin-top: 10px;
+}
+.outreach-history-item small {
+  display: block;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.outreach-dialog {
+  width: min(620px, calc(100% - 28px));
+}
+.outreach-dialog fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.outreach-exact {
+  padding: 14px;
+  background: #f5f8fd;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 12px 0;
+  max-height: 260px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.outreach-dialog .confirmation-check {
+  display: flex;
+  align-items: flex-start;
+  font-weight: normal;
+}
+.outreach-dialog .confirmation-check input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 3px;
+}
+@media (max-width: 1150px) {
+  .outreach-grid {
+    grid-template-columns: 1fr;
+  }
+  .outreach-targets {
+    border-right: 0;
+    padding-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+  }
+  .outreach-targets .contact-card {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(50% - 6px);
+  }
+  .outreach-targets .contact-card:nth-of-type(even) {
+    margin-left: 8px;
+  }
+}
+@media (max-width: 760px) {
+  .outreach-targets .contact-card {
+    display: block;
+    width: 100%;
+  }
+  .outreach-targets .contact-card:nth-of-type(even) {
+    margin-left: 0;
+  }
+  .outreach-recipient {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .outreach-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .outreach-intro {
+    align-items: flex-start;
+  }
+  .outreach-heading {
+    flex-wrap: wrap;
+  }
+}
 * {
   box-sizing: border-box;
 }

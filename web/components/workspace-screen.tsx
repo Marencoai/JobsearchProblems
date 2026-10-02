@@ -79,6 +79,7 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onReload={() => void session.reload()}
       onSignOut={() => void session.signOut()}
       onAction={session.humanActions ? session.act : undefined}
+      onOutreach={session.outreach ? session.actOutreach : undefined}
     />
   );
 }

@@ -221,6 +221,111 @@ afterEach(async () => {
 });
 
 describe("proposed Outreach schema and controlled transactions", () => {
+  it("atomically adds an unrestricted human-selected target and linked relationship", async () => {
+    const request = randomUUID(),
+      payload = {
+        opportunity_id: opportunity,
+        full_name: "Manual alternative",
+        email: "manual@example.invalid",
+        reason: "Professional connection outside recommendations",
+      };
+    const result = await rpc("add_manual_target", payload, request);
+    expect(await rpc("add_manual_target", payload, request)).toEqual(result);
+    expect(
+      await row("select full_name,source_system from contacts where id=$1", [
+        result.contact_id,
+      ]),
+    ).toMatchObject({
+      full_name: "Manual alternative",
+      source_system: "candidate",
+    });
+    expect(
+      await row(
+        "select selection_method,relevance from opportunity_contacts where contact_id=$1",
+        [result.contact_id],
+      ),
+    ).toMatchObject({ selection_method: "manual", relevance: payload.reason });
+    expect(
+      (
+        await row(
+          "select count(*)::int as n from outreach_engagement_opportunities where outreach_engagement_id=$1 and opportunity_id=$2",
+          [result.engagement_id, opportunity],
+        )
+      ).n,
+    ).toBe(1);
+    expect(
+      (
+        await row(
+          "select count(*)::int as n from activity_events where event_type='outreach_add_manual_target'",
+        )
+      ).n,
+    ).toBe(1);
+  });
+  it("rolls back the entire manual target transaction on invalid professional data", async () => {
+    const before = await row(
+      "select (select count(*) from contacts)::int as contacts,(select count(*) from outreach_engagements)::int as engagements,(select count(*) from activity_events)::int as events",
+    );
+    await expect(
+      rpc("add_manual_target", {
+        opportunity_id: opportunity,
+        full_name: "No partial person",
+        linkedin_url: "https://evil.invalid/user",
+      }),
+    ).rejects.toThrow();
+    expect(
+      await row(
+        "select (select count(*) from contacts)::int as contacts,(select count(*) from outreach_engagements)::int as engagements,(select count(*) from activity_events)::int as events",
+      ),
+    ).toEqual(before);
+  });
+  it("reuses the active role workstream when opening a recommended contact", async () => {
+    await rpc("link_contact", {
+      contact_id: contact,
+      opportunity_id: opportunity,
+      selection_method: "recommended",
+      relevance: "Relevant professional",
+      source_system: "verified_profile",
+    });
+    const first = await rpc("start_engagement", {
+      contact_id: contact,
+      opportunity_id: opportunity,
+    });
+    const second = await rpc("start_engagement", {
+      contact_id: contact,
+      opportunity_id: opportunity,
+    });
+    expect(first.engagement_id).toBe(engagement);
+    expect(second.engagement_id).toBe(engagement);
+    expect(
+      (await row("select count(*)::int as n from outreach_engagements")).n,
+    ).toBe(1);
+  });
+  it("rejects unlinked contacts and agent assertions for composite candidate commands", async () => {
+    await expect(
+      rpc("start_engagement", {
+        contact_id: contact,
+        opportunity_id: opportunity,
+      }),
+    ).rejects.toThrow("active linked contact");
+    const agent = await newPrincipal("agent", [
+      ...workflow,
+      "contact.manage",
+      "outreach.manage",
+    ]);
+    await asUser(agent.uid);
+    await expect(
+      rpc("add_manual_target", {
+        opportunity_id: opportunity,
+        full_name: "Worker invented candidate choice",
+      }),
+    ).rejects.toThrow("human action");
+    await expect(
+      rpc("start_engagement", {
+        contact_id: contact,
+        opportunity_id: opportunity,
+      }),
+    ).rejects.toThrow("human action");
+  });
   it("uses the canonical reusable relationship model and preserves backend lifecycle", async () => {
     const other = (
       await row(
