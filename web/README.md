@@ -1,5 +1,11 @@
 # Job Hunt HQ · Phase 1
 
+Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW.md](PHASE2_REVIEW.md). The default runtime remains read-only. Only after authenticated Phase 1 acceptance and explicit migration approval should the server environment set `HQ_HUMAN_ACTIONS=1`. That enables just the `hq_human_action` RPC and reads the new deferral column; it never permits direct table writes or other RPCs. Do not enable the flag against the pre-migration database.
+
+**Acceptance update · October 1, 2026:** Diana explicitly accepted Phase 1 after signing in and reviewing multiple real opportunities. [PHASE1_QA.md](PHASE1_QA.md) records that approval; the [requirements document](../docs/02-requirements/requirements.md#job-hunt-hq-deferred-product-improvements) tracks her two deferred, non-blocking improvements. The next gate is explicit Phase 2 production migration approval, which Diana has withheld. The migration and human-action flag remain inactive.
+
+**Subsequent rollout update · October 1, 2026:** Diana approved the exact Phase 2 migration reviewed at `3b047da`. Live preflight matches the reviewed database assumptions, but actual hosted worker installation/version-verification targets are not yet discoverable. Per her safeguards, no apply was attempted. The migration remains unapplied and human-action activation remains unauthorized. See the updated [review](PHASE2_REVIEW.md#approved-rollout-preflight--october-1-2026) and its exact preflight inventory.
+
 Read-only Next.js candidate workspace over the existing Supabase Auth/principal/workspace/RLS model. The existing worker workflows, schema, migrations, permissions, renderer, and job data are unchanged.
 
 ## Run locally
@@ -40,6 +46,10 @@ npm run build
 Tests cover stage precedence, history, score/authorization separation, version selection, linked activity, pagination, fail-closed identity resolution, workspace filters, SDK integration with a mocked network, transport write rejection, and UI search/tabs/material previews/disabled actions. Tests never create production fixtures. These tests validate client boundaries; authenticated live browser QA is required to establish production RLS behavior.
 
 For synthetic visual QA only, launch development with `HQ_QA_FIXTURES=1` and open `/qa`. The page is clearly labelled a synthetic workspace and uses the same UI components. `/jobs` continues to require real authentication. `/qa` always returns 404 in a production build, regardless of that flag. Fixtures are never a data-loading fallback.
+
+Add `&actions=1` to a synthetic QA job URL to preview action dialogs, such as `/qa?job=resume&actions=1`. The synthetic callback only displays a confirmation; it never connects to a database, executes a worker, or changes production. SQL transaction tests use an in-memory PostgreSQL 17 PGlite harness, replay actual foundational migrations with a synthetic Auth shim, and execute as `authenticated`. The two migrations provisioning production agent identities are excluded. No test connection string or persistent test database is used.
+
+Worker deferral/revision helpers and their CLI live in `worker-support/`; the existing planner/preparation skills call them before ranking/delivery or selecting a preparation Package. Ordinary tests execute the CLI and exercise real revision transitions as a synthetic prepare-only agent. Native concurrency is separately reproducible with `node scripts/concurrency-check.mjs /absolute/postgres/bin /absolute/psql`: the script owns a disposable synthetic cluster on a private Unix socket, disables TCP, replays migrations, observes overlapping lock waits, and removes the cluster after stopping it. See the review for results and remaining hosted acceptance limits.
 
 ## Approval gates
 

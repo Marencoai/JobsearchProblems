@@ -43,6 +43,8 @@ import type {
 import { STAGES } from "@/lib/types";
 import { buildJobViews } from "@/lib/workflow";
 import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
+import { HumanActions } from "./human-actions";
+import type { HumanActionHandler } from "@/lib/human-actions";
 
 type ShellProps = {
   identity: Identity;
@@ -55,6 +57,7 @@ type ShellProps = {
   onReload: () => void;
   onSignOut: () => void;
   fixture?: boolean;
+  onAction?: HumanActionHandler;
 };
 const stageIcons = [
   Target,
@@ -110,7 +113,7 @@ export function HqShell(props: ShellProps) {
   const role = identity.roles.find((r) => r.id === roleId)?.name ?? "Member";
   const jobLink = (id: string) =>
     props.fixture
-      ? `/qa?job=${encodeURIComponent(id)}`
+      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}`
       : `/jobs/${encodeURIComponent(id)}`;
   return (
     <div className="app-shell">
@@ -343,7 +346,8 @@ export function HqShell(props: ShellProps) {
           </label>
           <span className="access-badge">
             <ShieldCheck size={13} />
-            {role} · Read-only{props.fixture ? " · QA fixture" : ""}
+            {role} · {props.onAction ? "Human actions" : "Read-only"}
+            {props.fixture ? " · QA fixture" : ""}
           </span>
           <button
             className="reload"
@@ -391,6 +395,7 @@ export function HqShell(props: ShellProps) {
             <JobWorkspace
               key={`${workspaceId}:${selected.opportunity.id}`}
               job={selected}
+              onAction={props.onAction}
             />
           )}
           {!loading && data && (
@@ -456,7 +461,13 @@ function TextBlock({
   );
 }
 
-function JobWorkspace({ job }: { job: JobView }) {
+function JobWorkspace({
+  job,
+  onAction,
+}: {
+  job: JobView;
+  onAction?: HumanActionHandler;
+}) {
   const [stage, setStage] = useState<Stage>(job.stage ?? "Evaluate");
   const [tab, setTab] = useState("Overview");
   const [material, setMaterial] = useState<Material | null>(null);
@@ -498,7 +509,11 @@ function JobWorkspace({ job }: { job: JobView }) {
         <button
           className="button save"
           disabled
-          title="Saving is unavailable in the read-only preview"
+          title={
+            onAction
+              ? "Use Save for later in Evaluate while a decision is open"
+              : "Saving is unavailable in the read-only preview"
+          }
         >
           <Bookmark size={15} />
           Save
@@ -800,41 +815,55 @@ function JobWorkspace({ job }: { job: JobView }) {
                   </>
                 )}
               </div>
-              <div className="decision-actions">
-                <button
-                  className="button success"
-                  disabled
-                  title="Pursuit decisions are unavailable in Phase 1"
-                >
-                  <Check size={17} />
-                  <span>
-                    <strong>Pursue</strong>
-                    <small>Move to strategy and positioning</small>
-                  </span>
-                </button>
-                <button
-                  className="button danger"
-                  disabled
-                  title="Passing is unavailable in Phase 1"
-                >
-                  <X size={17} />
-                  <span>
-                    <strong>Pass</strong>
-                    <small>Not the right opportunity</small>
-                  </span>
-                </button>
-                <button
-                  className="button"
-                  disabled
-                  title="Saving is unavailable in Phase 1"
-                >
-                  <Bookmark size={16} />
-                  Save for later
-                </button>
-              </div>
+              {onAction ? (
+                <HumanActions job={job} stage={stage} onAction={onAction} />
+              ) : (
+                <div className="decision-actions">
+                  <button
+                    className="button success"
+                    disabled
+                    title="Pursuit decisions are unavailable in Phase 1"
+                  >
+                    <Check size={17} />
+                    <span>
+                      <strong>Pursue</strong>
+                      <small>Move to strategy and positioning</small>
+                    </span>
+                  </button>
+                  <button
+                    className="button danger"
+                    disabled
+                    title="Passing is unavailable in Phase 1"
+                  >
+                    <X size={17} />
+                    <span>
+                      <strong>Pass</strong>
+                      <small>Not the right opportunity</small>
+                    </span>
+                  </button>
+                  <button
+                    className="button"
+                    disabled
+                    title="Saving is unavailable in Phase 1"
+                  >
+                    <Bookmark size={16} />
+                    Save for later
+                  </button>
+                </div>
+              )}
             </>
           ) : (
-            <StageRecords stage={stage} job={job} onMaterial={setMaterial} />
+            <>
+              <StageRecords
+                stage={stage}
+                job={job}
+                onMaterial={setMaterial}
+                humanActions={!!onAction}
+              />
+              {onAction && (
+                <HumanActions job={job} stage={stage} onAction={onAction} />
+              )}
+            </>
           )}
           <details
             className="job-description"
@@ -849,7 +878,7 @@ function JobWorkspace({ job }: { job: JobView }) {
           </details>
           <p className="record-caption panel-caption">
             Backend lifecycle: {label(job.opportunity.opportunity_stage)} ·
-            Read-only preview
+            {onAction ? "Candidate workspace" : "Read-only preview"}
           </p>
         </article>
         <IntelligencePanel job={job} />
@@ -916,10 +945,12 @@ function StageRecords({
   stage,
   job,
   onMaterial,
+  humanActions,
 }: {
   stage: Stage;
   job: JobView;
   onMaterial: (material: Material) => void;
+  humanActions: boolean;
 }) {
   if (stage === "Pursue")
     return (
@@ -938,8 +969,9 @@ function StageRecords({
         />
         <PackageSummary job={job} />
         <p className="notice">
-          Preparation belongs to the existing application workflow. This preview
-          displays its recorded results.
+          {humanActions
+            ? "Your application worker prepares the materials. Its recorded results appear here."
+            : "Preparation belongs to the existing application workflow. This preview displays its recorded results."}
         </p>
         <EventList job={job} />
       </div>
@@ -1052,8 +1084,9 @@ function StageRecords({
           />
         )}
         <p className="notice">
-          Submission remains an explicit human confirmation. This preview cannot
-          submit or confirm an application.
+          {humanActions
+            ? "After completing the employer application, confirm the exact materials you submitted here."
+            : "Submission remains an explicit human confirmation. This preview cannot submit or confirm an application."}
         </p>
       </div>
     );

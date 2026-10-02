@@ -52,6 +52,14 @@ Do not create a new review action when:
 
 A `decide` action means the candidate reviews the Evaluation and chooses Pursue / Pass / Defer. It does not create an Application Package automatically.
 
+### Proposed HQ deferral support (not deployed)
+
+After the approved human-action migration adds `next_actions.available_after`, an open action with a future value remains part of deduplication but must be excluded from ranking, Today's One Thing, new Plan Items, and delivery. Do not synthesize a replacement action to bypass the deferral. Reconsider the same action when its timestamp arrives; null means available now. Treat `due_at` as the actual deadline, not a deferral field.
+
+An existing active Plan may contain a newly deferred action. Filter that action from delivery against live Next Action state; preserve historical Plan snapshots. On the next planner run, version the Plan only if priorities materially changed. Roll out this consumer rule with the HQ migration; until then, do not query a column that does not exist.
+
+The skill now calls the tested `worker-support/cli.mts planner` helper before ranking or delivery. Its output separates open-action deduplication from current eligibility and filters existing Plan Item IDs against eligible live actions. It checks Workspace/assignee scope and fails closed on an invalid timestamp. The helper performs no ranking, database writes, or authority changes. The local integration test supplies actual deferred SQL rows; live scheduled adoption remains a rollout prerequisite.
+
 ## Application Next Actions
 
 When an Application Package exists:

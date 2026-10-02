@@ -1,8 +1,27 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/database.types";
+import type { Database, Json } from "@/lib/database.types";
 
-export type HqClient = SupabaseClient<Database>;
-export type PublicConfig = { url: string; key: string };
+// Draft RPC contract overlays live generated types until migration approval.
+// Regenerate database.types.ts from the deployed project after that gate.
+type HqDatabase = Database & {
+  public: {
+    Functions: {
+      hq_human_action: {
+        Args: {
+          target_workspace_id: string;
+          target_opportunity_id: string;
+          expected_updated_at: string;
+          request_id: string;
+          command: string;
+          payload: Json;
+        };
+        Returns: Json;
+      };
+    };
+  };
+};
+export type HqClient = SupabaseClient<HqDatabase>;
+export type PublicConfig = { url: string; key: string; humanActions?: boolean };
 export const READ_TABLES = new Set([
   "principals",
   "workspace_memberships",
@@ -44,6 +63,7 @@ export function validConfig(config: PublicConfig): boolean {
 export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
+  humanActions = false,
 ): typeof fetch {
   return async (input, init) => {
     const url = new URL(
@@ -69,11 +89,16 @@ export function readOnlyFetch(
       url.pathname === "/auth/v1/logout" &&
       url.search === "?scope=local";
     const dataRead = method === "GET" && READ_TABLES.has(table);
+    const humanRpc =
+      humanActions &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_human_action" &&
+      !url.search;
     if (
       url.origin !== origin ||
       url.username ||
       url.password ||
-      !(authRead || login || logout || dataRead)
+      !(authRead || login || logout || dataRead || humanRpc)
     ) {
       throw new Error("This preview permits authenticated reads only.");
     }
@@ -91,13 +116,19 @@ export function createHqClient(
 ): HqClient {
   if (!validConfig(config))
     throw new Error("Public configuration is unavailable.");
-  return createClient<Database>(config.url, config.key, {
+  return createClient<HqDatabase>(config.url, config.key, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
       debug: false,
     },
-    global: { fetch: readOnlyFetch(new URL(config.url).origin, nativeFetch) },
+    global: {
+      fetch: readOnlyFetch(
+        new URL(config.url).origin,
+        nativeFetch,
+        config.humanActions === true,
+      ),
+    },
   });
 }

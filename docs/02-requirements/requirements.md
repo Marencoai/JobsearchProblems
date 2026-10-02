@@ -10,6 +10,17 @@ The system is designed to be reusable. Candidate-specific values such as locatio
 
 Implementation scope for V1 will be defined separately during Design. V1 may implement only a subset of these requirements without changing the long-term behavior defined here.
 
+## Job Hunt HQ deferred product improvements
+
+Recorded October 1, 2026 during Diana's explicit Phase 1 real-data acceptance. Both items are deferred, non-blocking improvements; they do not reopen or block accepted Phase 1. Recordkeeping only: implementation has not started.
+
+| Item | Desired improvement | Status and ownership |
+| --- | --- | --- |
+| HQ-LATER-001 · Business problem translation | Improve the plain-English translation so it explicitly identifies the underlying business problem the company is hiring the role to solve, beyond describing responsibilities. | Deferred. Preserve the existing evaluation/research worker's ownership of analysis; the UI surfaces its recorded output. |
+| HQ-LATER-002 · Recent company signals | Improve Opportunity Intelligence by populating and surfacing recent company signals/research when that workflow is available. | Deferred. Preserve the existing company-research workflow and recorded intelligence sources. |
+
+The next approval gate is the Phase 2 production migration. Diana explicitly withheld that approval; these improvement records do not authorize production schema changes, workflow execution, or feature-flag activation. See [`web/PHASE1_QA.md`](../../web/PHASE1_QA.md) for the acceptance record and [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md) for the proposed migration.
+
 Candidate Settings and Configuration
 REQ-SETTINGS-001 - Centralize Candidate Settings
 

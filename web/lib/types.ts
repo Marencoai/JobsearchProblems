@@ -45,7 +45,7 @@ export type Action = Pick<
   | "priority"
   | "due_at"
   | "status"
->;
+> & { updated_at?: string; available_after?: string | null };
 export type Task = Pick<
   Row<"internal_tasks">,
   | "id"
@@ -105,6 +105,7 @@ export const STAGES = [
 ] as const;
 export type Stage = (typeof STAGES)[number];
 export type JobView = {
+  reviewAction?: Action;
   opportunity: Opportunity;
   company?: Company;
   evaluation?: Evaluation;

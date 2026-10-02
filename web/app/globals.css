@@ -1734,3 +1734,62 @@ small {
     gap: 5px;
   }
 }
+/* Candidate actions reuse the existing workspace visual language. */
+.human-action-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  border: 1px solid #dfe4eb;
+  border-radius: 18px;
+  padding: 28px;
+  color: #22304a;
+  background: #fff;
+  box-shadow: 0 24px 80px #10234135;
+}
+.human-action-dialog::backdrop {
+  background: #10234180;
+}
+.human-action-dialog .button:disabled {
+  opacity: 0.5;
+}
+.human-action-dialog h2 {
+  margin: 0 0 12px;
+}
+.human-action-dialog p {
+  line-height: 1.6;
+}
+.human-action-dialog label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  font-weight: 600;
+}
+.human-action-dialog textarea,
+.human-action-dialog select {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #c7d0dd;
+  border-radius: 8px;
+  width: 100%;
+}
+.human-action-dialog textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+.human-action-dialog .confirmation-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.confirmation-check input {
+  margin-top: 4px;
+}
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}

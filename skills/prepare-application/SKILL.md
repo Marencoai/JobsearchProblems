@@ -146,4 +146,16 @@ When this skill is invoked from the scheduled Application Queue:
 6. after preparation succeeds, the Owner/orchestrator records the Internal Task result and completes the task;
 7. the package stops at `ready_for_review` and remains a human approval gate.
 
+## HQ Revision Requests
+
+The proposed HQ human-action RPC queues revisions through the same explicit candidate-action contract. A revision task description identifies the new draft Package and the candidate's requested changes. Validate that Package belongs to the task's Workspace and Opportunity, reuse that draft, read its `candidate_notes`, and prepare new Material versions there. Never choose the older approved Package or mutate its historical Materials. Initial pursuit tasks continue through the existing create/reuse flow. No additional pursuit or strategy approval is required.
+
+Before preparation, the existing Owner/orchestrator executes this boundary helper from the repository root:
+
+```sh
+node --experimental-strip-types worker-support/cli.mts preparation < synthetic-or-authorized-preparation-input.json
+```
+
+Pass JSON with `task` (workspace, opportunity, task type/domain, explicit candidate trigger, title/description) and accessible `packages` (IDs, workspace/opportunity, package number, status, candidate notes). Pass the validated resulting Package ID and notes to the Application Agent; the agent does not need Internal Task read/execute permission. `reuse` means prepare that exact draft/working Package, `create` preserves the initial-pursuit creation flow, and `already_ready` means reuse existing reviewed results without regenerating. Missing/foreign/archived/superseded revision targets or missing candidate authority fail closed. This helper does not compose materials, write data, or change authority. Retain the existing worker workflow and permissions. Use Node 22 or newer, with no credentials in the input.
+
 This preserves the distinction between machine orchestration authority, narrow Application Agent authority, and the candidate's authority to approve and submit.

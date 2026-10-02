@@ -33,6 +33,10 @@ A high Evaluation score alone is not authorization to prepare an application.
 
 The Application Agent does not receive `internal_task.execute`.
 
+## Proposed HQ Revision Handoff (pending rollout)
+
+For HQ revision tasks, the Owner/orchestrator calls `worker-support/cli.mts preparation` with the task and scoped Package records. The helper validates explicit candidate authority and chooses the exact new draft identified by the task description. Pass that Package ID and its candidate notes to the narrow Application Agent. The agent reads/prepares that Package through existing RLS; it does not need Internal Task read/execute permission. A missing, foreign, archived, or superseded revision target fails closed. Existing reviewed results are reused on retry rather than regenerated. The local SQL integration test verifies new Materials can reach `ready_for_review` under the original prepare-only permissions while approved history stays intact. Live worker adoption still requires deploying the matching repository/skill contract.
+
 ## Preparation Contract
 
 The Application Agent reads:

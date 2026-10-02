@@ -2,6 +2,14 @@ Job Search AI Agent
 
 Database Schema
 
+## Proposed Job Hunt HQ additive change (2026-10-01; not deployed)
+
+Migration `20261001205019_hq_existing_human_actions.sql` adds nullable `next_actions.available_after` and one authenticated-only SECURITY INVOKER RPC, `hq_human_action(workspace_id, opportunity_id, expected_updated_at, request_id, command, payload)`. Existing rows remain null and need no backfill. This does not introduce an Opportunity lifecycle value, change RLS policies, or grant new role permissions.
+
+The RPC validates an active human, active Workspace/membership, command-specific existing permissions, reviewed Opportunity/action/Package timestamps, and exact Material IDs where approval/submission needs them. It delegates table transitions and immutable submission snapshots to existing triggers. Successful commands append an Activity Event containing the exact request and result; retrying identical input with the same human request ID returns that result. Different input with a reused ID is rejected.
+
+See [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md) for the permission matrix, local validation, rollout dependencies, and rollback. Production schema remains unchanged until explicitly approved.
+
 1. Identity, Workspace, and Permissions
 
 This section defines the access-control foundation for the Job Search AI Agent.
@@ -6269,6 +6277,12 @@ timestamptz
 Last update
 
 The Daily Work Queue is a view of active Next Actions, not raw Internal Tasks.
+
+Proposed field, not yet deployed:
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `available_after` | `timestamptz nullable` | Candidate deferral. Null means available now. Future values exclude an open action from current attention and planner ranking, while preserving the action for deduplication. It is distinct from `due_at`, the actual deadline. |
 
 8.9 external_actions
 

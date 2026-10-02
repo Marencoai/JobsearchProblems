@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
 import type { Identity, WorkspaceData } from "@/lib/types";
+import { runHumanAction, type HumanActionHandler } from "@/lib/human-actions";
 
 type SessionState = {
   identity: Identity | null;
@@ -11,6 +12,8 @@ type SessionState = {
   loading: boolean;
   ready: boolean;
   error: string;
+  humanActions: boolean;
+  act: HumanActionHandler;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   selectWorkspace: (id: string) => Promise<void>;
@@ -33,6 +36,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
+  const [humanActions, setHumanActions] = useState(false);
+  const mutation = useRef(false);
   useEffect(() => {
     const activeGeneration = generation;
     let cancelled = false;
@@ -47,6 +52,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         const instance = createHqClient(config);
         client.current = instance;
+        setHumanActions(config.humanActions === true);
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -99,7 +105,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
       identityRef.current = verified;
       setIdentity(verified);
-      const rows = await loadWorkspace(instance, id, profile.principal.id);
+      const rows = await loadWorkspace(
+        instance,
+        id,
+        profile.principal.id,
+        humanActions,
+      );
       if (run === generation.current) setData(rows);
     } catch (e) {
       if (run === generation.current) {
@@ -167,6 +178,32 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (identityRef.current && workspaceRef.current)
       await readWorkspace(workspaceRef.current, identityRef.current);
   }
+  const act: HumanActionHandler = async (job, command, payload, requestId) => {
+    const instance = client.current,
+      profile = identityRef.current,
+      target = workspaceRef.current;
+    if (!humanActions || !instance || !profile || !target)
+      throw new Error("Human actions are not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    const run = generation.current;
+    mutation.current = true;
+    try {
+      const verified = await resolveIdentity(instance);
+      if (
+        run !== generation.current ||
+        workspaceRef.current !== target ||
+        verified.principal.id !== profile.principal.id ||
+        !verified.workspaces.some((w) => w.id === target)
+      )
+        throw new Error("Your workspace changed. Review the role again.");
+      await runHumanAction(instance, target, job, command, payload, requestId);
+      if (run === generation.current && workspaceRef.current === target)
+        await reload();
+    } finally {
+      mutation.current = false;
+    }
+  };
   return (
     <Context.Provider
       value={{
@@ -176,6 +213,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         loading,
         ready,
         error,
+        humanActions,
+        act,
         signIn,
         signOut,
         selectWorkspace,

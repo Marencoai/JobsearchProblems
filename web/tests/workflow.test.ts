@@ -11,6 +11,22 @@ import {
 import { actionStage, buildJobViews, deriveStage } from "@/lib/workflow";
 
 describe("derived human stages", () => {
+  it("keeps deferred decisions out of the current action until their review time", () => {
+    const now = new Date("2026-10-01T12:00:00Z");
+    const later = action("later", { available_after: "2026-10-02T12:00:00Z" });
+    const deferred = deriveStage(opportunity(), [later], [], undefined, now);
+    expect(deferred.action).toBeUndefined();
+    expect(deferred.nextAction).toContain("Saved for later");
+    expect(
+      deriveStage(
+        opportunity(),
+        [later],
+        [],
+        undefined,
+        new Date("2026-10-03T12:00:00Z"),
+      ).action?.id,
+    ).toBe("later");
+  });
   it.each(["discovered", "verified", "evaluating"])(
     "%s awaits Evaluate",
     (lifecycle) =>

@@ -1,0 +1,159 @@
+{
+  "recorded_at_utc": "2026-10-01 22:41:19 UTC",
+  "project_id": "xhhfnxswwspejdxjyvzz",
+  "project_name": "JobsearchProblems",
+  "approved_commit": "3b047da5cb6017c8275761491e636456b0ed8b6f",
+  "migration_file": "20261001205019_hq_existing_human_actions.sql",
+  "reviewed_and_current_sql_git_blob": "0ef9a55b7158d19a99cdf426a628b234191ee318",
+  "live_project_status": "ACTIVE_HEALTHY",
+  "live_postgres_version": "17.6",
+  "before_migration_inventory": [
+    {
+      "version": "20260924191944",
+      "name": "identity_foundation"
+    },
+    {
+      "version": "20260924192129",
+      "name": "identity_rls"
+    },
+    {
+      "version": "20260924192413",
+      "name": "core_opportunity"
+    },
+    {
+      "version": "20260924192612",
+      "name": "core_opportunity_rls"
+    },
+    {
+      "version": "20260924193851",
+      "name": "core_integrity_hardening"
+    },
+    {
+      "version": "20260924194625",
+      "name": "candidate_knowledge"
+    },
+    {
+      "version": "20260924194948",
+      "name": "candidate_knowledge_rls"
+    },
+    {
+      "version": "20260924200018",
+      "name": "evaluation_foundation"
+    },
+    {
+      "version": "20260924200115",
+      "name": "evaluation_rls"
+    },
+    {
+      "version": "20260924200229",
+      "name": "workflow_foundation"
+    },
+    {
+      "version": "20260924200309",
+      "name": "workflow_rls"
+    },
+    {
+      "version": "20260924200356",
+      "name": "daily_work_queue"
+    },
+    {
+      "version": "20260924200432",
+      "name": "daily_work_queue_rls"
+    },
+    {
+      "version": "20260924200550",
+      "name": "application_foundation"
+    },
+    {
+      "version": "20260924200629",
+      "name": "application_rls"
+    },
+    {
+      "version": "20260924200729",
+      "name": "candidate_settings_and_automation"
+    },
+    {
+      "version": "20260924200805",
+      "name": "security_definer_hardening"
+    },
+    {
+      "version": "20260924201148",
+      "name": "authenticated_table_grants"
+    },
+    {
+      "version": "20260924201251",
+      "name": "rls_auto_enable_hardening"
+    },
+    {
+      "version": "20260924214136",
+      "name": "task_dependency_execution_guard"
+    },
+    {
+      "version": "20260924215510",
+      "name": "daily_plan_completion_reconciliation"
+    },
+    {
+      "version": "20260924220951",
+      "name": "withdrawn_submission_retry_support"
+    },
+    {
+      "version": "20260926184412",
+      "name": "evaluation_agent_identity"
+    },
+    {
+      "version": "20260928173528",
+      "name": "application_agent_identity"
+    },
+    {
+      "version": "20260928175842",
+      "name": "candidate_application_defaults"
+    },
+    {
+      "version": "20260930005924",
+      "name": "candidate_application_reference_data"
+    }
+  ],
+  "proposed_rpc_before": null,
+  "available_after_exists_before": false,
+  "required_table_rls_enabled": true,
+  "live_edge_functions": 0,
+  "live_cron_schema_exists": false,
+  "connected_hosted_automation_inventory_count": 0,
+  "matching_local_codex_automation_count": 0,
+  "accessible_pages_with_matching_worker_titles": 0,
+  "identified_chatgpt_project": {
+    "label": "Job Hunting",
+    "project_id": "g-p-6a3c1871aaac81918552641fcb25bfaa"
+  },
+  "worker_policies": [
+    {
+      "action_key": "application.queue",
+      "is_enabled": true,
+      "autonomy_level": "prepare_only",
+      "deployment_target_identified": false
+    },
+    {
+      "action_key": "daily_plan.morning",
+      "is_enabled": true,
+      "autonomy_level": "prepare_only",
+      "deployment_target_identified": false
+    }
+  ],
+  "apply_attempted": false,
+  "worker_rollout_attempted": false,
+  "after_apply_inventory": null,
+  "application_flag_check": {
+    "phase1_loopback_port3000": {
+      "http_status": 200,
+      "humanActions_field": "absent; read-only Phase1 implementation"
+    },
+    "phase2_loopback_port3102": {
+      "http_status": 503,
+      "status": "configuration unavailable; fail closed"
+    },
+    "hosted_hq_runtime": "not identified; flag state not verifiable"
+  },
+  "safe_to_enable_human_actions": false,
+  "blocker": "Actual scheduled worker task/job IDs, execution location, source/version installation target, and read-back verification path are not discoverable in connected tools. Per the explicit rollout instruction, stop before applying until parent establishes that target.",
+  "future_apply_requirement": "Recheck live migration inventory and compatibility again immediately before any apply; do not reuse this earlier preflight as current evidence."
+}
