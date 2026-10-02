@@ -93,6 +93,15 @@ class ProbeTests(unittest.TestCase):
         self.assertIn("resource_metadata=", headers["WWW-Authenticate"])
         self.assertEqual(self.request(path="/secrets")[0], 404)
 
+    def test_json_media_type_parameters_and_rejection(self):
+        msg = {"jsonrpc": "2.0", "id": 1, "method": "initialize"}
+        self.assertEqual(self.request(msg, extra={"Content-Type": "application/json; charset=utf-8"})[0], 200)
+        self.assertEqual(self.request(msg, extra={"Content-Type": "Application/JSON; charset=UTF-8"})[0], 200)
+        self.assertEqual(self.request(msg, token=self.server.issue_fixture(), extra={"Content-Type": "text/plain"})[0], 415)
+        status, headers, _ = self.request(msg, extra={"Content-Type": "text/plain"})
+        self.assertEqual(status, 401)
+        self.assertIn("resource_metadata=", headers["WWW-Authenticate"])
+
 
 if __name__ == "__main__":
     unittest.main()

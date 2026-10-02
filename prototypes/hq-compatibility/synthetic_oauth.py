@@ -62,6 +62,12 @@ class OAuthState:
     def register(self, body):
         redirects = body.get("redirect_uris")
         if self.server.report_registration and isinstance(redirects, list):
+            def safe_list(value, allowed):
+                return [x if x in allowed else "unsupported" for x in value[:4]] if isinstance(value, list) else "omitted_or_invalid"
+            print(json.dumps({"event": "synthetic_registration_contract",
+                              "grant_types": safe_list(body.get("grant_types"), {"authorization_code", "refresh_token"}),
+                              "response_types": safe_list(body.get("response_types"), {"code"}),
+                              "token_endpoint_auth_method": body.get("token_endpoint_auth_method") if body.get("token_endpoint_auth_method") in (None, "none", "client_secret_basic", "client_secret_post", "private_key_jwt") else "unsupported"}), flush=True)
             for uri in redirects:
                 if isinstance(uri, str) and len(uri) <= 512:
                     parsed = urlsplit(uri)

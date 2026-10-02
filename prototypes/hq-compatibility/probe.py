@@ -53,8 +53,13 @@ class Handler(BaseHTTPRequestHandler):
             safe_paths = {"/mcp", "/register", "/authorize", "/consent", "/token", "/revoke",
                           "/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp",
                           "/.well-known/oauth-authorization-server"}
+            raw_type = self.headers.get("Content-Type")
+            media_type = self.headers.get_content_type() if raw_type else "missing"
+            media_type = media_type if media_type in ("application/json", "application/x-www-form-urlencoded", "text/plain", "application/octet-stream", "missing") else "other"
             print(json.dumps({"event": "synthetic_http_response", "method": self.command,
                               "path": path if path in safe_paths else "other", "status": status,
+                              "content_type_kind": media_type, "content_type_has_parameters": bool(raw_type and ";" in raw_type),
+                              "body_empty": self.headers.get("Content-Length", "0") == "0",
                               "observed_at_utc": datetime.now(timezone.utc).isoformat()}), flush=True)
         raw = body.encode() if html_body else (json.dumps(body).encode() if body is not None else b"")
         self.send_response(status)
@@ -82,6 +87,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         self.reply(405, {"error": "stateless_no_session"})
 
+    def auth_challenge(self):
+        self.reply(401, {"error": "invalid_or_missing_test_fixture"}, {
+            "WWW-Authenticate": 'Bearer resource_metadata="' + self.server.origin +
+            '/.well-known/oauth-protected-resource/mcp", scope="' + SCOPE + '"'})
+
     def do_POST(self):
         origin = self.headers.get("Origin")
         if origin is not None and origin != self.server.origin:
@@ -91,6 +101,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/mcp":
             return self.reply(404, {"error": "not_found"})
         if self.headers.get_content_type() != "application/json":
+            authorization = self.headers.get("Authorization", "")
+            fixture = self.server.fixtures.get(authorization[7:]) if authorization.startswith("Bearer ") else None
+            if not fixture or fixture[0] <= time.monotonic() or fixture[2] != self.server.origin + "/mcp":
+                return self.auth_challenge()
             return self.reply(415, {"error": "json_required"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -120,9 +134,7 @@ class Handler(BaseHTTPRequestHandler):
         authorization = self.headers.get("Authorization", "")
         fixture = self.server.fixtures.get(authorization[7:]) if authorization.startswith("Bearer ") else None
         if not fixture or fixture[0] <= time.monotonic() or fixture[2] != self.server.origin + "/mcp":
-            return self.reply(401, {"error": "invalid_or_missing_test_fixture"}, {
-                "WWW-Authenticate": 'Bearer resource_metadata="' + self.server.origin +
-                '/.well-known/oauth-protected-resource/mcp", scope="' + SCOPE + '"'})
+            return self.auth_challenge()
         if fixture[1] != SCOPE:
             return self.reply(403, {"error": "insufficient_scope"})
         args = params.get("arguments")

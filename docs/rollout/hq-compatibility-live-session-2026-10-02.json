@@ -4,7 +4,7 @@
   "mcp_url": "https://prison-ids-calculator-foundation.trycloudflare.com/mcp",
   "owned_sessions": {
     "cloudflared": 83369,
-    "probe": 2675
+    "probe": 90907
   },
   "binary_source": "https://github.com/cloudflare/cloudflared/releases/download/2026.9.3/cloudflared-darwin-arm64.tgz",
   "binary_checksum_reported": "5472c1a01c84bc31b3021056a73b4e5774ddddefc572124ea8fdf6c340639f32",
@@ -13,11 +13,14 @@
     "public_protected_resource_metadata": true,
     "one_readonly_probe_discovered": true,
     "unauthenticated_probe_http": 401,
-    "local_http_tests_passed": 22,
+    "local_http_tests_passed": 23,
     "public_root_resource_metadata_alias": true,
-    "get_mcp_bearer_challenge_http": 401
+    "get_mcp_bearer_challenge_http": 401,
+    "unauthenticated_empty_post_challenge_http": 401
   },
-  "callback_allowlist": [],
+  "callback_allowlist": [
+    "https://chatgpt.com/connector/oauth/C2SjzGHMQemR"
+  ],
   "production_access": false,
   "real_credentials": false,
   "chatgpt_authenticated_call_proven": false,
@@ -30,10 +33,18 @@
     "refresh_grant_absolute_seconds": 600,
     "tunnel": "manual teardown; URL ends when owned cloudflared stops"
   },
-  "cleanup": "Send Ctrl-C only to owned probe session 2675 and cloudflared session 83369; remove user-installed test connection and isolated tasks after evidence.",
+  "cleanup": "Send Ctrl-C only to owned probe session 90907 and cloudflared session 83369; remove user-installed test connection and isolated tasks after evidence.",
   "previous_session": {
     "origin": "https://discount-euro-shoppers-estimate.trycloudflare.com",
     "status": "HTTP530_PROCESS_SESSIONS_ENDED_NO_CALLBACK_OBSERVED"
   },
-  "discovery_diagnosis": "Old hostname HTTP530 and both recorded sessions absent; consistent with user discovery error. Exact failed client response unavailable. Fresh replacement checks 200 metadata/401 MCP challenge; no callback or grants."
+  "discovery_diagnosis": "Old hostname HTTP530 and both recorded sessions absent; consistent with user discovery error. Exact failed client response unavailable. Fresh replacement checks 200 metadata/401 MCP challenge; no callback or grants.",
+  "callback_evidence": {
+    "observed_at_utc": "2026-10-02T22:43:30.505026Z",
+    "initial_registration_http": 400,
+    "user_correlated_error_at_utc": "2026-10-02T22:43:45Z",
+    "parent_confirmed_exact_allowlist": true
+  },
+  "registration_status": "Exact observed callback now allowlisted; no successful client registration/grant yet; other callbacks rejected.",
+  "media_type_findings": "Valid JSON charset parameters already pass. Historical415 request content types not captured. Before grants, requests were unauthenticated; unsupported/missing MIME now receives401challenge. Authenticated malformed MIME still415."
 }
