@@ -6,6 +6,15 @@ their execution is not a hosted deployment prerequisite. Database/RPC remains
 authoritative for human actions. Exact approved Phase2 SQL stays Git blob
 `0ef9a55b7158d19a99cdf426a628b234191ee318`, unchanged.
 
+**October 2 authoritative update:** user-verified prompt adoption passed exact
+comparison and the single approved migration is applied; earlier task-access
+and pre-migration holds below are historical. Hosted read-only definitions
+confirm the two selection gaps still exist. A strict database-rejection
+requirement therefore needs the consolidated controlled path even if a worker
+behavioral test succeeds. See [enforcement and bounded fixture proposal](PHASE2_ENFORCEMENT_AND_FIXTURE_PROPOSAL.md)
+and [applied migration audit](PHASE2_HOSTED_VALIDATION.md). No new hardening SQL,
+fixtures, permissions, schedules or flags were changed.
+
 Parent reported both exact additive task-instruction updates returned
 **`You cannot modify this task.`** No updates occurred. This is a task-edit
 access denial, not a runtime deficiency. Do not retry through browser or another
@@ -60,6 +69,13 @@ It does **not** certify arbitrary automation mistakes as database-rejected.
 Parent must verify updated instructions and normal-data behavior before enabling.
 
 ## One conditional consolidated enforcement proposal
+
+The parent subsequently required database enforcement under a standing local
+development authorization. The concrete generated SQL and exact caller review
+now live in [PHASE2_HARDENING_REVIEW.md](PHASE2_HARDENING_REVIEW.md). Its guards,
+direct-write/RLS tests and native lock races supersede the design-only status
+below. No hosted apply or scheduled-task adoption has occurred; original approved
+SQL and the verified current prompt snapshot remain unchanged.
 
 If hosted validation shows either consumer cannot reliably honor these checks,
 or approval requires rejection even when it selects the wrong input, bring one

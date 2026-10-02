@@ -26,10 +26,11 @@ it.each(["off", ...flags.map(([env]) => env), "all"])(
     const response = GET();
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     const config = await response.json();
+    expect(config.phase2Diagnostics).toBe(false);
     for (const [env, key] of flags)
       expect(config[key]).toBe(selected === "all" || selected === env);
     expect(Object.keys(config).sort()).toEqual(
-      ["url", "key", ...flags.map(([, key]) => key)].sort(),
+      ["url", "key", "phase2Diagnostics", ...flags.map(([, key]) => key)].sort(),
     );
   },
 );

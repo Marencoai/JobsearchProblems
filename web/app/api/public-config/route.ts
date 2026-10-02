@@ -1,4 +1,5 @@
 import { validConfig } from "@/lib/supabase/client";
+import { phase2DiagnosticsEnabled } from "@/lib/phase2-diagnostics";
 
 export const dynamic = "force-dynamic";
 export function GET() {
@@ -15,6 +16,10 @@ export function GET() {
     manualIntake: process.env["HQ_MANUAL_INTAKE"] === "1",
     materialDelivery: process.env["HQ_MATERIAL_DELIVERY"] === "1",
     researchRefresh: process.env["HQ_RESEARCH_REFRESH"] === "1",
+    phase2Diagnostics: phase2DiagnosticsEnabled(
+      process.env.NODE_ENV,
+      process.env["HQ_PHASE2_DIAGNOSTICS"],
+    ),
   };
   const headers = { "Cache-Control": "private, no-store" };
   if (!validConfig(config))

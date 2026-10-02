@@ -91,6 +91,7 @@ export type PublicConfig = {
   manualIntake?: boolean;
   materialDelivery?: boolean;
   researchRefresh?: boolean;
+  phase2Diagnostics?: boolean;
 };
 export const OUTREACH_READ_TABLES = new Set([
   "contacts",

@@ -1,5 +1,6 @@
-// Pure worker boundary helpers. No database, network, preparation, ranking,
-// permission changes, or external actions happen in this module.
+// Optional offline checks only. Authority and locks come from the reviewed
+// database RPCs; supplied identity/time cannot replace those calls. No Node
+// runtime is required by the scheduled worker contract.
 export type PlannerAction = {
   id: string;
   workspace_id: string;
@@ -23,18 +24,17 @@ export function plannerEligibility(
   if (!workspaceId || !principalId || !Number.isFinite(clock))
     throw new Error("Workspace, human principal, and valid clock are required");
   const open = actions.filter(
-    (a) =>
-      a.workspace_id === workspaceId &&
-      a.status === "open" &&
-      (!a.assigned_to_principal_id ||
-        a.assigned_to_principal_id === principalId),
+    (a) => a.workspace_id === workspaceId && a.status === "open",
   );
   const eligible = open.filter((a) => {
-    if (!a.available_after) return true;
-    const resume = Date.parse(a.available_after);
-    if (!Number.isFinite(resume))
+    const resume = a.available_after ? Date.parse(a.available_after) : null;
+    if (resume !== null && !Number.isFinite(resume))
       throw new Error("Invalid action deferral timestamp");
-    return resume <= clock;
+    return (
+      (!a.assigned_to_principal_id ||
+        a.assigned_to_principal_id === principalId) &&
+      (resume === null || resume <= clock)
+    );
   });
   const ids = new Set(eligible.map((a) => a.id));
   return {
@@ -48,6 +48,7 @@ export function plannerEligibility(
   };
 }
 export type PreparationTask = {
+  id: string;
   workspace_id: string;
   opportunity_id: string;
   task_type: string;
@@ -64,6 +65,7 @@ export type PreparationPackage = {
   package_number: number;
   status: string;
   candidate_notes: string | null;
+  hq_preparation_task_id?: string | null;
 };
 export function preparationTarget(
   task: PreparationTask,
@@ -74,6 +76,7 @@ export function preparationTarget(
     task.domain !== "application" ||
     task.trigger_type !== "candidate_action" ||
     task.trigger_reference !== "candidate_decided_to_pursue" ||
+    !task.id ||
     !task.workspace_id ||
     !task.opportunity_id
   )
@@ -88,19 +91,20 @@ export function preparationTarget(
         p.status !== "archived",
     )
     .sort((a, b) => b.package_number - a.package_number);
-  const revision = task.title === "Prepare requested application revisions";
-  const match = task.description?.match(
-    /^Use draft package ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\. /i,
-  );
-  if (revision && !match)
-    throw new Error("Revision task must identify its exact draft package");
-  const target = match ? local.find((p) => p.id === match[1]) : local[0];
-  if (match && (!target || target.id !== local[0]?.id))
+  // Initial and legacy classification belongs to the Owner RPC. Never infer
+  // package authority from mutable titles, descriptions, or package recency.
+  const bound = packages.filter((p) => p.hq_preparation_task_id === task.id);
+  if (!bound.length)
+    return {
+      disposition: "owner_handoff_required",
+      package_id: null,
+      candidate_notes: null,
+    };
+  const target = local.find((p) => p.hq_preparation_task_id === task.id);
+  if (bound.length !== 1 || !target || target.id !== local[0]?.id)
     throw new Error(
       "Revision package is unavailable, foreign, archived, or superseded",
     );
-  if (!target)
-    return { disposition: "create", package_id: null, candidate_notes: null };
   if (target.status === "ready_for_review" || target.status === "approved")
     return {
       disposition: "already_ready",

@@ -643,8 +643,8 @@ describe("human transactions against real migration policies and triggers", () =
       [target.package_id],
     );
     const material = await row(
-      "insert into application_materials(workspace_id,application_package_id,material_type,content_text) values($1,$2,'resume','Synthetic revised resume') returning id",
-      [workspace, target.package_id],
+      "insert into application_materials(workspace_id,application_package_id,material_type,content_text,hq_preparation_task_id) values($1,$2,'resume','Synthetic revised resume',$3) returning id",
+      [workspace, target.package_id, revision.task_id],
     );
     await db.query(
       "update application_materials set status='candidate_review' where id=$1",
