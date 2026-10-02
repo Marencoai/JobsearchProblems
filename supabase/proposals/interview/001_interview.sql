@@ -153,7 +153,9 @@ begin
   if not public.has_permission(target_workspace_id,permission) then raise exception using errcode='42501',message='Interview action permission missing'; end if;
  end loop;
  if request_id is null or expected_updated_at is null or payload is null or jsonb_typeof(payload)<>'object' or octet_length(payload::text)>24000 then raise exception 'Reviewed version, request ID and bounded payload required'; end if;
- select * into o from public.opportunities where workspace_id=target_workspace_id and id=target_opportunity_id for update;
+ -- Non-key updates serialize this Opportunity without blocking FK KEY SHARE.
+ -- Outreach owns Workspace first; compatible FK locks prevent a reverse wait cycle.
+ select * into o from public.opportunities where workspace_id=target_workspace_id and id=target_opportunity_id for no key update;
  if not found then raise exception 'Opportunity unavailable'; end if;
  event_key:='hq-interview:'||actor::text||':'||request_id::text;
  request:=jsonb_build_object('opportunity_id',target_opportunity_id,'version',expected_updated_at,'command',command,'payload',payload);

@@ -138,3 +138,27 @@ This remains a human-reviewed manual source-record adapter. Gmail/calendar inges
 worker reconciliation and new agent authority are not delivered by this proposal.
 Outreach002 integration remains pinned to the recorded2af79c2 commit/hash; final
 integration green awaits the parent's final Outreach dependency confirmation.
+
+## Local concurrency correction and proposed Gmail hook
+
+The Opportunity serialization lock is now `FOR NO KEY UPDATE`, with the owned
+order Opportunity → Interview → Preparation. It still serializes competing domain
+RPCs but permits foreign-key KEY SHARE locks. Outreach's Workspace-first exclusive
+lock can therefore finish its Opportunity-referencing insert while Interview waits
+for the Workspace FK. No Workspace mutation capability, role grant, RLS policy or
+approved Phase2 SQL was changed. Native cross-domain checks run exact pinned Outreach
+SQL in both acquisition orders and assert both RPCs commit once without deadlock.
+`HQ_OUTREACH_PROPOSAL=/absolute/pinned.sql node scripts/interview-cross-domain-check.mjs /absolute/postgres/bin /absolute/psql`.
+The shared source-aware stage mapper now identifies an HQ Interview source event
+within the same Opportunity, so the exact preparation next action remains visible.
+
+`worker-support/interview-gmail-contract.ts` is pure proposal-only normalization.
+It uses existing classification identity and a separate reconciliation key, routes
+ambiguous/request/reschedule/cancellation messages to review and supplies only a
+human-reviewed scheduled-record proposal. It performs no writes, message reads,
+label changes, worker edits or authority grants. The current human gate remains.
+A future worker writer would change authority and needs its own reviewed permission
+proposal; this contract does not provide one. Hosted sync adoption, preclassified
+recovery execution, source-change commands and exact temporary Gmail action linkage
+remain undelivered. Synthetic contract tests cover those boundary dispositions,
+identity scoping, stable retries and unsafe schedules/links, not live reconciliation.
