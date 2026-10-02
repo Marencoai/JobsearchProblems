@@ -148,6 +148,16 @@ When this skill is invoked from the scheduled Application Queue:
 
 ## HQ Revision Requests
 
+The consolidated binding/readiness hardening is a separate, unapplied proposal
+in [the exact review](../../web/PHASE2_HARDENING_REVIEW.md). Its proposed worker
+replacement uses Owner `hq_preparation_target`, structured Task/Package IDs on
+new Materials, and agent `hq_preparation_ready`; it does not parse descriptions.
+The optional local reference helper now requires Task `id` and Package
+`hq_preparation_task_id`, and returns `owner_handoff_required` for unclassified
+work. It cannot authorize creation or replace the Owner RPC. The earlier
+behavioral contract below remains the verified live prompt until separately
+approved adoption/readback; no live task was edited here.
+
 The proposed HQ human-action RPC queues revisions through the same explicit candidate-action contract. A revision task description identifies the new draft Package and the candidate's requested changes. Validate that Package belongs to the task's Workspace and Opportunity, reuse that draft, read its `candidate_notes`, and prepare new Material versions there. Never choose the older approved Package or mutate its historical Materials. Initial pursuit tasks continue through the existing create/reuse flow. No additional pursuit or strategy approval is required.
 
 The live Application Queue is a ChatGPT scheduled automation. Its self-contained

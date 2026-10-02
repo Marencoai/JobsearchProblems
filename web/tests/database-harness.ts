@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 // No connection string, filesystem data directory, production rows, or network.
 // Hosted Auth is represented only by its UUID claim interface. PostgreSQL executes
 // the real repository tables, policies, grants, and lifecycle triggers unchanged.
-export async function databaseHarness() {
+export async function databaseHarness(
+  options: { stopBefore?: string; exclude?: string[] } = {},
+) {
   const db = new PGlite();
   await db.exec(`
     create role anon; create role authenticated;
@@ -35,6 +37,8 @@ export async function databaseHarness() {
   for (const name of (await readdir(directory))
     .filter((n) => n.endsWith(".sql"))
     .sort()) {
+    if (name === options.stopBefore) break;
+    if (options.exclude?.includes(name)) continue;
     // These two historical production identity migrations require specific real
     // Auth accounts and workspace IDs. Test identities are seeded separately.
     if (name.endsWith("_agent_identity.sql")) {

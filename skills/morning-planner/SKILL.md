@@ -35,6 +35,14 @@ Before each run read:
 
 ## HQ Deferral Contract (pending migration rollout)
 
+The consolidated database hardening is a separate, unapplied proposal in
+[the exact review](../../web/PHASE2_HARDENING_REVIEW.md). Its self-contained
+worker replacement calls `hq_planner_inputs` for Workspace-derived candidate
+authority, all-open deduplication and separately revalidated delivery. Adopt
+that caller contract only after the exact SQL is approved and verified. The
+local helper below is an optional offline reference; supplied identity/time
+cannot substitute for those database checks. No live scheduled task was changed.
+
 Once `next_actions.available_after` is deployed, keep all open actions in the deduplication set. Exclude actions with a future `available_after` from ranking, Today's One Thing, new Plan Items, and candidate-facing delivery, including items in an existing active Plan. Null means available now. Resume eligibility on the same action when that time arrives; never create a replacement to bypass deferral. Preserve historical Plan snapshots and the existing versioning rule. Do not query this proposed column before its migration is applied.
 
 The scheduled Morning Job Queue is a ChatGPT automation, not a persistent Node

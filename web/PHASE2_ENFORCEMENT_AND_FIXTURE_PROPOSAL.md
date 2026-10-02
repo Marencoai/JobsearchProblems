@@ -80,6 +80,17 @@ and its blob stay unchanged.
 
 ## One forward hardening design, for exact SQL review before apply
 
+The local implementation is now concrete in
+[the exact hardening review](PHASE2_HARDENING_REVIEW.md): generated file
+`20261002024651_hq_planner_revision_enforcement.sql`, SHA-256
+`fa5782a9fc29cd9fc043c82340588bc368fb221c7b283520449a7d4227aa4000`.
+It adds scoped Package/Material Task bindings, three caller-invoker RPCs,
+six guards and narrowly checked private locks without changing existing roles,
+policies or table grants. Twenty-one native concurrency cases and the local guard/
+catalog suite pass. This supersedes the abstract design below for exact code,
+lock-order exceptions, legacy classification and caller adoption. No production
+approval, apply, task edit, fixture or flag activation is included.
+
 Use the existing database, lifecycle triggers and Owner→Application Agent flow;
 no new service, scheduler, evaluator or Node deployment requirement.
 

@@ -70,6 +70,13 @@ Parent must verify updated instructions and normal-data behavior before enabling
 
 ## One conditional consolidated enforcement proposal
 
+The parent subsequently required database enforcement under a standing local
+development authorization. The concrete generated SQL and exact caller review
+now live in [PHASE2_HARDENING_REVIEW.md](PHASE2_HARDENING_REVIEW.md). Its guards,
+direct-write/RLS tests and native lock races supersede the design-only status
+below. No hosted apply or scheduled-task adoption has occurred; original approved
+SQL and the verified current prompt snapshot remain unchanged.
+
 If hosted validation shows either consumer cannot reliably honor these checks,
 or approval requires rejection even when it selects the wrong input, bring one
 separate forward proposal covering both gaps; do not modify approved Phase2 SQL:
