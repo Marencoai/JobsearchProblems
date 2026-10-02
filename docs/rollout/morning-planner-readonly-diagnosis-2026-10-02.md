@@ -18,7 +18,7 @@ The parent’s narrow log review found no final activation database error in the
 
 Separate tool calls can use independent sessions. Transaction-local settings do not survive their transaction, but no call transcript proves that such setup occurred or reset here. The available log stream cannot prove absence of preceding context setup. Historical trigger state and the relationship of earlier errors to this exact scheduled invocation are also not established.
 
-The parent has already requested one redacted excerpt: the final blocked tool call, exact denial and immediately preceding context setup. No duplicate request is needed.
+The task UI does not expose the exact call/context excerpt. The parent confirmed no further artifact request is needed; historical uncertainty remains, but does not block the [transport decision](morning-planner-transport-decision-2026-10-02.md).
 
 ## Safe remediation recommendation
 
