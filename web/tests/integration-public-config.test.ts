@@ -30,7 +30,12 @@ it.each(["off", ...flags.map(([env]) => env), "all"])(
     for (const [env, key] of flags)
       expect(config[key]).toBe(selected === "all" || selected === env);
     expect(Object.keys(config).sort()).toEqual(
-      ["url", "key", "phase2Diagnostics", ...flags.map(([, key]) => key)].sort(),
+      [
+        "url",
+        "key",
+        "phase2Diagnostics",
+        ...flags.map(([, key]) => key),
+      ].sort(),
     );
   },
 );
