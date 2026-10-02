@@ -74,6 +74,7 @@ it("rejects missing timezone, invalid times, reversed duration and unsafe meetin
   for (const change of [
     { scheduled_start_at: "2026-11-01T12:00:00" },
     { scheduled_start_at: "bad" },
+    { scheduled_start_at: "2026-02-30T12:00:00Z" },
     { scheduled_end_at: "2026-11-01T11:00:00Z" },
     { meeting_url: "javascript:alert(1)" },
     { meeting_url: "https://user:secret@example.invalid/meeting" },
