@@ -44,6 +44,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+        env:
+          HQ_OUTREACH_PROPOSAL: ${{ github.workspace }}/supabase/proposals/outreach/20261001230000_outreach_domain.sql
       - run: npm run build
   intake-extraction:
     runs-on: ubuntu-latest
