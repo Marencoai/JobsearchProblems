@@ -180,6 +180,42 @@ Local evidence at this SQL hash:
 - Lint, typecheck and optimized production build pass. Final format and prompt checks
   are recorded in [the validation artifact](qa-evidence/phase2-hardening-local-validation.json).
 
+## Frozen combined review and integration notes
+
+Independent review of implementation `cbcc27b8cbe7ecdecc37b5e785ae37d0804e7d10`
+plus the now-frozen native script overlay passes against integration
+`312e2e08f50221ab092dfb8e9058a0c64845c221`: 422 tests in 31 files, no skips,
+eight native suites, typecheck/lint/format/build. The two prior findings are
+fixed: One Thing delivery rechecks the live eligibility flag without changing
+its historical pointer; the planner returns only actions actually captured and
+locked, with an inserted-then-deferred phantom demonstrated in a widened local
+helper/read window. [The independent report](qa-evidence/phase2-hardening-independent-review.json)
+is preserved as a historical reviewed snapshot; its freeze gate is completed by
+committing the exact script bytes, SHA-256
+`e02d084cf14dff4affb1f0bd8f8e704a08eef018e8babf5b582373e4d6d83151`.
+
+The owner isolated merge also passes 428 tests in 33 files with no skips,
+combined schema/RLS, all 21 hardening races after loading all four hash-pinned
+Outreach/Interview/Contact/Offer files, three cross-domain lock scripts,
+typecheck and lint. It includes the separate six-test diagnostic UI, explaining
+the count difference from independent review. No other owner's checkout was edited.
+
+The integration owner should retain Interview/Offer providers around children
+when resolving the diagnostic Session return conflict, and keep the diagnostic
+as a sibling within Session context. The frozen public-config contract test must
+add the known `phase2Diagnostics` field to its expected whitelist and explicitly
+assert false; all nine independent feature-flag cases then pass. These are
+isolated merge adjustments, not production or flag activation. Shared unit/native
+dependencies have identical full lock entries; unused frozen Playwright-only
+additions were not installed and no browser/normal Auth acceptance is claimed.
+
+To reproduce all hardening races under the frozen combined schema, set the
+explicit test-only `HQ_FROZEN_DOMAINS_ROOT` to that checkout's
+`supabase/proposals` and run the existing `concurrency-check.mjs` with the
+explicit PostgreSQL bin/psql paths. The script validates every proposal hash
+before executing it inside its owned private-socket cluster. No connection
+string or inherited database credential is accepted.
+
 No hosted schema/grants/rows, live tasks, flags, external applications or messages
 were changed in this implementation turn. Parent remains responsible for PR7
 integration, independent review and the consolidated production gate.

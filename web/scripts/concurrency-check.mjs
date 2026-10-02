@@ -4,7 +4,7 @@
 import { spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdtemp, chmod, readFile, readdir, rm } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { resolve, join } from "node:path";
 import assert from "node:assert/strict";
 
@@ -212,6 +212,39 @@ try {
   console.log(
     `Replayed ${applied} unchanged migrations; skipped 2 production identity provisions`,
   );
+  // Optional combined test mode. The path is an explicit frozen proposal tree,
+  // not a connection/credential; these bytes can only enter this owned cluster.
+  if (process.env.HQ_FROZEN_DOMAINS_ROOT) {
+    const pins = [
+      [
+        "outreach/20261001230000_outreach_domain.sql",
+        "9a8dffce9152ffa51220c5da6787d1c87f4444b11d4b21b3b697f6c04c194e6b",
+      ],
+      [
+        "interview/001_interview.sql",
+        "1c1d6aef2c244793d844db34e9c861aafe56d01475d3ab2f70d0deed53255f11",
+      ],
+      [
+        "interview/002_interview_contacts.sql",
+        "54db40039beb65379fd9493b839a9812987036bbcf809a25694e8b2c5863780f",
+      ],
+      [
+        "offer/001_offer.sql",
+        "f8b04664ef59d365c9a8a2703b1eedf413a559727a967a68fb26b10442d37851",
+      ],
+    ];
+    for (const [name, sha256] of pins) {
+      const sql = await readFile(
+        join(process.env.HQ_FROZEN_DOMAINS_ROOT, name),
+        "utf8",
+      );
+      assert.equal(createHash("sha256").update(sql).digest("hex"), sha256);
+      await query(sql);
+    }
+    console.log(
+      "Replayed exact frozen Outreach/Interview/Contact/Offer proposals before all hardening concurrency cases",
+    );
+  }
   const owner =
     await json(`insert into auth.users(id,email) values(${literal(user)},'synthetic-native-owner@example.invalid');
     select set_config('request.jwt.claim.sub',${literal(user)},false);

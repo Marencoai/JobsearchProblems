@@ -1,6 +1,6 @@
 {
   "status": "LOCAL_CHECKS_PASSED_PROPOSED_NOT_APPLIED",
-  "observed_at_utc": "2026-10-02T03:39:12.828445+00:00",
+  "observed_at_utc": "2026-10-02T04:26:30.955602+00:00",
   "migration_file": "supabase/migrations/20261002024651_hq_planner_revision_enforcement.sql",
   "migration_sha256": "fa5782a9fc29cd9fc043c82340588bc368fb221c7b283520449a7d4227aa4000",
   "web_tests": {
@@ -69,5 +69,47 @@
     "20261001205019_hq_existing_human_actions.sql": "3e82cde7e177255c3767129a20417a87f50afc867f8db7163ba20e1987288125",
     "20261001225212_hq_manual_intake_and_material_delivery.sql": "ad96b4e0bdbba0a8da1c12522f733e86f6f785cfe0caa60ce68c0b02545084a6",
     "20261002001252_hq_research_refresh_request.sql": "fabd61fa09abc613eb6ac0fd48c2da492fe7e1fba88a2cd4cfd8dc9e4a34b2fd"
+  },
+  "combined_review": {
+    "frozen_integration_head": "312e2e08f50221ab092dfb8e9058a0c64845c221",
+    "reviewed_implementation_commit": "cbcc27b8cbe7ecdecc37b5e785ae37d0804e7d10",
+    "reviewed_and_final_native_script_sha256": "e02d084cf14dff4affb1f0bd8f8e704a08eef018e8babf5b582373e4d6d83151",
+    "independent": {
+      "tests": 422,
+      "files": 31,
+      "skipped": 0,
+      "native_suites": 8,
+      "typecheck": "passed",
+      "lint": "passed",
+      "format": "passed",
+      "build": "passed",
+      "scope": "hardening and frozen domains; excludes separate diagnostic UI"
+    },
+    "owner_isolated_combined": {
+      "tests": 428,
+      "files": 33,
+      "skipped": 0,
+      "schema_suite": "passed",
+      "all_21_hardening_cases_with_four_pinned_domain_files": "passed",
+      "three_cross_domain_lock_scripts": "passed",
+      "typecheck": "passed",
+      "lint": "passed",
+      "scope": "includes separate diagnostic UI and both providers"
+    },
+    "isolated_merge_adjustments": [
+      "Session render retains Interview/Offer providers and renders diagnostic as a sibling inside Session context",
+      "Frozen integration public-config expectation adds known phase2Diagnostics field and asserts false"
+    ],
+    "other_worker_or_integration_checkout_edits": false,
+    "new_installs": false,
+    "dependency_note": "All shared complete lock entries matched; unused frozen Playwright-only additions were not installed. No browser/normal Auth run is claimed.",
+    "proposals_sha256": {
+      "outreach/20261001230000_outreach_domain.sql": "9a8dffce9152ffa51220c5da6787d1c87f4444b11d4b21b3b697f6c04c194e6b",
+      "interview/001_interview.sql": "1c1d6aef2c244793d844db34e9c861aafe56d01475d3ab2f70d0deed53255f11",
+      "interview/002_interview_contacts.sql": "54db40039beb65379fd9493b839a9812987036bbcf809a25694e8b2c5863780f",
+      "offer/001_offer.sql": "f8b04664ef59d365c9a8a2703b1eedf413a559727a967a68fb26b10442d37851"
+    },
+    "parent_independent_artifact": "phase2-hardening-independent-review.json",
+    "sql_and_script_match_reviewed_snapshot": true
   }
 }
