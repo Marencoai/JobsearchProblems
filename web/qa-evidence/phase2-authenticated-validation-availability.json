@@ -1,0 +1,60 @@
+{
+  "observed_at_utc": "2026-10-02 02:21:57 UTC",
+  "project_id": "xhhfnxswwspejdxjyvzz",
+  "browser_or_session_controller_exposed": false,
+  "management_sql_is_normal_auth_context": false,
+  "tokens_or_auth_values_read_exported_or_copied": false,
+  "claims_forged": false,
+  "new_access_grants_or_fixture_writes": false,
+  "candidate_test_workspaces": [
+    {
+      "id": "538d7b18-ca89-4950-a5b0-164a77837095",
+      "name": "Test Workspace",
+      "status": "active",
+      "opportunity_count": 0,
+      "task_count": 0,
+      "package_count": 0,
+      "plan_count": 0,
+      "existing_human": "Diana Marenco",
+      "existing_role": "Owner",
+      "human_auth_binding_present": true,
+      "application_agent_membership_present": false,
+      "test_only_purpose_confirmed": false
+    },
+    {
+      "id": "063adec2-3b67-436c-8a65-c55590859386",
+      "name": "Test Workspace 2",
+      "status": "active",
+      "opportunity_count": 0,
+      "task_count": 0,
+      "package_count": 0,
+      "plan_count": 0,
+      "different_human_owner_with_auth_binding": true,
+      "diana_membership_present": false,
+      "test_only_purpose_confirmed": false
+    }
+  ],
+  "live_daily_plan_guards": [
+    {
+      "schema": "private",
+      "name": "enforce_daily_plan_lifecycle",
+      "source_md5": "e933b31fd8a6047eee8062d708990cd9",
+      "has_available_after_guard": false
+    },
+    {
+      "schema": "public",
+      "name": "prepare_daily_plan_item",
+      "source_md5": "23f7efe5823664264805ddec6ebfbce3",
+      "has_available_after_guard": false
+    },
+    {
+      "schema": "private",
+      "name": "validate_todays_one_thing",
+      "source_md5": "b49a9ca674d348db38869383adee5422",
+      "has_available_after_guard": false
+    }
+  ],
+  "structured_revision_task_package_binding_present": false,
+  "actual_automation_error_observed": false,
+  "safe_to_enable": false
+}

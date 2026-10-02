@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import {
   plannerEligibility,
@@ -13,6 +15,7 @@ const base = {
   status: "open",
 };
 const task: PreparationTask = {
+  id: "00000000-0000-4000-8000-000000000003",
   workspace_id: "workspace",
   opportunity_id: "role",
   task_type: "prepare_application_package",
@@ -39,9 +42,55 @@ const packages = [
     package_number: 2,
     status: "draft",
     candidate_notes: "Revision: Change evidence",
+    hq_preparation_task_id: task.id,
   },
 ];
 describe("worker deferral and package handoff", () => {
+  it("pins the proposed SQL and changes only the verified HQ worker fragments", async () => {
+    const artifact = JSON.parse(
+      await readFile(
+        new URL(
+          "../qa-evidence/phase2-hardening-proposed-worker-prompts.json",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
+    const snapshot = await readFile(
+      new URL(
+        "../../docs/live-worker-instructions-verified-2026-10-01.md",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const hash = (data: string) =>
+      createHash("sha256").update(data).digest("hex");
+    const prompts = [...snapshot.matchAll(/```text\n(.*?)\n```/gs)].map(
+      (m) => m[1],
+    );
+    expect(hash(snapshot)).toBe(artifact.snapshot_sha256);
+    expect(artifact.status).toBe("PROPOSED_NOT_ADOPTED");
+    expect(artifact.live_task_write_attempted).toBe(false);
+    expect(artifact.schedule_and_enabled_state_changes).toBe(false);
+    expect(prompts).toHaveLength(2);
+    for (const [index, entry] of artifact.entries.entries()) {
+      const current = prompts[index];
+      expect(hash(current)).toBe(entry.verified_current_prompt_sha256);
+      expect(current.split(entry.old_hq_fragment)).toHaveLength(2);
+      expect(
+        entry.proposed_prompt.split(entry.proposed_hq_fragment),
+      ).toHaveLength(2);
+      expect(
+        entry.proposed_prompt.replace(entry.proposed_hq_fragment, ""),
+      ).toBe(current.replace(entry.old_hq_fragment, ""));
+      expect(hash(entry.proposed_prompt)).toBe(entry.proposed_prompt_sha256);
+    }
+    const sql = await readFile(
+      new URL("../../" + artifact.migration_file, import.meta.url),
+      "utf8",
+    );
+    expect(hash(sql)).toBe(artifact.migration_sha256);
+  });
   it("executes planner filtering through the exact CLI named by the worker skill", () => {
     const script = fileURLToPath(
       new URL("../../worker-support/cli.mts", import.meta.url),
@@ -129,7 +178,7 @@ describe("worker deferral and package handoff", () => {
       now,
     );
     expect(result).toEqual({
-      deduplication_action_ids: ["later", "today"],
+      deduplication_action_ids: ["later", "today", "other-human"],
       eligible_action_ids: ["today"],
       delivery_plan_item_ids: ["today-item"],
     });
@@ -169,9 +218,15 @@ describe("worker deferral and package handoff", () => {
     expect(packages).toEqual(before);
   });
   it("rejects missing, foreign, archived, or superseded revision packages", () => {
-    expect(() =>
-      preparationTarget({ ...task, description: null }, packages),
-    ).toThrow("exact draft");
+    expect(
+      preparationTarget({ ...task, description: null }, packages).package_id,
+    ).toBe(packages[1].id);
+    expect(
+      preparationTarget(
+        task,
+        packages.map((p) => ({ ...p, hq_preparation_task_id: null })),
+      ).disposition,
+    ).toBe("owner_handoff_required");
     expect(() =>
       preparationTarget(task, [
         packages[0],
@@ -187,7 +242,12 @@ describe("worker deferral and package handoff", () => {
     expect(() =>
       preparationTarget(task, [
         ...packages,
-        { ...packages[1], id: "newer", package_number: 3 },
+        {
+          ...packages[1],
+          id: "newer",
+          package_number: 3,
+          hq_preparation_task_id: null,
+        },
       ]),
     ).toThrow("superseded");
   });
@@ -210,9 +270,11 @@ describe("worker deferral and package handoff", () => {
       title: "Prepare the application package",
       description: null,
     };
-    expect(preparationTarget(initial, []).disposition).toBe("create");
+    expect(preparationTarget(initial, []).disposition).toBe(
+      "owner_handoff_required",
+    );
     expect(preparationTarget(initial, [packages[0]]).disposition).toBe(
-      "already_ready",
+      "owner_handoff_required",
     );
   });
 });

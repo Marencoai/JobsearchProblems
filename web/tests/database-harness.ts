@@ -5,10 +5,19 @@ import { fileURLToPath } from "node:url";
 // No connection string, filesystem data directory, production rows, or network.
 // Hosted Auth is represented only by its UUID claim interface. PostgreSQL executes
 // the real repository tables, policies, grants, and lifecycle triggers unchanged.
-export async function databaseHarness() {
+export async function databaseHarness(
+  options: { stopBefore?: string; exclude?: string[] } = {},
+) {
   const db = new PGlite();
   await db.exec(`
     create role anon; create role authenticated;
+    -- Test-only Supabase Storage catalog interface. No object service/network.
+    create schema storage;
+    create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+    create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text references storage.buckets(id),name text,metadata jsonb,unique(bucket_id,name));
+    alter table storage.objects enable row level security;
+    grant usage on schema storage to authenticated;
+    grant select,insert,update,delete on storage.objects to authenticated;
     create schema auth;
     create table auth.users(id uuid primary key, email text);
     create function auth.uid() returns uuid language sql stable as $$
@@ -28,6 +37,8 @@ export async function databaseHarness() {
   for (const name of (await readdir(directory))
     .filter((n) => n.endsWith(".sql"))
     .sort()) {
+    if (name === options.stopBefore) break;
+    if (options.exclude?.includes(name)) continue;
     // These two historical production identity migrations require specific real
     // Auth accounts and workspace IDs. Test identities are seeded separately.
     if (name.endsWith("_agent_identity.sql")) {

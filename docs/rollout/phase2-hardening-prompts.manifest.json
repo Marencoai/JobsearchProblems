@@ -1,0 +1,37 @@
+{
+  "artifact_file": "docs/rollout/phase2-hardening-prompts.md",
+  "source_json": "web/qa-evidence/phase2-hardening-proposed-worker-prompts.json",
+  "source_json_sha256": "ac9a05353c5894cdf9952252906d81d61e265ba83d951798f34bf956e448345e",
+  "source_commit": "f5a2624f5c9342d246ec1528bd9148edb9e899b2",
+  "migration_file": "supabase/migrations/20261002024651_hq_planner_revision_enforcement.sql",
+  "migration_sha256": "fa5782a9fc29cd9fc043c82340588bc368fb221c7b283520449a7d4227aa4000",
+  "snapshot_sha256": "39d75e2bc8547634eec02438fd478aa39691d395334b2b8103dfb72216301511",
+  "live_task_edit_attempted": false,
+  "adopted": false,
+  "schedule_and_enabled_state_changes": false,
+  "entries": [
+    {
+      "name": "Morning Job Queue",
+      "automation_id": "6abaee64b7648191acc2fc9410c42009",
+      "preserve_schedule": "daily at 7:45 AM America/Los_Angeles",
+      "preserve_enabled": true,
+      "section": "morning-job-queue",
+      "prompt_sha256": "9f4ec140da580d46ca77061a0a1e83733c6666a88532158d50638bb77cc1cfce",
+      "verified_current_prompt_sha256": "abb37e8614005bb2252f62de31b5b88d7d83b034ec00ba6f00aaafbe5c611287",
+      "original_prompt_without_hq_fragment_sha256": "4d0b219cba8de360ea7f48936a2ca9acf9309b5945edc658a56a9760161d7f88",
+      "base_preservation_verified": true
+    },
+    {
+      "name": "Application Queue",
+      "automation_id": "6abaeec3a4c48191a530c7120433bd9d",
+      "preserve_schedule": "daily at 7:20 AM and 7:20 PM America/Los_Angeles",
+      "preserve_enabled": true,
+      "section": "application-queue",
+      "prompt_sha256": "7f858524f201a4b2f3218892ae8698f9bee313a7518d954564bf7d34944321ca",
+      "verified_current_prompt_sha256": "9a8058e50c8e416b042fe36581366c7f8ce6c5e2ffdebc3ba83dc36a197b210c",
+      "original_prompt_without_hq_fragment_sha256": "a0c27696a6fda1823bad144f7c630b7d9e74f614d4792be1a1633850fcbf48f5",
+      "base_preservation_verified": true
+    }
+  ],
+  "artifact_sha256": "0ff8b08de04f97046aee948d59eac2582f1798e785e15ba8084f1dced4e34069"
+}

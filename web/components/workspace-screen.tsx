@@ -79,6 +79,12 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onReload={() => void session.reload()}
       onSignOut={() => void session.signOut()}
       onAction={session.humanActions ? session.act : undefined}
+      onIntake={session.manualIntake ? session.intake : undefined}
+      onUpload={session.manualIntake ? session.upload : undefined}
+      onDelivery={session.materialDelivery ? session.deliver : undefined}
+      onResearchRefresh={
+        session.researchRefresh ? session.refreshResearch : undefined
+      }
     />
   );
 }

@@ -1,11 +1,33 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { MaterialArtifact } from "@/lib/types";
 import type { Database, Json } from "@/lib/database.types";
 
 // Draft RPC contract overlays live generated types until migration approval.
 // Regenerate database.types.ts from the deployed project after that gate.
 type HqDatabase = Database & {
   public: {
+    Tables: {
+      application_material_artifacts: {
+        Row: MaterialArtifact;
+        Insert: MaterialArtifact;
+        Update: never;
+        Relationships: [];
+      };
+    };
     Functions: {
+      hq_request_research_refresh: {
+        Args: {
+          target_workspace_id: string;
+          target_opportunity_id: string;
+          expected_updated_at: string;
+          request_id: string;
+        };
+        Returns: Json;
+      };
+      hq_request_job_intake: {
+        Args: { target_workspace_id: string; request_id: string; input: Json };
+        Returns: Json;
+      };
       hq_human_action: {
         Args: {
           target_workspace_id: string;
@@ -21,7 +43,15 @@ type HqDatabase = Database & {
   };
 };
 export type HqClient = SupabaseClient<HqDatabase>;
-export type PublicConfig = { url: string; key: string; humanActions?: boolean };
+export type PublicConfig = {
+  url: string;
+  key: string;
+  humanActions?: boolean;
+  manualIntake?: boolean;
+  materialDelivery?: boolean;
+  researchRefresh?: boolean;
+  phase2Diagnostics?: boolean;
+};
 export const READ_TABLES = new Set([
   "principals",
   "workspace_memberships",
@@ -64,6 +94,11 @@ export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
   humanActions = false,
+  capabilities: {
+    manualIntake?: boolean;
+    materialDelivery?: boolean;
+    researchRefresh?: boolean;
+  } = {},
 ): typeof fetch {
   return async (input, init) => {
     const url = new URL(
@@ -88,7 +123,47 @@ export function readOnlyFetch(
       method === "POST" &&
       url.pathname === "/auth/v1/logout" &&
       url.search === "?scope=local";
-    const dataRead = method === "GET" && READ_TABLES.has(table);
+    const dataRead =
+      method === "GET" &&
+      (READ_TABLES.has(table) ||
+        (capabilities.materialDelivery === true &&
+          table === "application_material_artifacts"));
+    const intakeRpc =
+      capabilities.manualIntake === true &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_request_job_intake" &&
+      !url.search;
+    const researchRpc =
+      capabilities.researchRefresh === true &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_request_research_refresh" &&
+      !url.search;
+    const intakePath =
+      "hq-intake/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx|png|jpg|txt)";
+    const materialPath =
+      "hq-materials/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx)";
+    const storageRead =
+      method === "GET" &&
+      !url.search &&
+      ((capabilities.manualIntake === true &&
+        new RegExp("^/storage/v1/object/" + intakePath + "$").test(
+          url.pathname,
+        )) ||
+        (capabilities.materialDelivery === true &&
+          new RegExp("^/storage/v1/object/" + materialPath + "$").test(
+            url.pathname,
+          )));
+    const headers = new Headers(
+      init?.headers ?? (input instanceof Request ? input.headers : undefined),
+    );
+    const intakeUpload =
+      capabilities.manualIntake === true &&
+      method === "POST" &&
+      !url.search &&
+      new RegExp("^/storage/v1/object/" + intakePath + "$").test(
+        url.pathname,
+      ) &&
+      headers.get("x-upsert") !== "true";
     const humanRpc =
       humanActions &&
       method === "POST" &&
@@ -98,7 +173,17 @@ export function readOnlyFetch(
       url.origin !== origin ||
       url.username ||
       url.password ||
-      !(authRead || login || logout || dataRead || humanRpc)
+      !(
+        authRead ||
+        login ||
+        logout ||
+        dataRead ||
+        humanRpc ||
+        intakeRpc ||
+        researchRpc ||
+        storageRead ||
+        intakeUpload
+      )
     ) {
       throw new Error("This preview permits authenticated reads only.");
     }
@@ -128,6 +213,7 @@ export function createHqClient(
         new URL(config.url).origin,
         nativeFetch,
         config.humanActions === true,
+        config,
       ),
     },
   });

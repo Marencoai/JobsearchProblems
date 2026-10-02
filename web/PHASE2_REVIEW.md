@@ -1,5 +1,24 @@
 # Job Hunt HQ human actions · proposed migration review
 
+**October 2 rollout update supersedes earlier holds:** both user-verified live
+scheduled prompt insertions pass exact mechanical comparison. The single
+approved migration was applied at 01:56:36 UTC; hosted body/grant/catalog checks
+pass. `HQ_HUMAN_ACTIONS` remains unactivated. Actual authenticated human/agent
+and scheduled deferral/revision acceptance remain pending; normal data has no
+such cases and no test fixture mutations were authorized. See the authoritative
+[hosted validation report](PHASE2_HOSTED_VALIDATION.md). All earlier observations
+below are retained as historical review evidence.
+
+**Rollout clarification supersedes the earlier deployment-target/runtime
+blocker below:** the live queues are ChatGPT scheduled automations. Node helpers
+are tested reference/CI contracts, not hosted prerequisites. Parent's authorized
+additive edits to both tasks were denied (`You cannot modify this task.`), with
+no changes. Current hold is matching instruction adoption/readback, followed by
+hosted normal-data validation after migration and before flag activation. Do not
+retry denied edits through browser/another route. See [database boundary audit
+and conditional consolidated proposal](AUTOMATION_DB_BOUNDARY_AUDIT.md). Exact
+approved SQL and the original user-authored instruction snapshot remain unchanged.
+
 **Date:** October 1, 2026  
 **Status:** Implemented and validated locally; not deployed or applied to production.  
 **Baseline:** Phase 1 commit `16a0e32`, draft PR [#1](https://github.com/Marencoai/JobsearchProblems/pull/1). This work is stacked on that branch.

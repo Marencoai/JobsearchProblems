@@ -1,0 +1,48 @@
+Casey Example
+OPERATIONS SYSTEMS LEADER
+casey@example.invalid | Example City | example.invalid/portfolio
+PROFESSIONAL SUMMARY
+Operations leader who turns fragmented workflows into clear systems that teams can use and improve. Combines 
+process design, practical automation, cross-functional delivery and measurement to connect strategy with daily 
+execution. Builds reliable operating routines, translates customer and employee needs into useful requirements, and 
+supports adoption through training and documentation. Brings experience coordinating distributed teams, improving 
+handoffs and creating visibility into service performance while keeping ownership and decision-making clear.
+CORE CAPABILITIES
+Operations strategy
+Process improvement
+Workflow automation
+Cross-functional delivery
+Service measurement
+Change management
+Requirements discovery
+Data quality
+Team enablement
+Systems integration
+Program coordination
+Customer operations
+SELECTED IMPACT
+24%
+Faster service handoffs
+18%
+Less routine rework
+6 teams
+Shared operating standards
+3 programs
+Delivery routines established
+SELECTED PROJECTS & SYSTEMS
+Service Handoff System  |  Program lead
+Mapped intake, ownership and completion across service teams. Introduced a consistent handoff checklist, a shared status view and 
+clear escalation points so each request had an accountable next step.
+Operations Measurement Workspace  |  Systems owner
+Connected service records to common definitions and a weekly review routine. Documented data quality checks and helped managers 
+use the same measures to prioritize improvements.
+Team Enablement Program  |  Delivery lead
+Built practical onboarding guides and role-specific training. Gathered feedback from distributed teams and revised procedures around the 
+steps that caused repeated confusion.
+SUPPORTING INFORMATION
+TOOLS & PLATFORMS
+Spreadsheets  |  SQL  |  Workflow tools  |  CRM  |  Service desk  |  Documentation  |  
+Process maps  |  Dashboards  |  Project boards  |  Forms  |  APIs  |  Knowledge bases
+CREDENTIALS
+Example Process Improvement Certificate
+B.A., Example University

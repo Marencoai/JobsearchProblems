@@ -1,0 +1,71 @@
+{
+  "reviewed_at": "2026-10-02T04:18:06.869895+00:00",
+  "snapshot": {
+    "base_commit": "312e2e08f50221ab092dfb8e9058a0c64845c221",
+    "owner_commit": "cbcc27b8cbe7ecdecc37b5e785ae37d0804e7d10",
+    "captured_at": "2026-10-02T04:14:54.050617+00:00",
+    "owner_working_tree_overlay": ["web/scripts/concurrency-check.mjs"],
+    "sql_sha256": "fa5782a9fc29cd9fc043c82340588bc368fb221c7b283520449a7d4227aa4000",
+    "native_script_sha256": "e02d084cf14dff4affb1f0bd8f8e704a08eef018e8babf5b582373e4d6d83151",
+    "files": [
+      "skills/morning-planner/SKILL.md",
+      "skills/prepare-application/SKILL.md",
+      "supabase/migrations/20261002024651_hq_planner_revision_enforcement.sql",
+      "web/AUTOMATION_DB_BOUNDARY_AUDIT.md",
+      "web/PHASE2_ENFORCEMENT_AND_FIXTURE_PROPOSAL.md",
+      "web/PHASE2_HARDENING_REVIEW.md",
+      "web/qa-evidence/phase2-hardening-local-validation.json",
+      "web/qa-evidence/phase2-hardening-proposed-worker-prompts.json",
+      "web/scripts/concurrency-check.mjs",
+      "web/tests/database-harness.ts",
+      "web/tests/enforcement-catalog-db.test.ts",
+      "web/tests/human-actions-db.test.ts",
+      "web/tests/planner-revision-enforcement-db.test.ts",
+      "web/tests/worker-contracts.test.ts",
+      "worker-support/hq-contracts.ts"
+    ]
+  },
+  "findings": {
+    "one_thing_flag": "corrected; regression test passes",
+    "unlocked_phantom": "corrected; native widened-window insertion/deferral test passes"
+  },
+  "combined_web_tests": {
+    "passed": 422,
+    "files": 31,
+    "skipped": 0,
+    "scope": "integration312e2e0 plus committed cbcc27b hardening changes; does not include separate d551cce diagnostic UI changes"
+  },
+  "native_suites": {
+    "passed": 8,
+    "scripts": [
+      "concurrency-check.mjs",
+      "integration-schema-check.mjs",
+      "interview-cross-domain-check.mjs",
+      "offer-cross-domain-check.mjs",
+      "phase2-outreach-cross-domain-check.mjs",
+      "outreach-concurrency-check.mjs",
+      "interview-concurrency-check.mjs",
+      "offer-concurrency-check.mjs"
+    ],
+    "hardening_cases": 21,
+    "network": "private Unix sockets; TCP disabled; synthetic Auth/records only",
+    "cleanup": "all owned clusters stopped and removed"
+  },
+  "static_checks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed",
+    "build": "passed after replacing external node_modules symlink with local dependency copy"
+  },
+  "production_changes": false,
+  "owner_edits": false,
+  "integration_edits": false,
+  "remaining_gates": [
+    "freeze owner test-script overlay into final commit and refresh final evidence",
+    "separate exact production approval and fresh hosted inventory",
+    "supported matching caller adoption/readback",
+    "normal authenticated human/agent and scheduled acceptance",
+    "bounded fixture authorization if needed",
+    "controlled final message rendering remains unverified"
+  ]
+}

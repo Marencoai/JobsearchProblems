@@ -1,0 +1,38 @@
+{
+  "synthetic_only": true,
+  "candidate_name": "Casey Example",
+  "renderer_unchanged": true,
+  "page_count": 2,
+  "visual_inspected_pages": [
+    1,
+    2
+  ],
+  "all_input_text_retained": true,
+  "all_text_within_page_bounds": true,
+  "page_one_positioning_page_two_experience": true,
+  "qa": {
+    "renderer_key": "executive-brief-two-page-v2",
+    "input_sha256": "6262eb58ae3c4cdec2cb1d4478c8f20a8562f2fd55c036b9b47fd15b346f0940",
+    "docx_sha256": "65e4e776138fa834977a1657018ef60bdc52f19eec3a65c064279c62eb72c58e",
+    "pdf_sha256": "325731aad1a2874dff01bbc99ae36cc1dccddc804900a3180838a42f0ada1c22",
+    "page_count": 2,
+    "visual_pass": true,
+    "parse_back_pass": true
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "python_docx": "1.2.0",
+    "pymupdf": "1.28.2",
+    "converter": "LibreOffice 26.8.0",
+    "vendor_download": "https://download.documentfoundation.org/libreoffice/stable/26.8.0/mac/aarch64/LibreOffice_26.8.0_MacOS_aarch64.dmg",
+    "vendor_dmg_sha256": "8858d8058da4f862f47559486814e65efc27294da67c5e4bb56b006b1ee59f89",
+    "dmg_checksum_matched": true,
+    "copied_bundle_strict_signature": "failed",
+    "security_bypass": false,
+    "profile_isolated": true
+  },
+  "limits": [
+    "Local document QA only; no real candidate data, Storage API or hosted worker acceptance.",
+    "Strict copied-bundle signature failure limits converter-runtime acceptance; no security bypass or signature modification."
+  ]
+}

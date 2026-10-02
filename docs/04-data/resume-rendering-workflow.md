@@ -25,7 +25,7 @@ Current production renderer key:
 
 Implementation:
 
-`renderers/resume/executive_brief_two_page_v1.py`
+`renderers/resume/executive_brief_two_page_v2.py`
 
 Active production Application Templates should select this renderer unless a later approved renderer version replaces it.
 
@@ -88,3 +88,7 @@ Never edit the content of an existing Application Material in place.
 The active Template version, renderer key, Evaluation version, evidence snapshots, and final rendered artifact should remain attributable to the Material version used for candidate review or submission.
 
 Historical resumes created with older renderers remain unchanged for reproducibility.
+
+## Proposed HQ delivery registration
+
+Migration `20261001225212_hq_manual_intake_and_material_delivery.sql` proposes private exact-version file registration; it is not live. After separate approval and actual worker adoption, publish the QA-passed DOCX/PDF pair while the Material is current/draft, then move it to candidate review. Immutable hashes, renderer/input provenance, exact DOCX-to-PDF relationship and QA attestation belong to `application_material_artifacts`; private bytes use hashed `hq-materials` paths. The browser verifies size/hash before preview/download without rerendering candidate documents. Follow `skills/prepare-application/SKILL.md` and `web/INTAKE_DELIVERY_REVIEW.md`.
