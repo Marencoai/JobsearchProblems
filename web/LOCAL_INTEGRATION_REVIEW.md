@@ -4,15 +4,15 @@ This isolated candidate combines PRs 2–6. It is local-only on `codex/local-v1-
 
 ## Published source pins
 
-| Package                   | Reviewed published head                    |
-| ------------------------- | ------------------------------------------ |
-| PR2 Phase2                | `a254eaed87e8b99da1608bcda236e6a03515f98e` |
-| PR3 Outreach final freeze | `0a31190b99ed52d332c61d97f8b9f21af3fb9f7c` |
-| PR4 Intake/delivery       | `802fbfe8a151a6859f3754ef5f7ad0f0db67dafa` |
-| PR5 Interview             | `a116c37df8d87b50d61e32db25209616aae63ee4` |
-| PR6 Offer                 | `18cf31dab1f83c59726e5623031e9b5e66532387` |
+| Package                   | Reviewed published head                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| PR2 Phase2                | `a254eaed87e8b99da1608bcda236e6a03515f98e`                                                                                    |
+| PR3 Outreach final freeze | `0a31190b99ed52d332c61d97f8b9f21af3fb9f7c`                                                                                    |
+| PR4 Intake/delivery       | `802fbfe8a151a6859f3754ef5f7ad0f0db67dafa`                                                                                    |
+| PR5 Interview             | `bf9fb8238613a1d8405f7570cde8a7b338e62aee` (final dependency pin update; original `a116c37df8d87b50d61e32db25209616aae63ee4`) |
+| PR6 Offer                 | `c11a6f5069c621c30c4488a82a5eb78336475dfe` (final dependency pin update; original `18cf31dab1f83c59726e5623031e9b5e66532387`) |
 
-Outreach advanced during integration from `255ecfb` to its published frozen head above; this candidate includes the final head. PR4 was reread remotely and had not advanced. Owner branches/worktrees and standalone review packages are preserved. Standalone PR5/6 reports/tests still mention the earlier Outreach checkpoint; parent should update their dependency documentation/pins before domain approvals or use this candidate's exact final evidence explicitly.
+Outreach advanced during integration from `255ecfb` to its published frozen head above; this candidate includes the final head. PR4 was reread remotely and had not advanced. Owner branches/worktrees and standalone review packages are preserved. Standalone PR5/6 reports/tests now pin the frozen Outreach dependency. Their independent suites pass (Interview147, Interview+Offer168), and both native mixed lock orders pass again from each updated standalone package.
 
 ## Exact SQL and rollout order
 
@@ -43,7 +43,7 @@ Native harnesses now provide the same test-only Supabase Storage catalog interfa
 - Native Phase2/intake suite: two intake retry races and five human Pursue/Pass/revision/approval/submission races pass. Separate local regression verifies exact unchanged Pursue alongside the compatible frozen Outreach lock.
 - Installed headless Chrome154.0.8037.93 in fresh owned profiles: Outreach behavioral suite passes at five responsive widths; zero external requests/page errors. Interview download is real: 638 UTF8 bytes, exact content match, SHA256 `25c124209932013033de8b6a5f97f32fb20bc648d83df2810988cec1cc33963a`.
 
-Browser integration evidence is in `qa-evidence/integration/`; script `scripts/integration-browser-check.mjs` exercises seven roles at desktop/mobile, synthetic PDF.js rendering, PDF/DOCX downloads and URL/text/file-picker intake. Synthetic transport files are not canonical Word/renderer or hosted Storage acceptance.
+Browser integration evidence is in `qa-evidence/integration/`; script `scripts/integration-browser-check.mjs` exercises seven roles at desktop/mobile, synthetic PDF.js rendering, PDF/DOCX downloads and URL/text/file-picker intake. Synthetic transport files are not canonical Word/renderer or hosted Storage acceptance. The DOCX fixture is a 63-byte transport sentinel rather than a complete Word document. Installed Chrome full-page capture leaves a blank PDF canvas tile in one dialog image; the separately captured `synthetic-pdf-canvas.png` displays actual rendered text, and the browser asserts dark text pixels plus exact extracted text. Canonical visual renderer acceptance remains pending.
 
 ## Master brief §26: 18-item checkpoint
 
