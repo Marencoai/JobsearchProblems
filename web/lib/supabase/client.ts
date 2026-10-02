@@ -50,6 +50,7 @@ export type PublicConfig = {
   manualIntake?: boolean;
   materialDelivery?: boolean;
   researchRefresh?: boolean;
+  phase2Diagnostics?: boolean;
 };
 export const READ_TABLES = new Set([
   "principals",

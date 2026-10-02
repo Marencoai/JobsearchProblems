@@ -2,6 +2,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
+import { Phase2Diagnostics } from "./phase2-diagnostics";
+import { readPhase2Diagnostics } from "@/lib/phase2-diagnostics";
 import type { Identity, WorkspaceData } from "@/lib/types";
 import { runHumanAction, type HumanActionHandler } from "@/lib/human-actions";
 import {
@@ -62,6 +64,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [manualIntake, setManualIntake] = useState(false),
     [materialDelivery, setMaterialDelivery] = useState(false);
   const [researchRefresh, setResearchRefresh] = useState(false);
+  const [diagnosticsEnabled, setDiagnosticsEnabled] = useState(false);
   useEffect(() => {
     const activeGeneration = generation;
     let cancelled = false;
@@ -80,6 +83,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setManualIntake(config.manualIntake === true);
         setMaterialDelivery(config.materialDelivery === true);
         setResearchRefresh(config.researchRefresh === true);
+        setDiagnosticsEnabled(
+          process.env.NODE_ENV === "development" &&
+            config.phase2Diagnostics === true,
+        );
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -326,6 +333,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       mutation.current = false;
     }
   };
+  async function diagnosePhase2() {
+    if (!diagnosticsEnabled || process.env.NODE_ENV !== "development")
+      throw new Error("Read-only diagnostics are not enabled.");
+    const { instance, profile, target, run } = await verifiedContext();
+    const report = await readPhase2Diagnostics(
+      instance,
+      profile.principal.id,
+      target,
+      humanActions,
+    );
+    if (run !== generation.current || target !== workspaceRef.current)
+      throw new Error("Your session or workspace changed during the check.");
+    return report;
+  }
   return (
     <Context.Provider
       value={{
@@ -351,6 +372,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      {diagnosticsEnabled && identity && workspaceId && (
+        <Phase2Diagnostics
+          key={identity.principal.id + ":" + workspaceId}
+          run={diagnosePhase2}
+        />
+      )}
     </Context.Provider>
   );
 }
