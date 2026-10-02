@@ -1,10 +1,10 @@
 {
   "status": "TEMPORARY_SYNTHETIC_ENDPOINT_LIVE_CALLBACK_NOT_ALLOWLISTED",
-  "origin": "https://prison-ids-calculator-foundation.trycloudflare.com",
-  "mcp_url": "https://prison-ids-calculator-foundation.trycloudflare.com/mcp",
+  "origin": "https://nice-missouri-demanding-reward.trycloudflare.com",
+  "mcp_url": "https://nice-missouri-demanding-reward.trycloudflare.com/mcp",
   "owned_sessions": {
-    "cloudflared": 83369,
-    "probe": 90907
+    "cloudflared": 74010,
+    "probe": 35756
   },
   "binary_source": "https://github.com/cloudflare/cloudflared/releases/download/2026.9.3/cloudflared-darwin-arm64.tgz",
   "binary_checksum_reported": "5472c1a01c84bc31b3021056a73b4e5774ddddefc572124ea8fdf6c340639f32",
@@ -33,7 +33,7 @@
     "refresh_grant_absolute_seconds": 600,
     "tunnel": "manual teardown; URL ends when owned cloudflared stops"
   },
-  "cleanup": "Send Ctrl-C only to owned probe session 90907 and cloudflared session 83369; remove user-installed test connection and isolated tasks after evidence.",
+  "cleanup": "Send Ctrl-C only to owned probe session 35756 and cloudflared session 74010; remove test connection and isolated tasks after evidence.",
   "previous_session": {
     "origin": "https://discount-euro-shoppers-estimate.trycloudflare.com",
     "status": "HTTP530_PROCESS_SESSIONS_ENDED_NO_CALLBACK_OBSERVED"
@@ -45,6 +45,23 @@
     "user_correlated_error_at_utc": "2026-10-02T22:43:45Z",
     "parent_confirmed_exact_allowlist": true
   },
-  "registration_status": "Exact observed callback now allowlisted; no successful client registration/grant yet; other callbacks rejected.",
-  "media_type_findings": "Valid JSON charset parameters already pass. Historical415 request content types not captured. Before grants, requests were unauthenticated; unsupported/missing MIME now receives401challenge. Authenticated malformed MIME still415."
+  "registration_status": "Only prior exact callback allowlisted. New session has received no observed DCR, consent, token exchange or authenticated probe. No recovery of lost-session activity is claimed.",
+  "media_type_findings": "Valid JSON charset parameters already pass. Historical415 request content types not captured. Before grants, requests were unauthenticated; unsupported/missing MIME now receives401challenge. Authenticated malformed MIME still415.",
+  "ended_sessions": [
+    {
+      "origin": "https://prison-ids-calculator-foundation.trycloudflare.com",
+      "sessions": {
+        "cloudflared": 83369,
+        "probe": 90907
+      },
+      "status": "HTTP530; both sessions absent after offline interval; activity during interval unavailable"
+    }
+  ],
+  "process_pids": {
+    "cloudflared": 67261,
+    "probe": 67293,
+    "shared_parent": 41045
+  },
+  "health_checked_at_utc": "2026-10-02T23:30:23.964860Z",
+  "process_lifetime_evidence": "Both new processes remained alive across the preceding agent turn end, parented by ChatGPT bundled codex. Turn end alone did not terminate them in this observation. Previous process loss coincided with offline intervals; exact termination cause not observed."
 }
