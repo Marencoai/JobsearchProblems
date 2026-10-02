@@ -23,16 +23,16 @@ try {
       : mode === "research-refresh"
         ? researchRefreshTarget(data.task, data.event, data.opportunity)
         : mode === "intake-dedupe"
-        ? intakeDedupe(data.candidate, data.opportunities, data.sources)
-        : mode === "manual-intake"
-          ? intakeTaskEvidence(data.task, data.event)
-          : mode === "preparation"
-            ? preparationTarget(data.task, data.packages)
-            : (() => {
-                throw new Error(
-                  "Use planner, preparation, manual-intake, intake-dedupe, or research-refresh mode",
-                );
-              })();
+          ? intakeDedupe(data.candidate, data.opportunities, data.sources)
+          : mode === "manual-intake"
+            ? intakeTaskEvidence(data.task, data.event)
+            : mode === "preparation"
+              ? preparationTarget(data.task, data.packages)
+              : (() => {
+                  throw new Error(
+                    "Use planner, preparation, manual-intake, intake-dedupe, or research-refresh mode",
+                  );
+                })();
   process.stdout.write(JSON.stringify(result) + "\n");
 } catch (error) {
   process.stderr.write(
