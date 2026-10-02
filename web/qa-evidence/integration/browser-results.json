@@ -3,7 +3,14 @@
   "checks": [
     "Seven role stages at desktop and mobile; no document horizontal overflow",
     "Synthetic two-page PDF rendered by installed PDF.js; text extraction and real PDF/DOCX browser downloads pass (transport fixtures, not canonical renderer acceptance)",
-    "Manual URL, pasted description, and real file-picker synthetic text upload reach explicit confirmation"
+    "Manual URL, pasted description, and real file-picker synthetic text upload reach explicit confirmation",
+    "Actual file-picker selection and bounded validation of committed fictional canonical PDF/DOCX and PNG screenshot; synthetic callback only, no Storage upload",
+    "Committed canonical synthetic PDF renders two pages and extracts Casey Example; actual saved PDF/DOCX bytes match files and hashes exactly, no conversion executed",
+    "Approved ATS packet desktop/mobile: exact pair readiness guards, explicit salary Copy, voluntary answers preserved, inspected ATS href; Copy never records submission. Research request shows plain pending state and prevents double-click",
+    "Research uncertain retry uses frozen request and reaches synthetic confirmation",
+    "Submitted history resolves exact old v1 Material and canonical bytes after current v2 exists; legacy external URL is preserved as text without a clickable bypass",
+    "Integrated Interview prep starts a session and saves a manual likely question without external meeting invitations",
+    "Integrated Offer records a synthetic negotiation plan and explicit exact-terms human decision; no employer contact or real commitment"
   ],
   "downloads": [
     {
@@ -17,6 +24,20 @@
       "filename": "resume-v1-resume-material.docx",
       "bytes": 63,
       "sha256": "06017cedea364bfe5f80ed58bb946a0e2f9e84b699481f495879d171ef0f4840"
+    },
+    {
+      "format": "canonical PDF",
+      "filename": "resume-v1-resume-material.pdf",
+      "bytes": 138436,
+      "sha256": "325731aad1a2874dff01bbc99ae36cc1dccddc804900a3180838a42f0ada1c22",
+      "exactCommittedContentMatch": true
+    },
+    {
+      "format": "canonical DOCX",
+      "filename": "resume-v1-resume-material.docx",
+      "bytes": 39515,
+      "sha256": "65e4e776138fa834977a1657018ef60bdc52f19eec3a65c064279c62eb72c58e",
+      "exactCommittedContentMatch": true
     }
   ],
   "pageErrors": [],

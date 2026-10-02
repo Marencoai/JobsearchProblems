@@ -1,0 +1,21 @@
+{
+  "mode": "owned local production build",
+  "qaFixtureEnvironment": "1",
+  "allServerCapabilities": "0",
+  "publicConfig": "empty",
+  "results": [
+    {
+      "path": "/qa?job=application&actions=1&packet=1&delivery=1&refresh=1&outreach=1&canonical=1&history=1",
+      "status": 404
+    },
+    {
+      "path": "/api/public-config",
+      "status": 503
+    },
+    {
+      "path": "/jobs",
+      "status": 200
+    }
+  ],
+  "productionChanges": false
+}
