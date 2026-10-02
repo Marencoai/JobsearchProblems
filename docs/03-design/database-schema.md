@@ -10,6 +10,14 @@ The RPC validates an active human, active Workspace/membership, command-specific
 
 See [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md) for the permission matrix, local validation, rollout dependencies, and rollback. Production schema remains unchanged until explicitly approved.
 
+## Proposed Outreach domain (2026-10-01; not deployed)
+
+The canonical relationship domain is implemented as a proposed forward file outside the automatic migration directory. See [`outreach-v1-review.md`](outreach-v1-review.md) for exact schema, RLS/permission impact, transitions, tests, data/backfill impact and rollback, and [`outreach-contacts-contract.md`](outreach-contacts-contract.md) for the shared Interview dependency.
+
+It adds `contacts`, `opportunity_contacts`, `outreach_engagements`, `outreach_engagement_opportunities`, versioned `outreach_messages`, `outreach_message_evidence`, `outreach_interactions`, `relationship_notes` and typed `outreach_task_links`. Contacts use UUID keys, `full_name`, nullable `title`, and `UNIQUE(workspace_id,id)`; every reference is tenant-scoped. One Engagement can span multiple roles, and none is required. Exact sent/received content and snapshots are immutable. Follow-up and generation continue using existing Internal Tasks and contextual Next Actions. New domain tables are read through RLS and written only by the checked private-schema action implementation exposed through an invoker wrapper. Existing workers receive no new grants and no external send authority is created.
+
+This section records a proposal, not production availability. The complete domain package needs one explicit approval before promoting its SQL to the production migration inventory. Interview must reuse the canonical Contacts table rather than create a parallel person model.
+
 1. Identity, Workspace, and Permissions
 
 This section defines the access-control foundation for the Job Search AI Agent.
