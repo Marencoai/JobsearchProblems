@@ -1793,3 +1793,26 @@ small {
   gap: 10px;
   margin-top: 24px;
 }
+
+.offer-terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.offer-terms dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.offer-terms dd {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.action-dialog {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+@media (max-width: 600px) {
+  .offer-terms {
+    grid-template-columns: 1fr;
+  }
+}

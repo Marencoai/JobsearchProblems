@@ -2954,12 +2954,17 @@ Reason:
 
 Real ATS forms repeatedly request employment-exit reasons, employer-contact permission, and references. Storing approved answers once prevents repeated candidate interruptions and prevents agents from inventing application facts.
 
+## Job Hunt HQ Interview / Offer proposal · October 1, 2026
 
-## Job Hunt HQ Interview proposal · October 1, 2026
+The local v1 proposals extend the same role workspace and leave Opportunity's
+existing lifecycle authoritative. Interview source recording is human-reviewed;
+Gmail matching/automatic detection retains its existing activity/attention contract
+until a separately reviewed worker capability is installed. Manual structured prep
+is usable without inventing agent output. Contact identity remains Outreach-owned.
 
-The local v1 Interview proposal extends the same role workspace and leaves the
-Opportunity lifecycle authoritative. Source recording is human-reviewed. Existing
-Gmail detection retains its activity/attention contract until a separately reviewed
-worker capability is installed. Manual structured prep does not invent agent output.
-Contact identity remains Outreach-owned. Production schema/permission approval and
-flag activation remain separately gated.
+Offer terms are immutable versions; negotiations and explicitly confirmed human
+decisions preserve exact terms and attribution. Terminal recording closes via the
+existing `other` close reason, only after the current active Offer is resolved.
+An older terms version cannot decide the revised active Offer. Recording a decision
+never communicates with an employer. Both domains require their own consolidated
+production schema/permission approval and separate flag rollout verification.

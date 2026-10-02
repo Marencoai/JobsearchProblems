@@ -1,6 +1,8 @@
 "use client";
 import { HqShell } from "./hq-shell";
 import { fixtureIdentity, visualFixture } from "@/lib/qa-fixtures";
+import { OfferContext } from "./offer-panel";
+import { offerFixture } from "@/lib/offer-fixture";
 import { InterviewContext } from "./interview-panel";
 import { interviewFixture } from "@/lib/interview-fixture";
 import { useMemo, useState } from "react";
@@ -12,6 +14,7 @@ export function QaScreen({
   actions?: boolean;
 }) {
   const [result, setResult] = useState("");
+  const offer = useMemo(() => offerFixture(), []);
   const interview = useMemo(() => interviewFixture(), []);
   const data = visualFixture();
   if (actions) {
@@ -25,34 +28,36 @@ export function QaScreen({
   }
   return (
     <InterviewContext.Provider value={interview}>
-      {actions && (
-        <p role="status" className="notice">
-          Synthetic action preview. No database connection or worker execution.{" "}
-          {result}
-        </p>
-      )}
-      <HqShell
-        identity={fixtureIdentity}
-        data={data}
-        workspaceId="fixture-workspace"
-        selectedId={selectedId}
-        loading={false}
-        error=""
-        fixture
-        domainActions
-        onWorkspace={() => {}}
-        onReload={() => {}}
-        onSignOut={() => {}}
-        onAction={
-          actions
-            ? async (_job, command) => {
-                setResult(
-                  "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
-                );
-              }
-            : undefined
-        }
-      />
+      <OfferContext.Provider value={offer}>
+        {actions && (
+          <p role="status" className="notice">
+            Synthetic action preview. No database connection or worker
+            execution. {result}
+          </p>
+        )}
+        <HqShell
+          identity={fixtureIdentity}
+          data={data}
+          workspaceId="fixture-workspace"
+          selectedId={selectedId}
+          loading={false}
+          error=""
+          fixture
+          domainActions
+          onWorkspace={() => {}}
+          onReload={() => {}}
+          onSignOut={() => {}}
+          onAction={
+            actions
+              ? async (_job, command) => {
+                  setResult(
+                    "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
+                  );
+                }
+              : undefined
+          }
+        />
+      </OfferContext.Provider>
     </InterviewContext.Provider>
   );
 }

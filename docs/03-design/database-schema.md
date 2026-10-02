@@ -7786,11 +7786,39 @@ prep save/review. Browser transport permits only this RPC when `HQ_INTERVIEW=1`;
 raw table writes remain blocked. Default is off and performs no new-table reads.
 No meeting invitation or external message is performed.
 
+## Job Hunt HQ Offer v1 proposal · October 1, 2026
 
-Interview exact retry bodies live in `hq_interview_action_requests`, with SELECT
-and INSERT restricted to the current active human actor and interview.read/manage
-permissions. Generic Activity details retain safe references only. The ledger is
-outside frontend read allowlists, append-only, RLS enabled, and denies anonymous
-access. The separate approval package includes these proposed permission impacts.
+Status: proposed, not deployed. `supabase/proposals/offer/001_offer.sql` adds
+`offers`, versioned `offer_terms`, append-only `offer_negotiations` and immutable
+`offer_decisions`. Terms separately retain currency/base period, base, variable,
+employer-stated OTE, equity/units/percent/vesting, benefits, start date, location
+and travel, quota, ramp, territory, deadline and notes. Missing amounts remain null;
+OTE is never inferred from incomplete or non-comparable compensation.
+
+One active Offer is allowed per Opportunity; revised terms create a new immutable
+version under that Offer. Decisions must name the latest exact terms, require an
+active human with `offer.decide`, explicit confirmation and a reason, and preserve
+the principal, timestamp and version. `hq_offer_action` uses SECURITY INVOKER,
+existing lifecycle protections, Opportunity/Offer locks, optimistic versions,
+attributed idempotent activity and exact linked Next Action reconciliation.
+Accepted/declined offers freeze their history and close the Opportunity using the
+existing `closed_reason=other` only when no active offer remains; exact decision
+semantics live in Offer history. A stale prior version cannot close negotiation
+on revised terms. No lifecycle enum, seven-stage model or external commitment gate
+changes. Recorded decisions never send employer acceptance or rejection.
+
+Proposed permissions `offer.read`, `offer.manage`, `offer.decide` are added to the
+existing global Owner only. All new writes require a human and active membership
+and Workspace; no agent role or automation capability changes. Immutable terms,
+negotiations and decisions have no authenticated UPDATE/DELETE grant. Frontend
+transport allows only domain reads and the proposed RPC with `HQ_OFFER=1`; default
+is off. No privileged frontend key, messaging tool or second backend is introduced.
+
+Interview/Offer exact retry bodies are stored in their new
+`hq_interview_action_requests` / `hq_offer_action_requests` tables, with SELECT and
+INSERT restricted to their current active human actor and domain read/manage
+permissions. Generic Activity details retain safe references only. These tables
+are outside frontend read allowlists, append-only, RLS enabled, and deny anonymous
+access. This proposed impact is included in each domain's separate approval review.
 The Interview Contact dependency is pinned to Outreach PR3 commit
-`2af79c2dfa31611083bf3f233d02b82bf890b8fe` (`full_name`, nullable `title`, Workspace UUID FK).
+`2af79c2dfa31611083bf3f233d02b82bf890b8fe` (`full_name`, `title`, Workspace UUID FK).

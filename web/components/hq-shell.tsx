@@ -43,6 +43,7 @@ import type {
 import { STAGES } from "@/lib/types";
 import { buildJobViews } from "@/lib/workflow";
 import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
+import { OfferPanel } from "./offer-panel";
 import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
 import type { HumanActionHandler } from "@/lib/human-actions";
@@ -962,6 +963,13 @@ function StageRecords({
   onMaterial: (material: Material) => void;
   humanActions: boolean;
 }) {
+  if (stage === "Offer")
+    return (
+      <>
+        <OfferPanel key={job.opportunity.id} job={job} />
+        <EventList job={job} filter="offer" />
+      </>
+    );
   if (stage === "Interview")
     return (
       <>
