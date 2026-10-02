@@ -25,9 +25,26 @@ export type InterviewGmailSource = {
 const uuid = (v: unknown) =>
   typeof v === "string" &&
   /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v);
-const time = (v: string) =>
-  /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v) &&
-  Number.isFinite(Date.parse(v));
+const time = (value: string) => {
+  const m = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,6})?)?(Z|[+-]\d{2}:\d{2})$/,
+  );
+  if (!m || !Number.isFinite(Date.parse(value))) return false;
+  const year = Number(m[1]),
+    month = Number(m[2]),
+    day = Number(m[3]);
+  const calendar = new Date(0);
+  calendar.setUTCFullYear(year, month - 1, day);
+  return (
+    calendar.getUTCFullYear() === year &&
+    calendar.getUTCMonth() === month - 1 &&
+    calendar.getUTCDate() === day &&
+    Number(m[4]) < 24 &&
+    Number(m[5]) < 60 &&
+    Number(m[6] ?? 0) < 60
+  );
+};
+
 export function interviewGmailPlan(source: InterviewGmailSource) {
   const { workspace_id: w, classification: e, match: m } = source;
   if (
