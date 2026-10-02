@@ -116,3 +116,15 @@ RPCs commit once without deadlock. The reviewed Phase2 SQL, RLS, grants and feat
 flags are unchanged. This is a revised local Offer proposal; previous SQL hash is
 superseded and production approval must use the new exact hash.
 `HQ_OUTREACH_PROPOSAL=/absolute/pinned.sql node scripts/offer-cross-domain-check.mjs /absolute/postgres/bin /absolute/psql`.
+
+## Final frozen Outreach dependency · 2026-10-02
+
+Mixed-domain checks now pin Outreach PR3 commit
+`0a31190b99ed52d332c61d97f8b9f21af3fb9f7c`, SQL SHA256
+`9a8dffce9152ffa51220c5da6787d1c87f4444b11d4b21b3b697f6c04c194e6b`.
+Contacts and junction keys remain unchanged. Workspace-first Outreach and
+Opportunity-first Offer use compatible NO KEY UPDATE serialization. Both native
+overlap orders pass against this exact frozen SQL; the isolated combined candidate
+also passes exact unchanged Phase2 Pursue/save_positioning overlaps and Interview
+contact integration. Offer proposal SQL/hash, RLS, grants and human commitment
+gates are unchanged. Separate production approval and hosted acceptance remain.
