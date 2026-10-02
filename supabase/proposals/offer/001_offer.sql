@@ -106,7 +106,8 @@ begin
  end loop;
  if command in ('accept','decline') and (not public.has_permission(target_workspace_id,'offer.decide') or not public.has_permission(target_workspace_id,'opportunity.close')) then raise exception using errcode='42501',message='Human offer decision permission required'; end if;
  if request_id is null or expected_updated_at is null or payload is null or jsonb_typeof(payload)<>'object' or octet_length(payload::text)>24000 then raise exception 'Reviewed version, request ID and bounded payload required'; end if;
- select * into o from public.opportunities where workspace_id=target_workspace_id and id=target_opportunity_id for update;
+ -- Opportunity -> Offer order; non-key serialization permits Outreach FK checks.
+ select * into o from public.opportunities where workspace_id=target_workspace_id and id=target_opportunity_id for no key update;
  if not found then raise exception 'Opportunity unavailable'; end if;
  request:=jsonb_build_object('opportunity_id',target_opportunity_id,'version',expected_updated_at,'command',command,'payload',payload);event_key:='hq-offer:'||actor::text||':'||request_id::text;
  select * into replay from public.hq_offer_action_requests where workspace_id=target_workspace_id and actor_principal_id=actor and hq_offer_action_requests.request_id=hq_offer_action.request_id;

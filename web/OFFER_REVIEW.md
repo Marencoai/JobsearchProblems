@@ -105,3 +105,14 @@ agents, suspended memberships, missing domain manage permissions, forged actor
 inserts and UPDATE/DELETE; generic Activity contains no sensitive request marker.
 The owned cluster is stopped and removed in finally; package/binary details are in
 the independent Interview review. No production connection or offer communication.
+
+## Local cross-domain lock correction
+
+Opportunity serialization now uses `FOR NO KEY UPDATE` and the owned lock order
+Opportunity → Offer. It still serializes competing revisions/terminal decisions
+while allowing foreign-key KEY SHARE checks from Outreach's Workspace-first writer.
+Native PostgreSQL17.6 cross-domain races in both acquisition orders prove both exact
+RPCs commit once without deadlock. The reviewed Phase2 SQL, RLS, grants and feature
+flags are unchanged. This is a revised local Offer proposal; previous SQL hash is
+superseded and production approval must use the new exact hash.
+`HQ_OUTREACH_PROPOSAL=/absolute/pinned.sql node scripts/offer-cross-domain-check.mjs /absolute/postgres/bin /absolute/psql`.
