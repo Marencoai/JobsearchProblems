@@ -80,6 +80,7 @@ export type Task = Pick<
   | "trigger_type"
   | "trigger_reference"
 > & {
+  workspace_id?: string;
   source_activity_event_id?: string | null;
   result_summary?: string | null;
   created_at?: string;
@@ -134,6 +135,7 @@ export const STAGES = [
 ] as const;
 export type Stage = (typeof STAGES)[number];
 export type JobView = {
+  researchTasks?: Task[];
   reviewAction?: Action;
   opportunity: Opportunity;
   company?: Company;

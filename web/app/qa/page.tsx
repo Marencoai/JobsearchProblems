@@ -10,6 +10,8 @@ export default async function Page({
     intake?: string;
     delivery?: string;
     fail?: string;
+    refresh?: string;
+    packet?: string;
   }>;
 }) {
   if (
@@ -17,7 +19,8 @@ export default async function Page({
     process.env.HQ_QA_FIXTURES !== "1"
   )
     notFound();
-  const { job, actions, intake, delivery, fail } = await searchParams;
+  const { job, actions, intake, delivery, fail, refresh, packet } =
+    await searchParams;
   return (
     <QaScreen
       selectedId={job}
@@ -25,6 +28,8 @@ export default async function Page({
       intake={intake === "1"}
       delivery={delivery === "1"}
       fail={fail === "1"}
+      refresh={refresh === "1"}
+      packet={packet === "1"}
     />
   );
 }

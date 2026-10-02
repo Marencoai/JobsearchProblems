@@ -82,6 +82,9 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onIntake={session.manualIntake ? session.intake : undefined}
       onUpload={session.manualIntake ? session.upload : undefined}
       onDelivery={session.materialDelivery ? session.deliver : undefined}
+      onResearchRefresh={
+        session.researchRefresh ? session.refreshResearch : undefined
+      }
     />
   );
 }

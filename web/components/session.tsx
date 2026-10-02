@@ -4,6 +4,10 @@ import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
 import type { Identity, WorkspaceData } from "@/lib/types";
 import { runHumanAction, type HumanActionHandler } from "@/lib/human-actions";
+import {
+  requestResearchRefresh,
+  type ResearchRefreshHandler,
+} from "@/lib/research-refresh";
 
 import {
   requestIntake,
@@ -26,6 +30,8 @@ type SessionState = {
   act: HumanActionHandler;
   manualIntake: boolean;
   materialDelivery: boolean;
+  researchRefresh: boolean;
+  refreshResearch: ResearchRefreshHandler;
   intake: IntakeHandler;
   upload: IntakeUploadHandler;
   deliver: MaterialDeliveryHandler;
@@ -55,6 +61,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const mutation = useRef(false);
   const [manualIntake, setManualIntake] = useState(false),
     [materialDelivery, setMaterialDelivery] = useState(false);
+  const [researchRefresh, setResearchRefresh] = useState(false);
   useEffect(() => {
     const activeGeneration = generation;
     let cancelled = false;
@@ -72,6 +79,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setHumanActions(config.humanActions === true);
         setManualIntake(config.manualIntake === true);
         setMaterialDelivery(config.materialDelivery === true);
+        setResearchRefresh(config.researchRefresh === true);
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -290,6 +298,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Your workspace changed. Open the material again.");
     return blob;
   };
+  const refreshResearch: ResearchRefreshHandler = async (
+    opportunity,
+    request,
+  ) => {
+    if (!researchRefresh)
+      throw new Error("Research requests are not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, target, run } = await verifiedContext();
+      const result = await requestResearchRefresh(
+        instance,
+        target,
+        opportunity,
+        request,
+      );
+      if (run === generation.current && target === workspaceRef.current)
+        await reload();
+      else
+        throw new Error(
+          "Your workspace changed. Start again in the current workspace.",
+        );
+      return result;
+    } finally {
+      mutation.current = false;
+    }
+  };
   return (
     <Context.Provider
       value={{
@@ -303,6 +339,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         act,
         manualIntake,
         materialDelivery,
+        researchRefresh,
+        refreshResearch,
         intake,
         upload,
         deliver,

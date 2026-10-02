@@ -175,3 +175,43 @@ node --experimental-strip-types worker-support/material-artifacts.mts context.js
 It does not render, QA, upload, approve or write. Without that runtime, follow its self-contained provenance contract. Context contains exact Material ID, Workspace, type/status/current-version state and renderer key. QA contains `visual_pass`, `parse_back_pass`, integral `page_count`, `renderer_key`, `input_sha256`, `docx_sha256`, `pdf_sha256` for the exact bytes.
 
 Upload privately to `hq-materials` at `{workspace}/{material}/{sha256}.docx` and `.pdf`, correct MIME and no upsert. Read back and verify bytes using the same narrow prepare identity. Insert immutable `application_material_artifacts` rows, preferably together in one transaction; reread and verify both share provenance. Publication failure keeps the package preparing with a clear blocker. Uncertain retries reuse exact paths/bytes and reread existing registrations, never overwrite. Corrected content/conversion creates a new Material version. Historical registrations and bytes remain unchanged when later approved/submitted.
+
+## Proposed approved ATS packet contract (not deployed)
+
+Preserve existing `application_requirements`, `application_answers`,
+`skills_list`, resume, cover-letter and other Material types. Store the following
+bounded version1 JSON in `content_text` before candidate review; no new answer
+table or authority is needed. Do not create a second strategy approval gate.
+
+Requirements include `contract_version:1`, `form_inspected:true`, inspected
+public HTTPS `apply_url`, optional `ats_provider`, `attachments` (each exact
+`material_type` and boolean `required`) and `fields` (unique nonempty `key`,
+actual employer `label`, boolean `required`, boolean `sensitive`). Maximum200
+fields/30 attachment types; unique keys/types; text bounded to250KB, field key
+100 chars/label300 and answer10000. Canonical ATS must come from actual form
+inspection, not a URL guessed from prose. If inspection is unavailable, follow
+the existing readiness blocker rather than assert `form_inspected=true`.
+
+Answers include `contract_version:1`, `requirements_material_id` bound to that
+exact current requirements Material, and up to200 unique `answers`: `field_key`,
+`state` (`confirmed`, `candidate_question`, or `voluntary`), plus recorded
+`value` or plain candidate `question`. Include actual salary/work authorization,
+skills selection, portfolio/LinkedIn/website and every employer-specific field
+that the inspected form requests. Confirmed values require supported Candidate
+Knowledge, confirmed application defaults or Diana's recorded response. Do not
+infer sensitive/voluntary values; record their choice state without a suggested
+value. Unknown non-sensitive answers remain explicit questions.
+
+Requirements/answers are current draft Material versions in the same exact
+Package/Workspace. Copy/Download only uses approved current versions. Changes
+to either form requirements or answers require new immutable versions and
+updated exact references before review; never overwrite approved/submitted
+answers. Existing submission snapshots retain exact `content_text` and Material
+IDs alongside file provenance. Candidate questions must be resolved in a new
+reviewed package before the frontend accepts submission confirmation. The UI
+does not autofill or submit, and ATS navigation never records submission.
+
+This additive repository contract requires actual hosted Application Queue
+adoption/readback under the existing workflow gate. Legacy text remains
+inspectable but does not certify structured field completeness; it must never
+be silently rewritten or treated as invented confirmed answers.

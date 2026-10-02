@@ -5,18 +5,23 @@ import { digest, prepareUpload } from "@/lib/intake";
 import { syntheticPdf, syntheticDocxBytes } from "@/lib/qa-delivery-fixtures";
 import type { MaterialArtifact } from "@/lib/types";
 import { useState } from "react";
+import { addSyntheticPacket } from "@/lib/qa-packet-fixtures";
 export function QaScreen({
   selectedId,
   actions = false,
   intake = false,
   delivery = false,
   fail = false,
+  refresh = false,
+  packet = false,
 }: {
   selectedId?: string;
   actions?: boolean;
   intake?: boolean;
   delivery?: boolean;
   fail?: boolean;
+  refresh?: boolean;
+  packet?: boolean;
 }) {
   const [result, setResult] = useState("");
   const data = visualFixture();
@@ -24,48 +29,53 @@ export function QaScreen({
   const [failed, setFailed] = useState(false);
   // Preview metadata is synthesized after the explicit Open files control.
   const openFiles = async () => {
-    const m = data.materials[0],
-      docx = syntheticDocxBytes(),
+    const docx = syntheticDocxBytes(),
       pdf = syntheticPdf();
     const dh = await digest(docx.buffer as ArrayBuffer),
       ph = await digest(pdf.buffer as ArrayBuffer);
     setArtifactRows(
-      (["pdf", "docx"] as const).map((format) => ({
-        id: "fixture-" + format,
-        workspace_id: m.workspace_id,
-        application_material_id: m.id,
-        format,
-        bucket_id: "hq-materials",
-        storage_path: `${m.workspace_id}/${m.id}/${format === "pdf" ? ph : dh}.${format}`,
-        sha256: format === "pdf" ? ph : dh,
-        byte_size: format === "pdf" ? pdf.length : docx.length,
-        renderer_key: "executive-brief-two-page-v2",
-        input_sha256: "c".repeat(64),
-        source_docx_sha256: dh,
-        qa: {
-          visual_pass: true,
-          parse_back_pass: true,
-          page_count: 2,
-          renderer_key: "executive-brief-two-page-v2",
-          input_sha256: "c".repeat(64),
-          docx_sha256: dh,
-          pdf_sha256: ph,
-        },
-        created_at: m.created_at,
-        created_by_principal_id: "fixture",
-      })),
+      data.materials
+        .filter((m) => ["resume", "cover_letter"].includes(m.material_type))
+        .flatMap((m) =>
+          (["pdf", "docx"] as const).map((format) => ({
+            id: "fixture-" + m.id + "-" + format,
+            workspace_id: m.workspace_id,
+            application_material_id: m.id,
+            format,
+            bucket_id: "hq-materials",
+            storage_path: `${m.workspace_id}/${m.id}/${format === "pdf" ? ph : dh}.${format}`,
+            sha256: format === "pdf" ? ph : dh,
+            byte_size: format === "pdf" ? pdf.length : docx.length,
+            renderer_key: "executive-brief-two-page-v2",
+            input_sha256: "c".repeat(64),
+            source_docx_sha256: dh,
+            qa: {
+              visual_pass: true,
+              parse_back_pass: true,
+              page_count: 2,
+              renderer_key: "executive-brief-two-page-v2",
+              input_sha256: "c".repeat(64),
+              docx_sha256: dh,
+              pdf_sha256: ph,
+            },
+            created_at: m.created_at,
+            created_by_principal_id: "fixture",
+          })),
+        ),
     );
   };
   data.artifacts = artifactRows;
   if (actions) {
     data.applications = [];
-    data.materials.push({
-      ...data.materials[0],
-      id: "application-resume-fixture",
-      application_package_id: "package-approved",
-      status: "approved",
-    });
+    if (!packet)
+      data.materials.push({
+        ...data.materials[0],
+        id: "application-resume-fixture",
+        application_package_id: "package-approved",
+        status: "approved",
+      });
   }
+  if (packet) addSyntheticPacket(data);
   return (
     <>
       {(intake || delivery) && (
@@ -96,6 +106,21 @@ export function QaScreen({
         onWorkspace={() => {}}
         onReload={() => {}}
         onSignOut={() => {}}
+        onResearchRefresh={
+          refresh
+            ? async (_opportunity, request) => {
+                if (fail && !failed) {
+                  setFailed(true);
+                  throw new Error(
+                    "Synthetic uncertain research response. Retry the same request.",
+                  );
+                }
+                setResult(
+                  "Confirmed synthetic research request " + request + ".",
+                );
+              }
+            : undefined
+        }
         onIntake={
           intake
             ? async (_input, request) => {

@@ -200,6 +200,144 @@ const rows = (["docx", "pdf"] as const).map((format) => ({
   },
 })) as MaterialArtifact[];
 describe("exact file controls", () => {
+  it("opens the submitted Material ID and its pair after a newer current version exists", async () => {
+    const data = visualFixture(),
+      old = {
+        ...data.materials[0],
+        id: "fixture-submitted-material",
+        application_package_id: "package-approved",
+        version_number: 1,
+        status: "submitted",
+        is_current_package_version: false,
+      };
+    data.materials.push(old, {
+      ...old,
+      id: "new-current-resume",
+      version_number: 2,
+      status: "approved",
+      is_current_package_version: true,
+    });
+    data.artifacts = rows.map((a) => ({
+      ...a,
+      workspace_id: old.workspace_id,
+      application_material_id: old.id,
+      storage_path: `${old.workspace_id}/${old.id}/${a.sha256}.${a.format}`,
+    }));
+    const load = vi
+      .fn()
+      .mockResolvedValue(new Blob(["synthetic exact historical bytes"]));
+    render(
+      <HqShell
+        identity={fixtureIdentity}
+        data={data}
+        workspaceId="fixture-workspace"
+        selectedId="application"
+        loading={false}
+        error=""
+        onReload={() => {}}
+        onWorkspace={() => {}}
+        onSignOut={() => {}}
+        onDelivery={load}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "View exact submitted resume · version 1",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Preview PDF" }));
+    await screen.findByTitle("Exact resume PDF version 1");
+    expect(load.mock.calls[0][0]).toEqual(old);
+    expect(load.mock.calls[0][1].application_material_id).toBe(old.id);
+    expect(load.mock.calls[0][0].id).not.toBe("new-current-resume");
+  });
+  it("does not expose a foreign-workspace submission snapshot as a historical file", () => {
+    const data = visualFixture();
+    data.submittedMaterials[0].workspace_id = "foreign";
+    data.materials.push({
+      ...data.materials[0],
+      id: "fixture-submitted-material",
+      application_package_id: "package-approved",
+      workspace_id: "foreign",
+      status: "submitted",
+    });
+    render(
+      <HqShell
+        identity={fixtureIdentity}
+        data={data}
+        workspaceId="fixture-workspace"
+        selectedId="application"
+        loading={false}
+        error=""
+        onReload={() => {}}
+        onWorkspace={() => {}}
+        onSignOut={() => {}}
+        onDelivery={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /View exact submitted/ }),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Exact synthetic submitted resume snapshot."),
+    ).toBeNull();
+  });
+  it.each(["missing", "mismatch", "hash"])(
+    "legacy reference cannot bypass %s verification",
+    async (kind) => {
+      const data = visualFixture(),
+        m = data.materials[0];
+      m.file_url = "https://example.invalid/legacy-unverified-resume.pdf";
+      data.artifacts =
+        kind === "missing"
+          ? []
+          : rows.map((r) => ({
+              ...r,
+              workspace_id: m.workspace_id,
+              application_material_id: m.id,
+              storage_path: `${m.workspace_id}/${m.id}/${r.sha256}.${r.format}`,
+              ...(kind === "mismatch"
+                ? { source_docx_sha256: "f".repeat(64) }
+                : {}),
+            }));
+      const load = vi
+        .fn()
+        .mockRejectedValue(new Error("File verification failed"));
+      render(
+        <HqShell
+          identity={fixtureIdentity}
+          data={data}
+          workspaceId="fixture-workspace"
+          selectedId="resume"
+          loading={false}
+          error=""
+          onReload={() => {}}
+          onWorkspace={() => {}}
+          onSignOut={() => {}}
+          onDelivery={load}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Resume.*Package/ }));
+      expect(
+        screen.queryByRole("link", { name: "Open recorded artifact" }),
+      ).toBeNull();
+      expect(
+        document.querySelector(
+          'a[href="https://example.invalid/legacy-unverified-resume.pdf"]',
+        ),
+      ).toBeNull();
+      if (kind === "hash") {
+        fireEvent.click(screen.getByRole("button", { name: "Download PDF" }));
+        await screen.findByRole("alert");
+      } else
+        expect(
+          screen.queryByRole("button", { name: "Download PDF" }),
+        ).toBeNull();
+      expect(m.file_url).toBe(
+        "https://example.invalid/legacy-unverified-resume.pdf",
+      );
+    },
+  );
   it("downloads the loaded exact pair with versioned filenames and revokes owned URLs on close", async () => {
     const blob = new Blob(["exact immutable bytes"]),
       create = vi.fn().mockReturnValue("blob:exact"),

@@ -10,6 +10,7 @@ export function GET() {
     humanActions: process.env["HQ_HUMAN_ACTIONS"] === "1",
     manualIntake: process.env["HQ_MANUAL_INTAKE"] === "1",
     materialDelivery: process.env["HQ_MATERIAL_DELIVERY"] === "1",
+    researchRefresh: process.env["HQ_RESEARCH_REFRESH"] === "1",
   };
   const headers = { "Cache-Control": "private, no-store" };
   if (!validConfig(config))

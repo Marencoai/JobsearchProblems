@@ -5,3 +5,4 @@ lib/database.types.ts
 next-env.d.ts
 package-lock.json
 public/pdf.worker.min.mjs
+qa-evidence/canonical/*.json

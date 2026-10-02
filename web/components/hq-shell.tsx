@@ -46,8 +46,15 @@ import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
 import { HumanActions } from "./human-actions";
 import { IntakeDialog } from "./intake-dialog";
 import { MaterialDelivery } from "./material-delivery";
+import { ResearchRefresh } from "./research-refresh";
+import type { ResearchRefreshHandler } from "@/lib/research-refresh";
 import type { IntakeHandler, IntakeUploadHandler } from "@/lib/intake";
-import type { MaterialDeliveryHandler } from "@/lib/material-delivery";
+import {
+  artifactPair,
+  type MaterialDeliveryHandler,
+} from "@/lib/material-delivery";
+import { ApplicationPacket } from "./application-packet";
+import { applicationPacket } from "@/lib/application-packet";
 import type { MaterialArtifact } from "@/lib/types";
 import type { HumanActionHandler } from "@/lib/human-actions";
 
@@ -66,6 +73,7 @@ type ShellProps = {
   onIntake?: IntakeHandler;
   onUpload?: IntakeUploadHandler;
   onDelivery?: MaterialDeliveryHandler;
+  onResearchRefresh?: ResearchRefreshHandler;
 };
 const stageIcons = [
   Target,
@@ -463,6 +471,7 @@ export function HqShell(props: ShellProps) {
               onAction={props.onAction}
               artifacts={data?.artifacts ?? []}
               onDelivery={props.onDelivery}
+              onResearchRefresh={props.onResearchRefresh}
             />
           )}
           {!loading && data && (
@@ -541,11 +550,13 @@ function JobWorkspace({
   onAction,
   artifacts,
   onDelivery,
+  onResearchRefresh,
 }: {
   job: JobView;
   onAction?: HumanActionHandler;
   artifacts: MaterialArtifact[];
   onDelivery?: MaterialDeliveryHandler;
+  onResearchRefresh?: ResearchRefreshHandler;
 }) {
   const [stage, setStage] = useState<Stage>(job.stage ?? "Evaluate");
   const [tab, setTab] = useState("Overview");
@@ -553,6 +564,21 @@ function JobWorkspace({
   const [jobDescription, setJobDescription] = useState(false);
   const currentIndex = job.stage ? STAGES.indexOf(job.stage) : -1;
   const Icon = stageIcons[STAGES.indexOf(stage)];
+  const packet = applicationPacket(job);
+  const deliveryBlocked =
+    !!onDelivery &&
+    packet.attachments.some(
+      (a) =>
+        a.required &&
+        a.material &&
+        ["resume", "cover_letter"].includes(a.material_type) &&
+        !artifactPair(a.material, artifacts),
+    );
+  const submissionBlockedReason = packet.submissionBlocked
+    ? "Resolve the recorded required answers and attachments, then request an updated package."
+    : deliveryBlocked
+      ? "Exact required files are not yet registered as a consistent pair."
+      : undefined;
   return (
     <>
       <section className="job-header">
@@ -938,9 +964,16 @@ function JobWorkspace({
                 job={job}
                 onMaterial={setMaterial}
                 humanActions={!!onAction}
+                artifacts={artifacts}
+                onDelivery={onDelivery}
               />
               {onAction && (
-                <HumanActions job={job} stage={stage} onAction={onAction} />
+                <HumanActions
+                  job={job}
+                  stage={stage}
+                  onAction={onAction}
+                  submissionBlockedReason={submissionBlockedReason}
+                />
               )}
             </>
           )}
@@ -960,7 +993,7 @@ function JobWorkspace({
             {onAction ? "Candidate workspace" : "Read-only preview"}
           </p>
         </article>
-        <IntelligencePanel job={job} />
+        <IntelligencePanel job={job} onResearchRefresh={onResearchRefresh} />
       </div>
       {material && (
         <MaterialDialog
@@ -1030,11 +1063,15 @@ function StageRecords({
   job,
   onMaterial,
   humanActions,
+  artifacts,
+  onDelivery,
 }: {
   stage: Stage;
   job: JobView;
   onMaterial: (material: Material) => void;
   humanActions: boolean;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
 }) {
   if (stage === "Pursue")
     return (
@@ -1106,6 +1143,12 @@ function StageRecords({
     return (
       <div className="stage-records">
         <PackageSummary job={job} />
+        <ApplicationPacket
+          job={job}
+          onMaterial={onMaterial}
+          artifacts={artifacts}
+          onDelivery={onDelivery}
+        />
         {job.applications.length ? (
           job.applications.map((app) => (
             <section className="application-card" key={app.id}>
@@ -1139,7 +1182,11 @@ function StageRecords({
               </External>
               <h4>Exact submitted materials</h4>
               {job.submittedMaterials
-                .filter((m) => m.application_id === app.id)
+                .filter(
+                  (m) =>
+                    m.application_id === app.id &&
+                    m.workspace_id === job.opportunity.workspace_id,
+                )
                 .map((m) => (
                   <details className="snapshot" key={m.id}>
                     <summary>
@@ -1150,10 +1197,30 @@ function StageRecords({
                       {snapshotText(m.submitted_material_snapshot) ??
                         "A submission snapshot exists, but no text preview is recorded."}
                     </p>
+                    {job.materials
+                      .filter(
+                        (material) =>
+                          material.id === m.application_material_id &&
+                          material.workspace_id === m.workspace_id &&
+                          material.material_type === m.material_type,
+                      )
+                      .map((material) => (
+                        <button
+                          className="button"
+                          key={material.id}
+                          onClick={() => onMaterial(material)}
+                        >
+                          View exact submitted{" "}
+                          {label(material.material_type).toLowerCase()} ·
+                          version {material.version_number}
+                        </button>
+                      ))}
                   </details>
                 ))}
               {!job.submittedMaterials.some(
-                (m) => m.application_id === app.id,
+                (m) =>
+                  m.application_id === app.id &&
+                  m.workspace_id === job.opportunity.workspace_id,
               ) && (
                 <p className="muted">
                   No submitted material snapshots recorded for this attempt.
@@ -1323,7 +1390,11 @@ function MaterialDialog({
           />
         )}
         <div className="modal-footer">
-          <External url={material.file_url}>Open recorded artifact</External>
+          <span className="muted">
+            {material.file_url || material.storage_path
+              ? "Historical file reference retained. Use verified files for this exact version."
+              : "No historical file reference recorded."}
+          </span>
           <button className="button" onClick={onClose}>
             Done
           </button>
@@ -1332,7 +1403,13 @@ function MaterialDialog({
     </div>
   );
 }
-function IntelligencePanel({ job }: { job: JobView }) {
+function IntelligencePanel({
+  job,
+  onResearchRefresh,
+}: {
+  job: JobView;
+  onResearchRefresh?: ResearchRefreshHandler;
+}) {
   const intel = [...job.intelligence].sort((a, b) =>
     b.researched_at.localeCompare(a.researched_at),
   );
@@ -1346,14 +1423,12 @@ function IntelligencePanel({ job }: { job: JobView }) {
           <Activity size={19} />
           Opportunity Intelligence
         </h2>
-        <button
-          className="button research-refresh"
-          disabled
-          title="Research refresh must be queued through the worker workflow in a later phase"
-        >
-          <RefreshCw size={13} />
-          Refresh
-        </button>
+        <ResearchRefresh
+          key={job.opportunity.workspace_id + ":" + job.opportunity.id}
+          opportunity={job.opportunity}
+          tasks={job.researchTasks ?? []}
+          onRequest={onResearchRefresh}
+        />
       </div>
       <section className="intelligence-card">
         <h3>Company snapshot</h3>

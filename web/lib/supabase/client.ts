@@ -15,6 +15,15 @@ type HqDatabase = Database & {
       };
     };
     Functions: {
+      hq_request_research_refresh: {
+        Args: {
+          target_workspace_id: string;
+          target_opportunity_id: string;
+          expected_updated_at: string;
+          request_id: string;
+        };
+        Returns: Json;
+      };
       hq_request_job_intake: {
         Args: { target_workspace_id: string; request_id: string; input: Json };
         Returns: Json;
@@ -40,6 +49,7 @@ export type PublicConfig = {
   humanActions?: boolean;
   manualIntake?: boolean;
   materialDelivery?: boolean;
+  researchRefresh?: boolean;
 };
 export const READ_TABLES = new Set([
   "principals",
@@ -83,7 +93,11 @@ export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
   humanActions = false,
-  capabilities: { manualIntake?: boolean; materialDelivery?: boolean } = {},
+  capabilities: {
+    manualIntake?: boolean;
+    materialDelivery?: boolean;
+    researchRefresh?: boolean;
+  } = {},
 ): typeof fetch {
   return async (input, init) => {
     const url = new URL(
@@ -117,6 +131,11 @@ export function readOnlyFetch(
       capabilities.manualIntake === true &&
       method === "POST" &&
       url.pathname === "/rest/v1/rpc/hq_request_job_intake" &&
+      !url.search;
+    const researchRpc =
+      capabilities.researchRefresh === true &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_request_research_refresh" &&
       !url.search;
     const intakePath =
       "hq-intake/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx|png|jpg|txt)";
@@ -160,6 +179,7 @@ export function readOnlyFetch(
         dataRead ||
         humanRpc ||
         intakeRpc ||
+        researchRpc ||
         storageRead ||
         intakeUpload
       )
