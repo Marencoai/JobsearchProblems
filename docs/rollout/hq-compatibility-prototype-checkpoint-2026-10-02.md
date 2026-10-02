@@ -2,6 +2,8 @@
 
 ## Outcome
 
+Follow-up under the parent's explicit local implementation instruction: the [bounded loopback probe](../../prototypes/hq-compatibility/README.md) now exists and passes nine real local HTTP tests, including synthetic auth rejection cases. No actual OAuth issuer, external endpoint, ChatGPT installation, scheduled invocation or refresh exists. The initial setup-only checkpoint below remains historical; actual runtime compatibility is still unproven. The README specifies Cloudflare's account-free Quick Tunnel as a proposed, unexecuted temporary forwarding option for consolidated setup review.
+
 Actual scheduled-runtime discovery/call and authentication have **not** been proven. The approved compatibility prototype reached the connection-setup prerequisite. No server, public deployment, test automation, OAuth grant, account, key or production connection was created. No production tool was used in this prototype investigation.
 
 Inventory of exposed tools found existing app permission/dependency inspection, automation management and website hosting, but no custom MCP connection creation/installation or interactive browser control. Plugin search/suggest tools are also not exposed here. No existing HQ test MCP endpoint is installed. Local cloudflared/ngrok commands are unavailable. These observations concern this executor's available capabilities, not a conclusion that ChatGPT scheduled tasks reject custom integrations.
@@ -40,4 +42,3 @@ A successful synthetic OAuth test still does not certify Supabase project-issued
 Current status: setup blocked, zero runtime tests executed; no local protocol pass claimed. Record each later result separately as local protocol, interactive ChatGPT, actual scheduled call, actual scheduled refresh and project Auth/RLS. Require actual scheduled authenticated discovery/call before preparing the consolidated production hosting/auth/identity/access/token/RLS/tools/revocation/rotation/deployment/testing/rollback packet. If setup or authentication cannot be supported cleanly, stop instead of creating an admin SQL fallback or a replacement scheduler.
 
 The existing planner decision remains a proposal. Morning stays paused and all HQ flags stay off.
-
