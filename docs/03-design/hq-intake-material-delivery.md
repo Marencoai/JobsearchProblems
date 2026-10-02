@@ -32,7 +32,9 @@ read/create authority, records explicit request provenance and reuses one pendin
 advisory locks. It does not write research facts, completed Evaluation snapshots,
 Next Actions or application authority. The Owner/research handoff is proposed in
 `skills/refresh-company-intelligence/SKILL.md`; no actual hosted consumer has been
-identified/adopted by this repository change. `HQ_RESEARCH_REFRESH` defaults off
+identified/adopted by this repository change. Node helpers remain reference/CI
+contracts; ChatGPT queues use self-contained instructions and database queries,
+not a presumed Node process. `HQ_RESEARCH_REFRESH` defaults off
 and requires its own approved schema/worker verification before activation.
 
 Application packet UI uses existing approved current Material versions and the

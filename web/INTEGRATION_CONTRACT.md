@@ -6,6 +6,13 @@ certify a combined stack. Preserve the user-authored worker snapshot commit
 `a254eaed87e8b99da1608bcda236e6a03515f98e` and approved Phase2 SQL blob
 `0ef9a55b7158d19a99cdf426a628b234191ee318`.
 
+Queues are ChatGPT scheduled automations; Node helpers are reference/CI contracts,
+not deployment prerequisites. The two additive live-task edits were denied;
+do not retry through another route. See [adoption status and deterministic
+database boundary audit](AUTOMATION_DB_BOUNDARY_AUDIT.md) for current gates and
+the conditional consolidated enforcement proposal. This clarification changes
+no approved SQL or production instructions.
+
 ## Explicit capabilities
 
 Current PR4 API:
