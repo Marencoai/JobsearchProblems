@@ -1,4 +1,4 @@
-"""Loopback-only dummy MCP probe. No OAuth issuer, database or outbound I/O."""
+"""Loopback-only dummy MCP probe with synthetic OAuth; no outbound I/O."""
 import argparse
 import json
 import re
@@ -6,6 +6,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import synthetic_oauth
 
 SCOPE = "hq.compatibility.read"
 TOOL = {
@@ -21,10 +22,16 @@ TOOL = {
 
 
 class ProbeServer(ThreadingHTTPServer):
-    def __init__(self, address=("127.0.0.1", 0)):
+    def __init__(self, address=("127.0.0.1", 0), origin=None, redirects=()):
+        configured = synthetic_oauth.public_origin(origin) if origin else None
         super().__init__(address, Handler)
-        self.origin = f"http://127.0.0.1:{self.server_port}"
+        self.origin = configured or f"http://127.0.0.1:{self.server_port}"
         self.fixtures = {}
+        try:
+            self.oauth = synthetic_oauth.OAuthState(self, redirects)
+        except ValueError:
+            self.server_close()
+            raise
 
     def issue_fixture(self, ttl=30, scope=SCOPE, audience=None):
         # Test harness only; no HTTP token issuance and no printed/stored secrets.
@@ -38,10 +45,10 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass  # Never log bearer headers, request bodies or fixture values.
 
-    def reply(self, status, body=None, headers=None):
-        raw = json.dumps(body).encode() if body is not None else b""
+    def reply(self, status, body=None, headers=None, html_body=False):
+        raw = body.encode() if html_body else (json.dumps(body).encode() if body is not None else b"")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "text/html; charset=utf-8" if html_body else "application/json")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(raw)))
         for key, value in (headers or {}).items():
@@ -50,12 +57,12 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_GET(self):
+        if synthetic_oauth.get(self):
+            return
         if self.path == "/.well-known/oauth-protected-resource/mcp":
             return self.reply(200, {"resource": self.server.origin + "/mcp",
-                "authorization_servers": [self.server.origin + "/synthetic-issuer"],
+                "authorization_servers": [self.server.origin],
                 "scopes_supported": [SCOPE], "bearer_methods_supported": ["header"]})
-        if self.path == "/synthetic-issuer/.well-known/oauth-authorization-server":
-            return self.reply(501, {"error": "synthetic_oauth_issuer_not_implemented"})
         if self.path == "/mcp":
             return self.reply(405, {"error": "json_only_no_sse"}, {"Allow": "POST, DELETE"})
         self.reply(404, {"error": "not_found"})
@@ -64,11 +71,13 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(405, {"error": "stateless_no_session"})
 
     def do_POST(self):
-        if self.path != "/mcp":
-            return self.reply(404, {"error": "not_found"})
         origin = self.headers.get("Origin")
         if origin is not None and origin != self.server.origin:
             return self.reply(403, {"error": "origin_denied"})
+        if synthetic_oauth.post(self):
+            return
+        if self.path != "/mcp":
+            return self.reply(404, {"error": "not_found"})
         if self.headers.get_content_type() != "application/json":
             return self.reply(415, {"error": "json_required"})
         try:
@@ -85,7 +94,9 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(params, dict):
             return self.rpc(ident, error={"code": -32602, "message": "Invalid params"})
         if method == "initialize":
-            return self.rpc(ident, {"protocolVersion": "2025-03-26",
+            requested = params.get("protocolVersion", "2025-03-26")
+            version = requested if requested in ("2025-03-26", "2025-06-18") else "2025-06-18"
+            return self.rpc(ident, {"protocolVersion": version,
                 "capabilities": {"tools": {}}, "serverInfo": {
                     "name": "hq-local-compatibility-probe", "version": "0.1.0"}})
         if method == "notifications/initialized":
@@ -121,9 +132,11 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8769)
+    parser.add_argument("--public-origin", help="Explicit bare HTTPS origin; never taken from Host")
+    parser.add_argument("--redirect-uri", action="append", default=[], help="Exact test client callback allowlist; repeat as needed")
     args = parser.parse_args()
-    server = ProbeServer(("127.0.0.1", args.port))
-    print(f"Local dummy probe: {server.origin}/mcp; OAuth not implemented; no tokens issued")
+    server = ProbeServer(("127.0.0.1", args.port), args.public_origin, args.redirect_uri)
+    print(f"Local dummy probe: {server.origin}/mcp; synthetic OAuth only; in-memory grants")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -39,6 +39,7 @@ class ProbeTests(unittest.TestCase):
 
     def test_initialize_and_notification(self):
         self.assertEqual(self.request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})[2]["result"]["protocolVersion"], "2025-03-26")
+        self.assertEqual(self.request({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}})[2]["result"]["protocolVersion"], "2025-06-18")
         self.assertEqual(self.request({"jsonrpc": "2.0", "method": "notifications/initialized"})[0], 202)
 
     def test_only_one_readonly_tool(self):
@@ -52,7 +53,7 @@ class ProbeTests(unittest.TestCase):
         self.assertIn("resource_metadata=", headers["WWW-Authenticate"])
         metadata = self.request(path="/.well-known/oauth-protected-resource/mcp")[2]
         self.assertEqual(metadata["scopes_supported"], [SCOPE])
-        self.assertEqual(self.request(path="/synthetic-issuer/.well-known/oauth-authorization-server")[0], 501)
+        self.assertEqual(self.request(path="/.well-known/oauth-authorization-server")[2]["code_challenge_methods_supported"], ["S256"])
 
     def test_success_has_no_auth_secret_or_runtime_claim(self):
         token = self.server.issue_fixture()

@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Follow-up under the parent's explicit local implementation instruction: the [bounded loopback probe](../../prototypes/hq-compatibility/README.md) now exists and passes nine real local HTTP tests, including synthetic auth rejection cases. No actual OAuth issuer, external endpoint, ChatGPT installation, scheduled invocation or refresh exists. The initial setup-only checkpoint below remains historical; actual runtime compatibility is still unproven. The README specifies Cloudflare's account-free Quick Tunnel as a proposed, unexecuted temporary forwarding option for consolidated setup review.
+Follow-up under the parent's explicit local implementation instruction: the [bounded loopback probe and synthetic OAuth issuer](../../prototypes/hq-compatibility/README.md) now exist and pass 22 real local HTTP tests, including PKCE, synthetic consent, replay, refresh and revocation. The follow-up synthetic OAuth issuer now passes 22 local HTTP tests with the probe; no external endpoint, ChatGPT installation, scheduled invocation or runtime refresh exists. The initial setup-only checkpoint below remains historical; actual runtime compatibility is still unproven. The README specifies Cloudflare's account-free Quick Tunnel as a proposed, unexecuted temporary forwarding option for consolidated setup review.
 
 Actual scheduled-runtime discovery/call and authentication have **not** been proven. The approved compatibility prototype reached the connection-setup prerequisite. No server, public deployment, test automation, OAuth grant, account, key or production connection was created. No production tool was used in this prototype investigation.
 

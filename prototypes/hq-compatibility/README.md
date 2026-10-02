@@ -1,12 +1,12 @@
 # Local HQ compatibility probe
 
-Bounded test-only artifact; no database, credentials, external data, persistent storage, browser integration or outbound request. Python standard library only.
+Bounded test-only artifact; no database, credentials, external data, persistent storage, installed ChatGPT integration or outbound request. Synthetic consent is a local HTML page; all grants are in memory. Python standard library only.
 
 Run the tests:
 
 ```sh
 cd prototypes/hq-compatibility
-python3 -m unittest -v test_probe.py
+python3 -m unittest -v test_probe.py test_oauth.py
 ```
 
 Launch the loopback endpoint:
@@ -15,11 +15,19 @@ Launch the loopback endpoint:
 python3 probe.py --port 8769
 ```
 
-It listens only on 127.0.0.1. Stop that owned foreground process with Ctrl-C. The CLI issues no token, so tool calls receive an authentication challenge. The tests generate 30-second opaque synthetic fixtures internally and exercise real loopback HTTP requests; fixtures never leave memory or enter output. Fixture expiry/scope/audience checks model rejection behavior, **not** JWT validation or actual OAuth authorization/refresh.
+It listens only on 127.0.0.1. Stop that owned foreground process with Ctrl-C. The CLI prints only the endpoint, never tokens. With no callback allowlist, registration/consent cannot complete; discovery remains available. The tests allow one synthetic callback and exercise the whole local flow without contacting it. No real user/account exists.
 
-Implemented: JSON-only stateless MCP-style initialize, initialized notification, tools/list, and one tools/call; nonce/time/receipt echo; protected-resource metadata and WWW-Authenticate challenge; denial of unknown methods/paths, foreign browser Origin, oversized/invalid inputs and missing/invalid/expired/revoked/wrong-audience/wrong-scope fixtures. No SSE/session support. The synthetic issuer metadata URL deliberately returns 501: a genuine synthetic OAuth flow is still unimplemented and cannot be advertised as working.
+Implemented: JSON-only stateless MCP initialize/notification/tools/list/tools/call, one nonce/time/receipt probe, protected-resource and authorization-server metadata, DCR for public clients, authorization code + S256 PKCE, explicit synthetic consent/denial with one-use CSRF handle, exact redirect allowlist, exact scope/resource binding, 60-second code/consent expiry, 30-second opaque access tokens, rotating refresh tokens with a ten-minute absolute grant lifetime, replay family revocation, and access/refresh revocation. All auth artifacts remain in memory. No JWT signing/validation, real Auth mapping, database, external fetch, SSE or persistent session. The authorization endpoint cannot select a real principal.
 
-Result: **9 tests passed**, actual loopback HTTP. Initial sandbox bind was denied; approved loopback-only escalation ran successfully. Server and test fixture memory were cleaned up by test teardown. No listener remains from these tests. No ChatGPT connection, scheduled call or refresh was tested.
+**22 local HTTP tests passed** after final changes. Tests cover positive PKCE/bearer transport and negative/replay/expiry/refresh/revocation paths, attacker Host/Origin, denied callback/client/resource/scope, bounded input and metadata. Local listeners closed and fixture state discarded by teardown. Token expiry cases alter only synthetic in-memory deadlines rather than wait; they do not prove actual scheduled refresh. Initial sandbox binding was denied; approved loopback-only escalation ran successfully. Actual ChatGPT OAuth, discovery/call, scheduled runtime, refresh, and project Auth/RLS remain unproven.
+
+Safe external-origin configuration is explicit and never derived from Host or forwarding headers. Only a bare HTTPS origin is accepted; callbacks are exact startup allowlist entries. After approval and an actual temporary hostname/observed callback exist, the launch shape is:
+
+```sh
+python3 probe.py --port 8769 --public-origin https://ACTUAL-HOST.trycloudflare.com --redirect-uri ACTUAL-OBSERVED-HTTPS-CALLBACK
+```
+
+Those uppercase values are placeholders, not a ready URL/callback. Do not invent a callback or use the synthetic test callback in ChatGPT. Do not relax the allowlist if DCR fails: inspect the authorized setup's actual callback and configure that exact URI. No secrets or OAuth client credentials belong in this command. Metadata advertises DCR and public-client auth method none; CIMD is not advertised or fetched. The selected ChatGPT form's OAuth default can attempt this documented path, but DCR interoperability still needs actual client evidence. Leave advanced credential fields empty unless the observed client requires a separately reviewed setup.
 
 ## Narrow temporary public-HTTPS candidate
 
@@ -33,11 +41,11 @@ This would expose only this dummy process, including discovery metadata, through
 
 Quick Tunnels do not support SSE. This probe uses JSON responses, so it is a plausible discovery transport; actual ChatGPT JSON transport support through the tunnel must be tested. Do not add Cloudflare email gating: it requires an interactive browser and is incompatible with unattended machine requests.
 
-For authentication testing, an isolated reachable synthetic authorization server with PKCE/resource binding would need to be added after setup review. Its generated issuer/resource origins must use the actual temporary hostname; current loopback metadata cannot be treated as public OAuth metadata. No permanent hostname, real OAuth account, OpenAI/Supabase key or production token is required for the synthetic issuer, but client installation and test consent remain interactive access decisions.
+The isolated synthetic authorization server is now implemented and tested locally. Its generated issuer/resource origins must use the actual temporary hostname; current loopback metadata cannot be treated as public OAuth metadata. No permanent hostname, real OAuth account, OpenAI/Supabase key or production token is required for the synthetic issuer, but client installation and test consent remain interactive access decisions.
 
 ## One consolidated setup requirement
 
-Parent checks developer-mode availability. Request only: temporary dummy HTTPS exposure via the above account-free forwarding route, installation of HQ Compatibility Test into the intended ChatGPT Work chat, and explicit synthetic-only consent. No production identity or permission. Implement/test the minimal synthetic issuer only after this setup route is accepted. Then prove manual authenticated invocation before scheduling one isolated one-time probe; prove refresh in that actual runtime separately. Stop on unsupported installation/authentication instead of using admin SQL or introducing another scheduler.
+Parent checks developer-mode availability. Request only: temporary dummy HTTPS exposure via the above account-free forwarding route, installation of HQ Compatibility Test into the intended ChatGPT Work chat, and explicit synthetic-only consent. No production identity or permission. The local synthetic issuer is ready; configure only the real approved test hostname and observed callback during setup. Then prove manual authenticated invocation before scheduling one isolated one-time probe; prove refresh in that actual runtime separately. Stop on unsupported installation/authentication instead of using admin SQL or introducing another scheduler.
 
 Cleanup: stop only the two owned foreground processes; remove the test ChatGPT connection and isolated test tasks; clear synthetic issuer sessions; delete generated auth artifacts if any. Preserve sanitized receipts/test reports only. Production review remains contingent on actual scheduled compatibility proof.
 
