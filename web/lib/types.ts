@@ -1,4 +1,5 @@
 import type { Database } from "./database.types";
+import type { OutreachData } from "./outreach-types";
 export type Row<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 export type Principal = Pick<
@@ -30,6 +31,30 @@ export type EvaluationIntelligence = Row<"evaluation_company_intelligence">;
 export type Source = Row<"opportunity_sources">;
 export type Package = Row<"application_packages">;
 export type Material = Row<"application_materials">;
+export type MaterialArtifact = {
+  id: string;
+  workspace_id: string;
+  application_material_id: string;
+  format: "pdf" | "docx";
+  bucket_id: "hq-materials";
+  storage_path: string;
+  sha256: string;
+  byte_size: number;
+  renderer_key: string;
+  input_sha256: string;
+  source_docx_sha256: string;
+  qa: {
+    visual_pass: boolean;
+    parse_back_pass: boolean;
+    page_count: number;
+    renderer_key: string;
+    input_sha256: string;
+    docx_sha256: string;
+    pdf_sha256: string;
+  };
+  created_at: string;
+  created_by_principal_id: string;
+};
 export type Application = Row<"applications">;
 export type SubmittedMaterial = Row<"application_submitted_materials">;
 export type Action = Pick<
@@ -55,7 +80,12 @@ export type Task = Pick<
   | "status"
   | "trigger_type"
   | "trigger_reference"
->;
+> & {
+  workspace_id?: string;
+  source_activity_event_id?: string | null;
+  result_summary?: string | null;
+  created_at?: string;
+};
 export type Activity = Pick<
   Row<"activity_events">,
   | "id"
@@ -77,6 +107,7 @@ export type Identity = {
   roles: Role[];
 };
 export type WorkspaceData = {
+  outreach?: OutreachData;
   opportunities: Opportunity[];
   companies: Company[];
   evaluations: Evaluation[];
@@ -87,6 +118,7 @@ export type WorkspaceData = {
   sources: Source[];
   packages: Package[];
   materials: Material[];
+  artifacts?: MaterialArtifact[];
   applications: Application[];
   submittedMaterials: SubmittedMaterial[];
   actions: Action[];
@@ -105,6 +137,7 @@ export const STAGES = [
 ] as const;
 export type Stage = (typeof STAGES)[number];
 export type JobView = {
+  researchTasks?: Task[];
   reviewAction?: Action;
   opportunity: Opportunity;
   company?: Company;
@@ -121,6 +154,7 @@ export type JobView = {
   evaluationIntelligence: EvaluationIntelligence[];
   sources: Source[];
   materials: Material[];
+  artifacts?: MaterialArtifact[];
   applications: Application[];
   submittedMaterials: SubmittedMaterial[];
   activities: Activity[];

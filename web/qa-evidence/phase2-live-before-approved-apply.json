@@ -1,0 +1,2095 @@
+{
+  "checked_at_utc": "2026-10-02 01:56:15 UTC",
+  "project_id": "xhhfnxswwspejdxjyvzz",
+  "migration_count": 26,
+  "sql_blob": "0ef9a55b7158d19a99cdf426a628b234191ee318",
+  "prior_fingerprint_and_column_comparison": "all 51 previously captured triggers, 27 policies and 30 columns unchanged; current query additionally includes five existing application_gaps triggers",
+  "catalog": {
+    "rls": [
+      {
+        "table": "activity_events",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "application_gaps",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "application_materials",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "application_packages",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "application_submitted_materials",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "applications",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "evaluations",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "internal_tasks",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "next_actions",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "opportunities",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      },
+      {
+        "table": "workspaces",
+        "enabled": true,
+        "anon_insert": false,
+        "anon_select": false,
+        "anon_update": false
+      }
+    ],
+    "columns": [
+      {
+        "type": "uuid",
+        "table": "activity_events",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "activity_events",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "activity_events",
+        "column": "opportunity_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "event_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "activity_events",
+        "column": "event_timestamp",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "activity_events",
+        "column": "actor_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "summary",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "details",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "source_system",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "source_reference",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "activity_events",
+        "column": "idempotency_key",
+        "nullable": "YES"
+      },
+      {
+        "type": "bool",
+        "table": "activity_events",
+        "column": "requires_candidate_attention",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "activity_events",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "activity_events",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "opportunity_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "evaluation_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "skill_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "gap_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "description",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "severity",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "blocking_status",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "resolution_type",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "resolution_status",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_gaps",
+        "column": "resolution_notes",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_gaps",
+        "column": "resolved_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_gaps",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_gaps",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_gaps",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "application_package_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_materials",
+        "column": "material_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "application_materials",
+        "column": "version_number",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_materials",
+        "column": "content_text",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_materials",
+        "column": "file_url",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_materials",
+        "column": "storage_path",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "source_template_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_materials",
+        "column": "status",
+        "nullable": "NO"
+      },
+      {
+        "type": "bool",
+        "table": "application_materials",
+        "column": "is_current_package_version",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_materials",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_materials",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_materials",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "opportunity_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "application_packages",
+        "column": "package_number",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "application_template_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "evaluation_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "application_packages",
+        "column": "status",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_packages",
+        "column": "candidate_notes",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "prepared_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "approved_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_packages",
+        "column": "approved_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "application_packages",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_packages",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_packages",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_submitted_materials",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_submitted_materials",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_submitted_materials",
+        "column": "application_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_submitted_materials",
+        "column": "application_material_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "application_submitted_materials",
+        "column": "material_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "jsonb",
+        "table": "application_submitted_materials",
+        "column": "submitted_material_snapshot",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_submitted_materials",
+        "column": "submitted_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "application_submitted_materials",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "application_submitted_materials",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "opportunity_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "application_package_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "int4",
+        "table": "applications",
+        "column": "attempt_number",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "application_stage",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "submission_method",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "application_url",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "applications",
+        "column": "submitted_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "applications",
+        "column": "confirmed_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "submitted_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "approved_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "confirmation_type",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "confirmation_reference",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "applications",
+        "column": "notes",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "applications",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "applications",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "applications",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "evaluations",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "evaluations",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "evaluations",
+        "column": "opportunity_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "evaluations",
+        "column": "version_number",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "evaluations",
+        "column": "candidate_fit_score",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "evaluations",
+        "column": "opportunity_fit_score",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "evaluations",
+        "column": "pursuit_score",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "opportunity_type",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "evidence_confidence",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "problem_translation",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "problem_fit_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "strengths_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "tradeoffs_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "company_fit_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "career_optionality_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "required_decision_authority",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "recommended_next_action",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "unresolved_questions",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "evaluation_status",
+        "nullable": "NO"
+      },
+      {
+        "type": "jsonb",
+        "table": "evaluations",
+        "column": "opportunity_snapshot",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "evaluations",
+        "column": "evaluation_method_version",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "evaluations",
+        "column": "evaluated_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "evaluations",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "evaluations",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "evaluations",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "evaluations",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "opportunity_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "source_activity_event_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "task_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "domain",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "title",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "description",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "owner_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "status",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "internal_tasks",
+        "column": "priority",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "trigger_type",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "trigger_reference",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "due_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "not_before",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "waiting_condition",
+        "nullable": "YES"
+      },
+      {
+        "type": "bool",
+        "table": "internal_tasks",
+        "column": "approval_required",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "internal_tasks",
+        "column": "max_attempts",
+        "nullable": "NO"
+      },
+      {
+        "type": "int4",
+        "table": "internal_tasks",
+        "column": "attempt_count",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "last_attempt_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "completed_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "result_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "internal_tasks",
+        "column": "idempotency_key",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "internal_tasks",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "internal_tasks",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "opportunity_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "internal_task_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "source_activity_event_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "assigned_to_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "next_actions",
+        "column": "action_type",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "next_actions",
+        "column": "title",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "next_actions",
+        "column": "context_summary",
+        "nullable": "YES"
+      },
+      {
+        "type": "int4",
+        "table": "next_actions",
+        "column": "priority",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "next_actions",
+        "column": "due_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "int4",
+        "table": "next_actions",
+        "column": "estimated_minutes",
+        "nullable": "YES"
+      },
+      {
+        "type": "bool",
+        "table": "next_actions",
+        "column": "approval_required",
+        "nullable": "NO"
+      },
+      {
+        "type": "bool",
+        "table": "next_actions",
+        "column": "todays_one_thing_eligible",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "next_actions",
+        "column": "status",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "next_actions",
+        "column": "completed_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "next_actions",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "next_actions",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "next_actions",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "workspace_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "company_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "job_family_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "title",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "normalized_title",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "requisition_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "canonical_url",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "location_text",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "work_arrangement",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "employment_type",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "opportunities",
+        "column": "salary_min",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "opportunities",
+        "column": "salary_max",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "salary_currency",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "salary_period",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "job_description_text",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "opportunity_stage",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "opportunities",
+        "column": "closed_reason",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "opportunities",
+        "column": "first_discovered_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "opportunities",
+        "column": "last_verified_at",
+        "nullable": "YES"
+      },
+      {
+        "type": "date",
+        "table": "opportunities",
+        "column": "posting_date",
+        "nullable": "YES"
+      },
+      {
+        "type": "date",
+        "table": "opportunities",
+        "column": "closing_date",
+        "nullable": "YES"
+      },
+      {
+        "type": "bool",
+        "table": "opportunities",
+        "column": "is_currently_active",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "previous_opportunity_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "created_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "opportunities",
+        "column": "updated_by_principal_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamptz",
+        "table": "opportunities",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "opportunities",
+        "column": "updated_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "workspaces",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "workspaces",
+        "column": "name",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "workspaces",
+        "column": "slug",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "workspaces",
+        "column": "status",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "workspaces",
+        "column": "created_at",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamptz",
+        "table": "workspaces",
+        "column": "updated_at",
+        "nullable": "NO"
+      }
+    ],
+    "helpers": [
+      {
+        "config": ["search_path=\"\""],
+        "signature": "current_principal_id()",
+        "auth_execute": true,
+        "security_definer": false
+      },
+      {
+        "config": ["search_path=\"\""],
+        "signature": "current_principal_is_human()",
+        "auth_execute": true,
+        "security_definer": false
+      },
+      {
+        "config": ["search_path=\"\""],
+        "signature": "has_permission(uuid,text)",
+        "auth_execute": true,
+        "security_definer": false
+      },
+      {
+        "config": ["search_path=\"\""],
+        "signature": "is_active_workspace_human(uuid,uuid)",
+        "auth_execute": true,
+        "security_definer": false
+      }
+    ],
+    "policies": [
+      {
+        "roles": ["authenticated"],
+        "table": "activity_events",
+        "policy": "authorized principals can create activity events",
+        "command": "INSERT",
+        "check_md5": "8a28644b99357977a612ec63fef59cc3",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "activity_events",
+        "policy": "authorized principals can view activity events",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "885ec11d86db6e973031f73c8317cc1f"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_gaps",
+        "policy": "authorized principals can create application gaps",
+        "command": "INSERT",
+        "check_md5": "0a7d985e210eb186ccdb8039ef8f1b4d",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_gaps",
+        "policy": "authorized principals can update application gaps",
+        "command": "UPDATE",
+        "check_md5": "b41b894924fea960653c10dd92d09e22",
+        "using_md5": "b41b894924fea960653c10dd92d09e22"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_gaps",
+        "policy": "authorized principals can view application gaps",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "196572d1c7ed1de69ea236818d079308"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_materials",
+        "policy": "authorized principals can create application materials",
+        "command": "INSERT",
+        "check_md5": "aef6c258808b0b69f95ac8dfb7806cdc",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_materials",
+        "policy": "authorized principals can update application materials",
+        "command": "UPDATE",
+        "check_md5": "f7e0a4b0361d80cf9b6cfce8fa96e69e",
+        "using_md5": "f7e0a4b0361d80cf9b6cfce8fa96e69e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_materials",
+        "policy": "authorized principals can view application materials",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "bc7164815de9d242dcf5a6ab7aaa462d"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_packages",
+        "policy": "authorized principals can create application packages",
+        "command": "INSERT",
+        "check_md5": "aef6c258808b0b69f95ac8dfb7806cdc",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_packages",
+        "policy": "authorized principals can update application packages",
+        "command": "UPDATE",
+        "check_md5": "8c6868a7c6c763c491e4086210b5d8db",
+        "using_md5": "8c6868a7c6c763c491e4086210b5d8db"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_packages",
+        "policy": "authorized principals can view application packages",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "bc7164815de9d242dcf5a6ab7aaa462d"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "application_submitted_materials",
+        "policy": "authorized principals can view submitted materials",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "bc7164815de9d242dcf5a6ab7aaa462d"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "applications",
+        "policy": "authorized principals can create application attempts",
+        "command": "INSERT",
+        "check_md5": "a4f8e7a4bd7b1c9911ed9b6089dd2ed4",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "applications",
+        "policy": "authorized principals can update applications",
+        "command": "UPDATE",
+        "check_md5": "ca4e6ddb57242b1198aa0f098a0f14dd",
+        "using_md5": "ca4e6ddb57242b1198aa0f098a0f14dd"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "applications",
+        "policy": "authorized principals can view applications",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "bc7164815de9d242dcf5a6ab7aaa462d"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "evaluations",
+        "policy": "authorized principals can create evaluations",
+        "command": "INSERT",
+        "check_md5": "4e8f685c336dea95bcd8e0dced397c81",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "evaluations",
+        "policy": "authorized principals can update evaluations",
+        "command": "UPDATE",
+        "check_md5": "f5bb2974a2543d27a28ca7d5eddeabd7",
+        "using_md5": "f5bb2974a2543d27a28ca7d5eddeabd7"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "evaluations",
+        "policy": "authorized principals can view evaluations",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "1b7c52f5a01c199444b50b0a2444ad72"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "internal_tasks",
+        "policy": "authorized principals can create internal tasks",
+        "command": "INSERT",
+        "check_md5": "323d3920c6757cfc8de486d95f903f72",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "internal_tasks",
+        "policy": "authorized principals can update or execute internal tasks",
+        "command": "UPDATE",
+        "check_md5": "bd3cba7fa3dec938d3853112add28124",
+        "using_md5": "bd3cba7fa3dec938d3853112add28124"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "internal_tasks",
+        "policy": "authorized principals can view internal tasks",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "a57025c548159b455b43c8e524522750"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "next_actions",
+        "policy": "authorized principals can create next actions",
+        "command": "INSERT",
+        "check_md5": "4b34c3c17bf39255b9d533b257ba7afc",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "next_actions",
+        "policy": "authorized principals can update or complete next actions",
+        "command": "UPDATE",
+        "check_md5": "6e2c4ab1b377a4498848b2dda10675c8",
+        "using_md5": "6e2c4ab1b377a4498848b2dda10675c8"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "next_actions",
+        "policy": "authorized principals can view next actions",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "29e5b8901577f0822edbeab3085f4c71"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "opportunities",
+        "policy": "authorized principals can create opportunities",
+        "command": "INSERT",
+        "check_md5": "6c57a3966d582e25d328db13785c21db",
+        "using_md5": "d41d8cd98f00b204e9800998ecf8427e"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "opportunities",
+        "policy": "authorized principals can update opportunities",
+        "command": "UPDATE",
+        "check_md5": "72eca6905bf79f55e8ed269a32808b7b",
+        "using_md5": "72eca6905bf79f55e8ed269a32808b7b"
+      },
+      {
+        "roles": ["authenticated"],
+        "table": "opportunities",
+        "policy": "authorized principals can view opportunities",
+        "command": "SELECT",
+        "check_md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "using_md5": "6ca12f14865267e1a87fb09e06853cca"
+      }
+    ],
+    "triggers": [
+      {
+        "table": "activity_events",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_activity_event_delete",
+        "function": "prevent_activity_event_mutation",
+        "definition_md5": "a79acd6cee8cec2754dcedd9bdb63dc0",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "activity_events",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_activity_event_update",
+        "function": "prevent_activity_event_mutation",
+        "definition_md5": "a79acd6cee8cec2754dcedd9bdb63dc0",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "activity_events",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_activity_events_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "activity_events",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_activity_events_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "activity_events",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_activity_event_actor_before_insert",
+        "function": "validate_activity_event_actor",
+        "definition_md5": "0d7c22a3dd5b463f5db7f9b540c376a9",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_gaps",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_application_gaps_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_gaps",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_gaps_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_gaps",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_gaps_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_gaps",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "sync_application_gap_resolution_time_before_write",
+        "function": "sync_application_gap_resolution_time",
+        "definition_md5": "3b28b604b5196e9d88e27b87591fd77f",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_gaps",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_application_gap_evaluation_before_write",
+        "function": "validate_application_gap_evaluation",
+        "definition_md5": "5b9241705f999e3f4b8b7f5e172db58f",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_application_material_lifecycle_before_write",
+        "function": "enforce_application_material_lifecycle",
+        "definition_md5": "7b55a632b59c049536033c9502355de7",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "application_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prepare_application_material_before_insert",
+        "function": "prepare_application_material_insert",
+        "definition_md5": "0b56f6baa8b95fad400132d7928f0779",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_application_materials_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_materials_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_materials_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_application_package_lifecycle_before_write",
+        "function": "enforce_application_package_lifecycle",
+        "definition_md5": "0faebe930e550996c74c9bd73f340337",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prepare_application_package_before_insert",
+        "function": "prepare_application_package_insert",
+        "definition_md5": "689ee41a8f61d2beb78502a14e42afc7",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_application_packages_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_packages_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_packages_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_application_package_context_before_write",
+        "function": "validate_application_package_context",
+        "definition_md5": "7eb99adae14613d8b195502082a23bc9",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "application_packages",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_application_package_template_before_write",
+        "function": "validate_application_package_template",
+        "definition_md5": "caffd0535c2683dc017cc2abcafd00ac",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "application_submitted_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prepare_submitted_application_material_before_insert",
+        "function": "prepare_submitted_application_material",
+        "definition_md5": "aeb065fb03001443c6c9790aaacb4e03",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_submitted_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_application_submitted_materials_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_submitted_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_submitted_material_delete",
+        "function": "prevent_submitted_material_mutation",
+        "definition_md5": "5621ce689c5d56636e2ce12878c9b819",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_submitted_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_submitted_material_update",
+        "function": "prevent_submitted_material_mutation",
+        "definition_md5": "5621ce689c5d56636e2ce12878c9b819",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "application_submitted_materials",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_application_submitted_materials_actor",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_application_lifecycle_before_write",
+        "function": "enforce_application_lifecycle",
+        "definition_md5": "6e57b111bc2c868ff68e50d0925ac0e7",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prepare_application_before_insert",
+        "function": "prepare_application_insert",
+        "definition_md5": "6aeba17d2e5ff6d32d5809e947750a3c",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_applications_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_applications_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_applications_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "snapshot_materials_after_application_submit",
+        "function": "snapshot_materials_after_application_submit",
+        "definition_md5": "da391f31fca807c92b12fea12c77395f",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_application_principals_before_write",
+        "function": "validate_application_principals",
+        "definition_md5": "2bc6f4f1a716c57c3f3352e2839f3306",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "applications",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_application_submission_context_before_insert",
+        "function": "validate_application_submission_context",
+        "definition_md5": "52eed1da9e083541e7b024b9874712a5",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "evaluations",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_evaluation_lifecycle_before_update",
+        "function": "enforce_evaluation_lifecycle",
+        "definition_md5": "3e6c716505bad6b3e128cf91bad806e0",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "evaluations",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prepare_evaluation_before_insert",
+        "function": "prepare_evaluation_insert",
+        "definition_md5": "06305aa276954c89b01e01a2f7cf1bc1",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "evaluations",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_evaluations_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "evaluations",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_evaluations_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "evaluations",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_evaluations_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_internal_task_lifecycle_before_write",
+        "function": "enforce_internal_task_lifecycle",
+        "definition_md5": "9a17213dc7e46024d0a7d8bc19313633",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=\"\""],
+        "enabled": "O",
+        "trigger": "enforce_task_dependencies_before_running",
+        "function": "assert_task_dependencies_satisfied",
+        "definition_md5": "db77c39bc1a57fef81f331c39ae35570",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_internal_tasks_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_internal_tasks_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_internal_tasks_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "internal_tasks",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_internal_task_owner_before_write",
+        "function": "validate_internal_task_owner",
+        "definition_md5": "cf5b26a1adac982f35bb1649cf76166f",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "next_actions",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_next_action_lifecycle_before_write",
+        "function": "enforce_next_action_lifecycle",
+        "definition_md5": "8c81bb3aeee7de9ff2c95e43437706fc",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "next_actions",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_next_actions_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "next_actions",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_next_actions_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "next_actions",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_next_actions_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "next_actions",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "validate_next_action_assignee_before_write",
+        "function": "validate_next_action_assignee",
+        "definition_md5": "23d152c08c03f631ca7eb6c760b3cadf",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "opportunities",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "enforce_opportunity_close",
+        "function": "enforce_opportunity_close_permission",
+        "definition_md5": "d9ba4503cd9ad82fc795ec85f814cd6a",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "opportunities",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_opportunities_workspace_change",
+        "function": "prevent_workspace_change",
+        "definition_md5": "65e2492c5cf805917293b553249b6645",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "opportunities",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "prevent_opportunity_history_cycle_before_write",
+        "function": "prevent_opportunity_history_cycle",
+        "definition_md5": "6a200beae16ac1099e961ba01a0054c6",
+        "function_schema": "private",
+        "security_definer": true
+      },
+      {
+        "table": "opportunities",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_opportunities_actor_audit",
+        "function": "set_actor_audit_fields",
+        "definition_md5": "7822df0b7aec9a35d4cf145b937694c3",
+        "function_schema": "public",
+        "security_definer": false
+      },
+      {
+        "table": "opportunities",
+        "config": ["search_path=public"],
+        "enabled": "O",
+        "trigger": "set_opportunities_updated_at",
+        "function": "set_updated_at",
+        "definition_md5": "65f077b7fa0c276e6456db6e64475b35",
+        "function_schema": "public",
+        "security_definer": false
+      }
+    ],
+    "rpc_exists": false,
+    "permissions": [
+      "activity.create",
+      "activity.read",
+      "application_gap.read",
+      "application.approve",
+      "application.prepare",
+      "application.read",
+      "application.submit",
+      "evaluation.read",
+      "internal_task.create",
+      "internal_task.read",
+      "next_action.complete",
+      "next_action.create",
+      "next_action.read",
+      "next_action.update",
+      "opportunity.close",
+      "opportunity.read",
+      "opportunity.update",
+      "workspace.read"
+    ],
+    "server_version": "17.6",
+    "available_after_exists": false
+  }
+}

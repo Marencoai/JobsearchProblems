@@ -1,5 +1,19 @@
 # Job Hunt HQ · Phase 1
 
+**Outreach local review:** [the consolidated domain package](../docs/03-design/outreach-v1-review.md) includes proposed SQL/RLS/permissions/tests/rollback and the gated interface. `HQ_OUTREACH` remains off until its production migration and rollout are explicitly approved. Ordinary reads and Phase 2 remain independent. Do not enable this flag against a pre-migration database.
+
+For isolated development review, run `HQ_QA_FIXTURES=1 HQ_OUTREACH=0 npm run dev -- --port 3104` and open `http://127.0.0.1:3104/qa?outreach=1`. This needs no public config, credentials, database or worker. Contact/draft/attestation state exists only in the synthetic browser session. The full production build still rejects `/qa`. The browser script restricts all requests to this loopback origin and launches its own fresh headless profile:
+
+```sh
+# After installing the pinned dev dependencies; supported test browser:
+npx --no-install playwright install chromium --only-shell
+node scripts/outreach-browser-check.mjs
+# Or use an existing Chrome executable as the sole argument.
+```
+
+Screenshots and exact test/browser evidence are in [`qa-evidence/outreach/`](qa-evidence/outreach/) and [the dated validation report](../docs/03-design/outreach-validation-2026-10-01.md). The browser is test-only; no global browser preference, user profile, credential or live communication is touched.
+Manual intake and exact private PDF/DOCX delivery are locally proposed on a separate stacked branch. See [INTAKE_DELIVERY_REVIEW.md](INTAKE_DELIVERY_REVIEW.md) for SQL, worker adoption, Storage validation, rollback and remaining v1 gates. `HQ_MANUAL_INTAKE` and `HQ_MATERIAL_DELIVERY` default off and require separate approved rollout/activation. For development-only synthetic transport QA use `/qa?job=resume&intake=1&delivery=1` and Load synthetic file fixtures. No database/Storage request or canonical candidate rendering occurs there.
+
 Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW.md](PHASE2_REVIEW.md). The default runtime remains read-only. Only after authenticated Phase 1 acceptance and explicit migration approval should the server environment set `HQ_HUMAN_ACTIONS=1`. That enables just the `hq_human_action` RPC and reads the new deferral column; it never permits direct table writes or other RPCs. Do not enable the flag against the pre-migration database.
 
 **Acceptance update · October 1, 2026:** Diana explicitly accepted Phase 1 after signing in and reviewing multiple real opportunities. [PHASE1_QA.md](PHASE1_QA.md) records that approval; the [requirements document](../docs/02-requirements/requirements.md#job-hunt-hq-deferred-product-improvements) tracks her two deferred, non-blocking improvements. The next gate is explicit Phase 2 production migration approval, which Diana has withheld. The migration and human-action flag remain inactive.

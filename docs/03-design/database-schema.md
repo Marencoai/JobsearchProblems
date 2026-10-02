@@ -2,6 +2,10 @@ Job Search AI Agent
 
 Database Schema
 
+## Proposed HQ intake/material artifacts (not deployed)
+
+Migration `20261001225212_hq_manual_intake_and_material_delivery.sql` adds the immutable `application_material_artifacts` child of existing exact Material versions, private `hq-intake`/`hq-materials` buckets and caller-invoker manual-intake/Storage boundaries. It preserves existing roles, business permissions and lifecycle triggers. This proposal needs its own approval; the earlier Phase 2 approval does not cover it. See [design and schema contract](hq-intake-material-delivery.md) and [review/rollout gates](../../web/INTAKE_DELIVERY_REVIEW.md).
+
 ## Proposed Job Hunt HQ additive change (2026-10-01; not deployed)
 
 Migration `20261001205019_hq_existing_human_actions.sql` adds nullable `next_actions.available_after` and one authenticated-only SECURITY INVOKER RPC, `hq_human_action(workspace_id, opportunity_id, expected_updated_at, request_id, command, payload)`. Existing rows remain null and need no backfill. This does not introduce an Opportunity lifecycle value, change RLS policies, or grant new role permissions.
@@ -9,6 +13,14 @@ Migration `20261001205019_hq_existing_human_actions.sql` adds nullable `next_act
 The RPC validates an active human, active Workspace/membership, command-specific existing permissions, reviewed Opportunity/action/Package timestamps, and exact Material IDs where approval/submission needs them. It delegates table transitions and immutable submission snapshots to existing triggers. Successful commands append an Activity Event containing the exact request and result; retrying identical input with the same human request ID returns that result. Different input with a reused ID is rejected.
 
 See [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md) for the permission matrix, local validation, rollout dependencies, and rollback. Production schema remains unchanged until explicitly approved.
+
+## Proposed Outreach domain (2026-10-01; not deployed)
+
+The canonical relationship domain is implemented as a proposed forward file outside the automatic migration directory. See [`outreach-v1-review.md`](outreach-v1-review.md) for exact schema, RLS/permission impact, transitions, tests, data/backfill impact and rollback, and [`outreach-contacts-contract.md`](outreach-contacts-contract.md) for the shared Interview dependency.
+
+It adds `contacts`, `opportunity_contacts`, `outreach_engagements`, `outreach_engagement_opportunities`, versioned `outreach_messages`, `outreach_message_evidence`, `outreach_interactions`, `relationship_notes` and typed `outreach_task_links`. Contacts use UUID keys, `full_name`, nullable `title`, and `UNIQUE(workspace_id,id)`; every reference is tenant-scoped. One Engagement can span multiple roles, and none is required. Exact sent/received content and snapshots are immutable. Follow-up and generation continue using existing Internal Tasks and contextual Next Actions. New domain tables are read through RLS and written only by the checked private-schema action implementation exposed through an invoker wrapper. Existing workers receive no new grants and no external send authority is created.
+
+This section records a proposal, not production availability. The complete domain package needs one explicit approval before promoting its SQL to the production migration inventory. Interview must reuse the canonical Contacts table rather than create a parallel person model.
 
 1. Identity, Workspace, and Permissions
 
@@ -7754,3 +7766,71 @@ That will make foreign keys, dependency order, and even RLS much easier to reaso
 Once you paste this in, **we are done designing the schema for now**.
 
 The next step is our first actual build step: **turn Section 1, the Security Foundation, into Supabase SQL.**
+
+## Job Hunt HQ Interview v1 proposal · October 1, 2026
+
+Status: proposed only, not deployed. The intended §7 entities are implemented in
+`supabase/proposals/interview/001_interview.sql` and `002_interview_contacts.sql`.
+The second file requires Outreach's separately reviewed `contacts` table and
+composite Workspace identity. Do not add a duplicate contact model.
+
+The proposal preserves the existing authoritative Opportunity lifecycle and seven
+derived HQ stages. Source references uniquely match verified interviews within a
+Workspace. One active Process is allowed per Opportunity. Every interview/process,
+preparation/question and candidate-knowledge reference is tenant-scoped; questions
+cannot attach a preparation from a different interview. Evaluation context must
+belong to the same Opportunity. Evidence rows contain exactly one Story, Project,
+or Skill. Predicted and actual questions stay distinct. Reviewed preparations and
+their questions/evidence are frozen; new reviewed content needs a new package.
+
+Proposed permission impacts: add `interview.read` and `interview.manage` and grant
+both only to the existing global Owner role. RLS requires existing principal and
+membership checks, with human-only writes and active Workspace checks. No agent
+roles, identity, existing table policies, automation authority or Calendar/Gmail
+capability is changed. Agent preparation requires a future separately reviewed
+capability; this implementation supports manual structured preparation.
+
+`hq_interview_action` is a SECURITY INVOKER transaction that checks all required
+existing permissions, locks the Opportunity, checks the reviewed timestamp,
+records attributed idempotent activity, and reconciles only explicitly linked
+interview actions. It supports human-reviewed source recording, prep start and
+prep save/review. Browser transport permits only this RPC when `HQ_INTERVIEW=1`;
+raw table writes remain blocked. Default is off and performs no new-table reads.
+No meeting invitation or external message is performed.
+
+## Job Hunt HQ Offer v1 proposal · October 1, 2026
+
+Status: proposed, not deployed. `supabase/proposals/offer/001_offer.sql` adds
+`offers`, versioned `offer_terms`, append-only `offer_negotiations` and immutable
+`offer_decisions`. Terms separately retain currency/base period, base, variable,
+employer-stated OTE, equity/units/percent/vesting, benefits, start date, location
+and travel, quota, ramp, territory, deadline and notes. Missing amounts remain null;
+OTE is never inferred from incomplete or non-comparable compensation.
+
+One active Offer is allowed per Opportunity; revised terms create a new immutable
+version under that Offer. Decisions must name the latest exact terms, require an
+active human with `offer.decide`, explicit confirmation and a reason, and preserve
+the principal, timestamp and version. `hq_offer_action` uses SECURITY INVOKER,
+existing lifecycle protections, Opportunity/Offer locks, optimistic versions,
+attributed idempotent activity and exact linked Next Action reconciliation.
+Accepted/declined offers freeze their history and close the Opportunity using the
+existing `closed_reason=other` only when no active offer remains; exact decision
+semantics live in Offer history. A stale prior version cannot close negotiation
+on revised terms. No lifecycle enum, seven-stage model or external commitment gate
+changes. Recorded decisions never send employer acceptance or rejection.
+
+Proposed permissions `offer.read`, `offer.manage`, `offer.decide` are added to the
+existing global Owner only. All new writes require a human and active membership
+and Workspace; no agent role or automation capability changes. Immutable terms,
+negotiations and decisions have no authenticated UPDATE/DELETE grant. Frontend
+transport allows only domain reads and the proposed RPC with `HQ_OFFER=1`; default
+is off. No privileged frontend key, messaging tool or second backend is introduced.
+
+Interview/Offer exact retry bodies are stored in their new
+`hq_interview_action_requests` / `hq_offer_action_requests` tables, with SELECT and
+INSERT restricted to their current active human actor and domain read/manage
+permissions. Generic Activity details retain safe references only. These tables
+are outside frontend read allowlists, append-only, RLS enabled, and deny anonymous
+access. This proposed impact is included in each domain's separate approval review.
+The Interview Contact dependency is pinned to Outreach PR3 commit
+`2af79c2dfa31611083bf3f233d02b82bf890b8fe` (`full_name`, `title`, Workspace UUID FK).

@@ -24,6 +24,12 @@ The proposed `hq_human_action` SECURITY INVOKER RPC groups each explicit candida
 
 The review package, tests, rollout gates, and rollback strategy are in [`web/PHASE2_REVIEW.md`](../../web/PHASE2_REVIEW.md). This proposal has not been applied to production. Research refresh remains owned by the research worker; no new browser research engine is introduced.
 
+## Outreach implementation proposal (2026-10-01; production off)
+
+The existing reusable relationship design is carried into the proposed structured Outreach domain. Contacts remain independent of roles; Engagements relate to zero or several Opportunities. Manual targets remain valid alongside recommendations and preserve their selection reason/source. Draft editing creates exact new message versions, and explicit human mark-sent records an external fact rather than performing transport or imposing a second approval gate. Sent/received content and recipient/role snapshots are immutable. Existing tasks own research/generation and response/time waits; contextual Next Actions surface human work only when relevant.
+
+The proposed controlled writer uses the already established non-exposed private schema with explicit actual-Principal/workspace/permission checks and an invoker wrapper; raw table mutations are denied. No existing agent authority, backend Opportunity lifecycle, derived seven-stage contract, renderer or application submission behavior changes. Production migration and the nine new Owner domain capabilities remain gated together. The single review package, local validation and non-destructive rollback are in [`outreach-v1-review.md`](outreach-v1-review.md). Shared Contacts types for Interview are in [`outreach-contacts-contract.md`](outreach-contacts-contract.md).
+
 1. System Components
 
 1.1 Opportunity Activity Feed
@@ -2953,3 +2959,18 @@ The Owner may create, update, and validate these records. The Application Agent 
 Reason:
 
 Real ATS forms repeatedly request employment-exit reasons, employer-contact permission, and references. Storing approved answers once prevents repeated candidate interruptions and prevents agents from inventing application facts.
+
+## Job Hunt HQ Interview / Offer proposal · October 1, 2026
+
+The local v1 proposals extend the same role workspace and leave Opportunity's
+existing lifecycle authoritative. Interview source recording is human-reviewed;
+Gmail matching/automatic detection retains its existing activity/attention contract
+until a separately reviewed worker capability is installed. Manual structured prep
+is usable without inventing agent output. Contact identity remains Outreach-owned.
+
+Offer terms are immutable versions; negotiations and explicitly confirmed human
+decisions preserve exact terms and attribution. Terminal recording closes via the
+existing `other` close reason, only after the current active Offer is resolved.
+An older terms version cannot decide the revised active Offer. Recording a decision
+never communicates with an employer. Both domains require their own consolidated
+production schema/permission approval and separate flag rollout verification.

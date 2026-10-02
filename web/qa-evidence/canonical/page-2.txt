@@ -1,0 +1,23 @@
+Casey Example  | OPERATIONS SYSTEMS LEADER
+casey@example.invalid | Example City | example.invalid/portfolio
+
+PROFESSIONAL EXPERIENCE
+
+Operations Systems Lead  | Example Services                                                     2022–2026
+Coordinated shared operating systems across six service teams.
+  • Established intake and handoff standards, clarifying ownership, completion criteria and escalation routes for cross-team requests.
+  • Partnered with service managers to reduce repeated work and improve visibility into delivery commitments.
+  • Translated frontline feedback into workflow requirements and prioritized changes with business owners.
+  • Built a weekly operating review that connected service measures with specific improvement actions.
+
+Program Manager  | Example Platforms                                                            2018–2022
+Managed process and enablement programs for distributed customer operations.
+  • Coordinated three improvement programs, maintaining milestones, dependencies and clear decisions across partner teams.
+  • Created practical onboarding materials and facilitated training for new workflow standards.
+  • Introduced consistent reporting definitions and documented checks for reliable service information.
+
+Operations Analyst  | Example Partners                                                           2014–2018
+Supported service quality, reporting and continuous improvement.
+  • Analyzed recurring service issues and worked with process owners to simplify high-volume tasks.
+  • Maintained operational reporting and documented the source and meaning of each shared measure.
+  • Gathered user requirements and tested workflow changes before team-wide adoption.

@@ -59,7 +59,7 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
           )}
           <p className="login-note">
             <ShieldCheck size={18} />{" "}
-            {session.humanActions
+            {session.humanActions || session.domainActions
               ? "Candidate workspace."
               : "Read-only preview."}{" "}
             Your session stays in browser memory; reloading signs you out.
@@ -78,7 +78,15 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       onWorkspace={(id) => void session.selectWorkspace(id)}
       onReload={() => void session.reload()}
       onSignOut={() => void session.signOut()}
+      domainActions={session.domainActions}
       onAction={session.humanActions ? session.act : undefined}
+      onOutreach={session.outreach ? session.actOutreach : undefined}
+      onIntake={session.manualIntake ? session.intake : undefined}
+      onUpload={session.manualIntake ? session.upload : undefined}
+      onDelivery={session.materialDelivery ? session.deliver : undefined}
+      onResearchRefresh={
+        session.researchRefresh ? session.refreshResearch : undefined
+      }
     />
   );
 }

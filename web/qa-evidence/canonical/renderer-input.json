@@ -1,0 +1,21 @@
+{
+  "name": "Casey Example",
+  "headline": "OPERATIONS SYSTEMS LEADER",
+  "contact": "casey@example.invalid | Example City | example.invalid/portfolio",
+  "summary": "Operations leader who turns fragmented workflows into clear systems that teams can use and improve. Combines process design, practical automation, cross-functional delivery and measurement to connect strategy with daily execution. Builds reliable operating routines, translates customer and employee needs into useful requirements, and supports adoption through training and documentation. Brings experience coordinating distributed teams, improving handoffs and creating visibility into service performance while keeping ownership and decision-making clear.",
+  "capabilities": ["Operations strategy", "Process improvement", "Workflow automation", "Cross-functional delivery", "Service measurement", "Change management", "Requirements discovery", "Data quality", "Team enablement", "Systems integration", "Program coordination", "Customer operations"],
+  "impact": [["24%", "Faster service handoffs"], ["18%", "Less routine rework"], ["6 teams", "Shared operating standards"], ["3 programs", "Delivery routines established"]],
+  "projects": [
+    {"name": "Service Handoff System", "role": "Program lead", "text": "Mapped intake, ownership and completion across service teams. Introduced a consistent handoff checklist, a shared status view and clear escalation points so each request had an accountable next step."},
+    {"name": "Operations Measurement Workspace", "role": "Systems owner", "text": "Connected service records to common definitions and a weekly review routine. Documented data quality checks and helped managers use the same measures to prioritize improvements."},
+    {"name": "Team Enablement Program", "role": "Delivery lead", "text": "Built practical onboarding guides and role-specific training. Gathered feedback from distributed teams and revised procedures around the steps that caused repeated confusion."}
+  ],
+  "tools": ["Spreadsheets", "SQL", "Workflow tools", "CRM", "Service desk", "Documentation", "Process maps", "Dashboards", "Project boards", "Forms", "APIs", "Knowledge bases"],
+  "certifications": ["Example Process Improvement Certificate"],
+  "education": ["B.A., Example University"],
+  "experience": [
+    {"title": "Operations Systems Lead", "company": "Example Services", "dates": "2022–2026", "scope": "Coordinated shared operating systems across six service teams.", "bullets": ["Established intake and handoff standards, clarifying ownership, completion criteria and escalation routes for cross-team requests.", "Partnered with service managers to reduce repeated work and improve visibility into delivery commitments.", "Translated frontline feedback into workflow requirements and prioritized changes with business owners.", "Built a weekly operating review that connected service measures with specific improvement actions."]},
+    {"title": "Program Manager", "company": "Example Platforms", "dates": "2018–2022", "scope": "Managed process and enablement programs for distributed customer operations.", "bullets": ["Coordinated three improvement programs, maintaining milestones, dependencies and clear decisions across partner teams.", "Created practical onboarding materials and facilitated training for new workflow standards.", "Introduced consistent reporting definitions and documented checks for reliable service information."]},
+    {"title": "Operations Analyst", "company": "Example Partners", "dates": "2014–2018", "scope": "Supported service quality, reporting and continuous improvement.", "bullets": ["Analyzed recurring service issues and worked with process owners to simplify high-volume tasks.", "Maintained operational reporting and documented the source and meaning of each shared measure.", "Gathered user requirements and tested workflow changes before team-wide adoption."]}
+  ]
+}

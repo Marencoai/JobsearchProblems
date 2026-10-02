@@ -224,3 +224,51 @@ describe("derived human stages", () => {
     expect(buildJobViews(data)[0].activities).toHaveLength(1);
   });
 });
+
+it("recognizes source-linked Interview preparation and preserves the exact next step", () => {
+  const prep = action("prep", {
+    opportunity_id: "a",
+    action_type: "prepare",
+    source_activity_event_id: "event",
+    title: "Prepare for interview",
+    priority: 85,
+  });
+  const activity = {
+    id: "event",
+    opportunity_id: "a",
+    event_type: "interview_record_verified_interview",
+    source_system: "hq",
+    event_timestamp: "2026-10-01",
+    summary: "Verified interview recorded",
+  };
+  const result = deriveStage(
+    opportunity("a", { opportunity_stage: "interviewing" }),
+    [prep],
+    [],
+    undefined,
+    new Date(),
+    [activity],
+  );
+  expect(result.nextAction).toBe(prep.title);
+  expect(
+    actionStage(prep, [], [{ ...activity, opportunity_id: "foreign" }]),
+  ).toBeUndefined();
+  expect(
+    actionStage(prep, [], [{ ...activity, source_system: "untrusted" }]),
+  ).toBeUndefined();
+  const overlap = action("outreach", {
+    opportunity_id: "a",
+    internal_task_id: "outreach-task",
+    priority: 50,
+  });
+  expect(
+    deriveStage(
+      opportunity("a", { opportunity_stage: "interviewing" }),
+      [overlap, prep],
+      [task("outreach-task", { domain: "outreach" })],
+      undefined,
+      new Date(),
+      [activity],
+    ).action?.id,
+  ).toBe("prep");
+});

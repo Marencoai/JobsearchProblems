@@ -43,8 +43,25 @@ import type {
 import { STAGES } from "@/lib/types";
 import { buildJobViews } from "@/lib/workflow";
 import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
+import { OfferPanel } from "./offer-panel";
+import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
+import { IntakeDialog } from "./intake-dialog";
+import { MaterialDelivery } from "./material-delivery";
+import { ResearchRefresh } from "./research-refresh";
+import type { ResearchRefreshHandler } from "@/lib/research-refresh";
+import type { IntakeHandler, IntakeUploadHandler } from "@/lib/intake";
+import {
+  artifactPair,
+  type MaterialDeliveryHandler,
+} from "@/lib/material-delivery";
+import { ApplicationPacket } from "./application-packet";
+import { applicationPacket } from "@/lib/application-packet";
+import type { MaterialArtifact } from "@/lib/types";
 import type { HumanActionHandler } from "@/lib/human-actions";
+import type { OutreachHandler } from "@/lib/outreach";
+import type { OutreachData } from "@/lib/outreach-types";
+import { OutreachPanel } from "./outreach-panel";
 
 type ShellProps = {
   identity: Identity;
@@ -57,7 +74,16 @@ type ShellProps = {
   onReload: () => void;
   onSignOut: () => void;
   fixture?: boolean;
+  fixturePacket?: boolean;
+  fixtureCanonical?: boolean;
+  fixtureHistory?: boolean;
+  domainActions?: boolean;
   onAction?: HumanActionHandler;
+  onOutreach?: OutreachHandler;
+  onIntake?: IntakeHandler;
+  onUpload?: IntakeUploadHandler;
+  onDelivery?: MaterialDeliveryHandler;
+  onResearchRefresh?: ResearchRefreshHandler;
 };
 const stageIcons = [
   Target,
@@ -78,6 +104,7 @@ function mobileSnapshot() {
 }
 export function HqShell(props: ShellProps) {
   const { identity, data, workspaceId, loading, error } = props;
+  const [intakeOpen, setIntakeOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Stage[]>([]);
   const [expanded, setExpanded] = useState<Stage[]>([]);
@@ -113,7 +140,7 @@ export function HqShell(props: ShellProps) {
   const role = identity.roles.find((r) => r.id === roleId)?.name ?? "Member";
   const jobLink = (id: string) =>
     props.fixture
-      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}`
+      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}${data?.outreach ? "&outreach=1" : ""}${props.onIntake ? "&intake=1" : ""}${props.onDelivery ? "&delivery=1" : ""}${props.onResearchRefresh ? "&refresh=1" : ""}${props.fixturePacket ? "&packet=1" : ""}${props.fixtureCanonical ? "&canonical=1" : ""}${props.fixtureHistory ? "&history=1" : ""}`
       : `/jobs/${encodeURIComponent(id)}`;
   return (
     <div className="app-shell">
@@ -159,8 +186,16 @@ export function HqShell(props: ShellProps) {
         </div>
         <button
           className="button primary add-job"
-          disabled
-          title="Job intake will be available in a later phase"
+          disabled={!props.onIntake || !props.onUpload}
+          onClick={() => {
+            setMobileOpen(false);
+            setIntakeOpen(true);
+          }}
+          title={
+            props.onIntake
+              ? "Add a job for review"
+              : "Job intake is not enabled yet"
+          }
         >
           <Plus size={19} /> Add Job
         </button>
@@ -346,7 +381,13 @@ export function HqShell(props: ShellProps) {
           </label>
           <span className="access-badge">
             <ShieldCheck size={13} />
-            {role} · {props.onAction ? "Human actions" : "Read-only"}
+            {role} ·{" "}
+            {props.onAction ||
+            props.onOutreach ||
+            props.domainActions ||
+            props.onIntake
+              ? "Candidate workspace"
+              : "Read-only"}
             {props.fixture ? " · QA fixture" : ""}
           </span>
           <button
@@ -368,6 +409,49 @@ export function HqShell(props: ShellProps) {
               </button>
             </div>
           )}
+          {!loading &&
+            data &&
+            data.activities
+              .filter((e) => e.event_type === "manual_job_intake_requested")
+              .map((e) => {
+                const task = data.tasks.find(
+                  (t) => t.source_activity_event_id === e.id,
+                );
+                if (
+                  !task ||
+                  (task.status === "completed" && task.opportunity_id)
+                )
+                  return null;
+                const status =
+                  task.status === "completed"
+                    ? "Review complete"
+                    : task.status === "blocked" || task.status === "failed"
+                      ? "Job review needs attention"
+                      : task.status === "cancelled"
+                        ? "Review cancelled"
+                        : "Job review in progress";
+                return (
+                  <section
+                    className="pending-intake"
+                    key={e.id}
+                    aria-label="Supplied job review"
+                  >
+                    <strong>{status}</strong>
+                    <p>
+                      {task.status === "blocked" || task.status === "failed"
+                        ? "The supplied evidence could not be resolved yet. Your original evidence is saved; check the recorded review note or add more complete evidence."
+                        : task.status === "completed"
+                          ? "The worker finished checking your supplied evidence."
+                          : "Your supplied evidence is saved. The discovery workflow checks the posting and matches existing jobs before evaluation."}
+                    </p>
+                    {task.opportunity_id && (
+                      <Link href={"/jobs/" + task.opportunity_id}>
+                        Open role
+                      </Link>
+                    )}
+                  </section>
+                );
+              })}
           {loading && (
             <div className="loading-state" role="status">
               <div className="skeleton" />
@@ -396,6 +480,13 @@ export function HqShell(props: ShellProps) {
               key={`${workspaceId}:${selected.opportunity.id}`}
               job={selected}
               onAction={props.onAction}
+              domainActions={props.domainActions}
+              outreach={data?.outreach}
+              tasks={data?.tasks ?? []}
+              onOutreach={props.onOutreach}
+              artifacts={data?.artifacts ?? []}
+              onDelivery={props.onDelivery}
+              onResearchRefresh={props.onResearchRefresh}
             />
           )}
           {!loading && data && (
@@ -407,6 +498,14 @@ export function HqShell(props: ShellProps) {
           )}
         </main>
       </div>
+      {intakeOpen && props.onIntake && props.onUpload && (
+        <IntakeDialog
+          key={workspaceId}
+          onClose={() => setIntakeOpen(false)}
+          onRequest={props.onIntake}
+          onUpload={props.onUpload}
+        />
+      )}
     </div>
   );
 }
@@ -464,9 +563,23 @@ function TextBlock({
 function JobWorkspace({
   job,
   onAction,
+  artifacts,
+  onDelivery,
+  domainActions,
+  outreach,
+  tasks,
+  onOutreach,
+  onResearchRefresh,
 }: {
   job: JobView;
   onAction?: HumanActionHandler;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
+  domainActions?: boolean;
+  outreach?: OutreachData;
+  tasks: WorkspaceData["tasks"];
+  onOutreach?: OutreachHandler;
+  onResearchRefresh?: ResearchRefreshHandler;
 }) {
   const [stage, setStage] = useState<Stage>(job.stage ?? "Evaluate");
   const [tab, setTab] = useState("Overview");
@@ -474,6 +587,21 @@ function JobWorkspace({
   const [jobDescription, setJobDescription] = useState(false);
   const currentIndex = job.stage ? STAGES.indexOf(job.stage) : -1;
   const Icon = stageIcons[STAGES.indexOf(stage)];
+  const packet = applicationPacket(job);
+  const deliveryBlocked =
+    !!onDelivery &&
+    packet.attachments.some(
+      (a) =>
+        a.required &&
+        a.material &&
+        ["resume", "cover_letter"].includes(a.material_type) &&
+        !artifactPair(a.material, artifacts),
+    );
+  const submissionBlockedReason = packet.submissionBlocked
+    ? "Resolve the recorded required answers and attachments, then request an updated package."
+    : deliveryBlocked
+      ? "Exact required files are not yet registered as a consistent pair."
+      : undefined;
   return (
     <>
       <section className="job-header">
@@ -854,14 +982,30 @@ function JobWorkspace({
             </>
           ) : (
             <>
-              <StageRecords
-                stage={stage}
-                job={job}
-                onMaterial={setMaterial}
-                humanActions={!!onAction}
-              />
+              {stage === "Outreach" && outreach ? (
+                <OutreachPanel
+                  job={job}
+                  data={outreach}
+                  tasks={tasks}
+                  onAction={onOutreach}
+                />
+              ) : (
+                <StageRecords
+                  stage={stage}
+                  job={job}
+                  onMaterial={setMaterial}
+                  humanActions={!!onAction}
+                  artifacts={artifacts}
+                  onDelivery={onDelivery}
+                />
+              )}
               {onAction && (
-                <HumanActions job={job} stage={stage} onAction={onAction} />
+                <HumanActions
+                  job={job}
+                  stage={stage}
+                  onAction={onAction}
+                  submissionBlockedReason={submissionBlockedReason}
+                />
               )}
             </>
           )}
@@ -878,13 +1022,20 @@ function JobWorkspace({
           </details>
           <p className="record-caption panel-caption">
             Backend lifecycle: {label(job.opportunity.opportunity_stage)} ·
-            {onAction ? "Candidate workspace" : "Read-only preview"}
+            {onAction || onOutreach || domainActions
+              ? "Candidate workspace"
+              : "Read-only preview"}
           </p>
         </article>
-        <IntelligencePanel job={job} />
+        <IntelligencePanel job={job} onResearchRefresh={onResearchRefresh} />
       </div>
       {material && (
-        <MaterialDialog material={material} onClose={() => setMaterial(null)} />
+        <MaterialDialog
+          material={material}
+          artifacts={artifacts}
+          onDelivery={onDelivery}
+          onClose={() => setMaterial(null)}
+        />
       )}
     </>
   );
@@ -946,12 +1097,30 @@ function StageRecords({
   job,
   onMaterial,
   humanActions,
+  artifacts,
+  onDelivery,
 }: {
   stage: Stage;
   job: JobView;
   onMaterial: (material: Material) => void;
   humanActions: boolean;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
 }) {
+  if (stage === "Offer")
+    return (
+      <>
+        <OfferPanel key={job.opportunity.id} job={job} />
+        <EventList job={job} filter="offer" />
+      </>
+    );
+  if (stage === "Interview")
+    return (
+      <>
+        <InterviewPanel key={job.opportunity.id} job={job} />
+        <EventList job={job} filter="interview" />
+      </>
+    );
   if (stage === "Pursue")
     return (
       <div className="stage-records">
@@ -1022,6 +1191,12 @@ function StageRecords({
     return (
       <div className="stage-records">
         <PackageSummary job={job} />
+        <ApplicationPacket
+          job={job}
+          onMaterial={onMaterial}
+          artifacts={artifacts}
+          onDelivery={onDelivery}
+        />
         {job.applications.length ? (
           job.applications.map((app) => (
             <section className="application-card" key={app.id}>
@@ -1055,7 +1230,11 @@ function StageRecords({
               </External>
               <h4>Exact submitted materials</h4>
               {job.submittedMaterials
-                .filter((m) => m.application_id === app.id)
+                .filter(
+                  (m) =>
+                    m.application_id === app.id &&
+                    m.workspace_id === job.opportunity.workspace_id,
+                )
                 .map((m) => (
                   <details className="snapshot" key={m.id}>
                     <summary>
@@ -1066,10 +1245,30 @@ function StageRecords({
                       {snapshotText(m.submitted_material_snapshot) ??
                         "A submission snapshot exists, but no text preview is recorded."}
                     </p>
+                    {job.materials
+                      .filter(
+                        (material) =>
+                          material.id === m.application_material_id &&
+                          material.workspace_id === m.workspace_id &&
+                          material.material_type === m.material_type,
+                      )
+                      .map((material) => (
+                        <button
+                          className="button"
+                          key={material.id}
+                          onClick={() => onMaterial(material)}
+                        >
+                          View exact submitted{" "}
+                          {label(material.material_type).toLowerCase()} ·
+                          version {material.version_number}
+                        </button>
+                      ))}
                   </details>
                 ))}
               {!job.submittedMaterials.some(
-                (m) => m.application_id === app.id,
+                (m) =>
+                  m.application_id === app.id &&
+                  m.workspace_id === job.opportunity.workspace_id,
               ) && (
                 <p className="muted">
                   No submitted material snapshots recorded for this attempt.
@@ -1168,9 +1367,13 @@ function snapshotText(snapshot: unknown): string | undefined {
 function MaterialDialog({
   material,
   onClose,
+  artifacts,
+  onDelivery,
 }: {
   material: Material;
   onClose: () => void;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -1226,8 +1429,20 @@ function MaterialDialog({
           {material.content_text ??
             "No text preview recorded for this material."}
         </div>
+        {onDelivery && (
+          <MaterialDelivery
+            key={material.id}
+            material={material}
+            artifacts={artifacts}
+            load={onDelivery}
+          />
+        )}
         <div className="modal-footer">
-          <External url={material.file_url}>Open recorded artifact</External>
+          <span className="muted">
+            {material.file_url || material.storage_path
+              ? "Historical file reference retained. Use verified files for this exact version."
+              : "No historical file reference recorded."}
+          </span>
           <button className="button" onClick={onClose}>
             Done
           </button>
@@ -1236,7 +1451,13 @@ function MaterialDialog({
     </div>
   );
 }
-function IntelligencePanel({ job }: { job: JobView }) {
+function IntelligencePanel({
+  job,
+  onResearchRefresh,
+}: {
+  job: JobView;
+  onResearchRefresh?: ResearchRefreshHandler;
+}) {
   const intel = [...job.intelligence].sort((a, b) =>
     b.researched_at.localeCompare(a.researched_at),
   );
@@ -1250,14 +1471,12 @@ function IntelligencePanel({ job }: { job: JobView }) {
           <Activity size={19} />
           Opportunity Intelligence
         </h2>
-        <button
-          className="button research-refresh"
-          disabled
-          title="Research refresh must be queued through the worker workflow in a later phase"
-        >
-          <RefreshCw size={13} />
-          Refresh
-        </button>
+        <ResearchRefresh
+          key={job.opportunity.workspace_id + ":" + job.opportunity.id}
+          opportunity={job.opportunity}
+          tasks={job.researchTasks ?? []}
+          onRequest={onResearchRefresh}
+        />
       </div>
       <section className="intelligence-card">
         <h3>Company snapshot</h3>

@@ -1,0 +1,31 @@
+{
+  "verified_commit": "4f2341e9d09bef4ccc8d4abb1e31b67c91ebe35c",
+  "verified_blob": "f69d32c9316976a550266c94b29623d6394b4e7a",
+  "evidence_source": "user-supplied re-read snapshot, not independent live task API readback",
+  "workers": [
+    {
+      "worker": "Morning Job Queue",
+      "original_sha256": "4d0b219cba8de360ea7f48936a2ca9acf9309b5945edc658a56a9760161d7f88",
+      "verified_sha256": "abb37e8614005bb2252f62de31b5b88d7d83b034ec00ba6f00aaafbe5c611287",
+      "exact_insertion": "After the Phase 2 migration is verified, retain deferred open actions in the deduplication set. Only actions in Diana\u2019s workspace, assigned to Diana or unassigned, with available_after empty or at/before the current time are eligible for ranking, Today\u2019s One Thing, new plan items, or delivery. Recheck existing active-plan items before delivery so deferred actions aren\u2019t resurfaced. Resume the same action when due; never create a replacement to bypass deferral. Preserve historical plans. Do not query available_after before the migration exists; invalid deferral timestamps must stop the run rather than be ignored.",
+      "removing_insertion_recovers_original": true,
+      "automation_id": "6abaee64b7648191acc2fc9410c42009",
+      "enabled": true,
+      "schedule": "daily at 7:45 AM America/Los_Angeles",
+      "schedule_matches_original": true
+    },
+    {
+      "worker": "Application Queue",
+      "original_sha256": "a0c27696a6fda1823bad144f7c630b7d9e74f614d4792be1a1633850fcbf48f5",
+      "verified_sha256": "9a8058e50c8e416b042fe36581366c7f8ce6c5e2ffdebc3ba83dc36a197b210c",
+      "exact_insertion": "Before preparing materials, resolve the package in Owner/orchestrator context. For \u2018Prepare requested application revisions\u2019 tasks, require the exact draft package ID specified in the task description. Verify it belongs to the same workspace/opportunity and is the latest non-archived package; block missing, foreign, archived, or superseded targets. Pass that package ID and its candidate_notes to Application Agent. Reuse draft/preparing targets; if already ready_for_review or approved, reuse the existing result without regenerating. Preserve the older approved package and materials. Initial pursuit keeps the existing create/reuse flow. Do not grant Application Agent task-management permissions or require another pursuit approval.",
+      "removing_insertion_recovers_original": true,
+      "automation_id": "6abaeec3a4c48191a530c7120433bd9d",
+      "enabled": true,
+      "schedule": "daily at 7:20 AM and 7:20 PM America/Los_Angeles",
+      "schedule_matches_original": true
+    }
+  ],
+  "sql_blob": "0ef9a55b7158d19a99cdf426a628b234191ee318",
+  "sql_sha256": "3e82cde7e177255c3767129a20417a87f50afc867f8db7163ba20e1987288125"
+}

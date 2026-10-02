@@ -1,10 +1,36 @@
 "use client";
+import { OfferContext } from "./offer-panel";
+import { offerService, type OfferService } from "@/lib/offer";
+import { InterviewContext } from "./interview-panel";
+import { interviewService, type InterviewService } from "@/lib/interview";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createHqClient, type HqClient } from "@/lib/supabase/client";
 import { resolveIdentity, loadWorkspace } from "@/lib/queries";
+import { Phase2Diagnostics } from "./phase2-diagnostics";
+import { readPhase2Diagnostics } from "@/lib/phase2-diagnostics";
 import type { Identity, WorkspaceData } from "@/lib/types";
 import { runHumanAction, type HumanActionHandler } from "@/lib/human-actions";
+import {
+  loadOutreach,
+  runOutreachAction,
+  type OutreachHandler,
+} from "@/lib/outreach";
 
+import {
+  requestResearchRefresh,
+  type ResearchRefreshHandler,
+} from "@/lib/research-refresh";
+
+import {
+  requestIntake,
+  uploadIntake,
+  type IntakeHandler,
+  type IntakeUploadHandler,
+} from "@/lib/intake";
+import {
+  loadMaterialArtifact,
+  type MaterialDeliveryHandler,
+} from "@/lib/material-delivery";
 type SessionState = {
   identity: Identity | null;
   data: WorkspaceData | null;
@@ -13,7 +39,17 @@ type SessionState = {
   ready: boolean;
   error: string;
   humanActions: boolean;
+  domainActions: boolean;
+  outreach: boolean;
+  actOutreach: OutreachHandler;
   act: HumanActionHandler;
+  manualIntake: boolean;
+  materialDelivery: boolean;
+  researchRefresh: boolean;
+  refreshResearch: ResearchRefreshHandler;
+  intake: IntakeHandler;
+  upload: IntakeUploadHandler;
+  deliver: MaterialDeliveryHandler;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   selectWorkspace: (id: string) => Promise<void>;
@@ -37,7 +73,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [humanActions, setHumanActions] = useState(false);
+  const [interview, setInterview] = useState<InterviewService | null>(null);
+  const [offer, setOffer] = useState<OfferService | null>(null);
+  const refresh = useRef<() => Promise<void>>(async () => {});
+  useEffect(() => {
+    refresh.current = reload;
+  });
+  const [outreach, setOutreach] = useState(false);
   const mutation = useRef(false);
+  const [manualIntake, setManualIntake] = useState(false),
+    [materialDelivery, setMaterialDelivery] = useState(false);
+  const [researchRefresh, setResearchRefresh] = useState(false);
+  const [diagnosticsEnabled, setDiagnosticsEnabled] = useState(false);
   useEffect(() => {
     const activeGeneration = generation;
     let cancelled = false;
@@ -52,7 +99,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         const instance = createHqClient(config);
         client.current = instance;
+        if (config.interview === true)
+          setInterview(
+            interviewService(
+              instance,
+              () => workspaceRef.current,
+              async () => {
+                await refresh.current();
+              },
+            ),
+          );
+        if (config.offer === true)
+          setOffer(
+            offerService(
+              instance,
+              () => workspaceRef.current,
+              async () => {
+                await refresh.current();
+              },
+            ),
+          );
         setHumanActions(config.humanActions === true);
+        setOutreach(config.outreach === true);
+        setManualIntake(config.manualIntake === true);
+        setMaterialDelivery(config.materialDelivery === true);
+        setResearchRefresh(config.researchRefresh === true);
+        setDiagnosticsEnabled(
+          process.env.NODE_ENV === "development" &&
+            config.phase2Diagnostics === true,
+        );
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -110,7 +185,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         id,
         profile.principal.id,
         humanActions,
+        materialDelivery,
       );
+      if (run !== generation.current) return;
+      if (outreach) rows.outreach = await loadOutreach(instance, id);
       if (run === generation.current) setData(rows);
     } catch (e) {
       if (run === generation.current) {
@@ -204,6 +282,170 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       mutation.current = false;
     }
   };
+  const actOutreach: OutreachHandler = async (command, payload, requestId) => {
+    const instance = client.current,
+      profile = identityRef.current,
+      target = workspaceRef.current;
+    if (!outreach || !instance || !profile || !target)
+      throw new Error("Outreach is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    const run = generation.current;
+    mutation.current = true;
+    try {
+      const verified = await resolveIdentity(instance);
+      if (
+        run !== generation.current ||
+        workspaceRef.current !== target ||
+        verified.principal.id !== profile.principal.id ||
+        !verified.workspaces.some((w) => w.id === target)
+      )
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      const result = await runOutreachAction(
+        instance,
+        target,
+        command,
+        payload,
+        requestId,
+      );
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      // Keep the role/stage and exact confirmation mounted during refresh.
+      // Workspace changes/sign-out still invalidate this whole read generation.
+      const rows = await loadWorkspace(
+        instance,
+        target,
+        profile.principal.id,
+        humanActions,
+        materialDelivery,
+      );
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      rows.outreach = await loadOutreach(instance, target);
+      if (run !== generation.current || workspaceRef.current !== target)
+        throw new Error(
+          "Your workspace changed. Review this relationship again.",
+        );
+      setData(rows);
+      return result;
+    } finally {
+      mutation.current = false;
+    }
+  };
+  async function verifiedContext() {
+    const instance = client.current,
+      profile = identityRef.current,
+      target = workspaceRef.current,
+      run = generation.current;
+    if (!instance || !profile || !target)
+      throw new Error("Sign in and select a workspace.");
+    const verified = await resolveIdentity(instance);
+    if (
+      run !== generation.current ||
+      target !== workspaceRef.current ||
+      verified.principal.id !== profile.principal.id ||
+      !verified.workspaces.some((w) => w.id === target)
+    )
+      throw new Error(
+        "Your workspace changed. Start again in the current workspace.",
+      );
+    return { instance, profile, target, run };
+  }
+  const intake: IntakeHandler = async (input, request) => {
+    if (!manualIntake) throw new Error("Job intake is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, target, run } = await verifiedContext();
+      await requestIntake(instance, target, input, request);
+      if (run === generation.current && target === workspaceRef.current)
+        await reload();
+    } finally {
+      mutation.current = false;
+    }
+  };
+  const upload: IntakeUploadHandler = async (file, request) => {
+    if (!manualIntake) throw new Error("Job intake is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, profile, target, run } = await verifiedContext();
+      const input = await uploadIntake(
+        instance,
+        file,
+        target,
+        profile.principal.id,
+        request,
+      );
+      if (run !== generation.current || target !== workspaceRef.current)
+        throw new Error(
+          "Your workspace changed. Start again in the current workspace.",
+        );
+      return input;
+    } finally {
+      mutation.current = false;
+    }
+  };
+  const deliver: MaterialDeliveryHandler = async (material, artifact) => {
+    if (!materialDelivery) throw new Error("File delivery is not enabled yet.");
+    const { instance, target, run } = await verifiedContext();
+    if (material.workspace_id !== target || artifact.workspace_id !== target)
+      throw new Error("This material belongs to a different workspace.");
+    const blob = await loadMaterialArtifact(instance, material, artifact);
+    if (run !== generation.current || target !== workspaceRef.current)
+      throw new Error("Your workspace changed. Open the material again.");
+    return blob;
+  };
+  const refreshResearch: ResearchRefreshHandler = async (
+    opportunity,
+    request,
+  ) => {
+    if (!researchRefresh)
+      throw new Error("Research requests are not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, target, run } = await verifiedContext();
+      const result = await requestResearchRefresh(
+        instance,
+        target,
+        opportunity,
+        request,
+      );
+      if (run === generation.current && target === workspaceRef.current)
+        await reload();
+      else
+        throw new Error(
+          "Your workspace changed. Start again in the current workspace.",
+        );
+      return result;
+    } finally {
+      mutation.current = false;
+    }
+  };
+  async function diagnosePhase2() {
+    if (!diagnosticsEnabled || process.env.NODE_ENV !== "development")
+      throw new Error("Read-only diagnostics are not enabled.");
+    const { instance, profile, target, run } = await verifiedContext();
+    const report = await readPhase2Diagnostics(
+      instance,
+      profile.principal.id,
+      target,
+      humanActions,
+    );
+    if (run !== generation.current || target !== workspaceRef.current)
+      throw new Error("Your session or workspace changed during the check.");
+    return report;
+  }
   return (
     <Context.Provider
       value={{
@@ -214,14 +456,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         ready,
         error,
         humanActions,
+        domainActions: !!interview || !!offer,
+        outreach,
+        actOutreach,
         act,
+        manualIntake,
+        materialDelivery,
+        researchRefresh,
+        refreshResearch,
+        intake,
+        upload,
+        deliver,
         signIn,
         signOut,
         selectWorkspace,
         reload,
       }}
     >
-      {children}
+      <InterviewContext.Provider value={identity ? interview : null}>
+        <OfferContext.Provider value={identity ? offer : null}>
+          {children}
+        </OfferContext.Provider>
+      </InterviewContext.Provider>
+      {diagnosticsEnabled && identity && workspaceId && (
+        <Phase2Diagnostics
+          key={identity.principal.id + ":" + workspaceId}
+          run={diagnosePhase2}
+        />
+      )}
     </Context.Provider>
   );
 }

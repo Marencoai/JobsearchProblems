@@ -1,5 +1,6 @@
 import type {
   Action,
+  Activity,
   JobView,
   Opportunity,
   Package,
@@ -8,7 +9,18 @@ import type {
   WorkspaceData,
 } from "./types";
 
-export function actionStage(action: Action, tasks: Task[]): Stage | undefined {
+export function actionStage(
+  action: Action,
+  tasks: Task[],
+  activities: Activity[] = [],
+): Stage | undefined {
+  const source = activities.find(
+    (a) =>
+      a.id === action.source_activity_event_id &&
+      a.opportunity_id === action.opportunity_id &&
+      a.source_system === "hq",
+  );
+  if (source?.event_type.startsWith("interview_")) return "Interview";
   const task = tasks.find((t) => t.id === action.internal_task_id);
   if (task?.domain === "interview") return "Interview";
   if (task?.domain === "outreach") return "Outreach";
@@ -31,6 +43,7 @@ export function deriveStage(
   tasks: Task[],
   pkg?: Package,
   now = new Date(),
+  activities: Activity[] = [],
 ): { stage: Stage | null; action?: Action; nextAction: string } {
   if (
     opportunity.opportunity_stage === "closed" ||
@@ -52,7 +65,7 @@ export function deriveStage(
     )
     .sort(actionOrder);
   const interviewAction = open.find(
-    (a) => actionStage(a, tasks) === "Interview",
+    (a) => actionStage(a, tasks, activities) === "Interview",
   );
   if (opportunity.opportunity_stage === "offer")
     return {
@@ -66,10 +79,10 @@ export function deriveStage(
       action: interviewAction ?? open[0],
       nextAction: interviewAction?.title ?? "Review interview updates",
     };
-  const active = open.find((a) => actionStage(a, tasks));
+  const active = open.find((a) => actionStage(a, tasks, activities));
   if (active)
     return {
-      stage: actionStage(active, tasks)!,
+      stage: actionStage(active, tasks, activities)!,
       action: active,
       nextAction: active.title,
     };
@@ -113,7 +126,14 @@ export function buildJobViews(data: WorkspaceData): JobView[] {
       const applications = data.applications
         .filter((a) => a.opportunity_id === opportunity.id)
         .sort((a, b) => b.attempt_number - a.attempt_number);
-      const workflow = deriveStage(opportunity, data.actions, data.tasks, pkg);
+      const workflow = deriveStage(
+        opportunity,
+        data.actions,
+        data.tasks,
+        pkg,
+        new Date(),
+        data.activities,
+      );
       const application = applications[0];
       // Submission alone does not invent outreach work. The approved Application view
       // remains inspectable until a real outreach/interview/offer action is present.
@@ -147,6 +167,11 @@ export function buildJobViews(data: WorkspaceData): JobView[] {
           )
           .sort(actionOrder)[0],
         opportunity,
+        researchTasks: data.tasks.filter(
+          (t) =>
+            t.opportunity_id === opportunity.id &&
+            t.domain === "company_intelligence",
+        ),
         company: data.companies.find((c) => c.id === opportunity.company_id),
         evaluation,
         package: pkg,
