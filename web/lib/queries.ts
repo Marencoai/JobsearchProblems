@@ -217,7 +217,7 @@ export async function loadWorkspace(
       client
         .from("internal_tasks")
         .select(
-          "id,opportunity_id,task_type,domain,status,trigger_type,trigger_reference,source_activity_event_id",
+          "id,workspace_id,opportunity_id,task_type,domain,status,trigger_type,trigger_reference,source_activity_event_id",
         )
         .eq("workspace_id", workspaceId)
         .order("id")

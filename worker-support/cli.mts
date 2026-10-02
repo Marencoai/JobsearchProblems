@@ -2,6 +2,7 @@
 import { plannerEligibility, preparationTarget } from "./hq-contracts.ts";
 import { intakeDedupe } from "./intake-dedupe.ts";
 import { intakeTaskEvidence } from "./intake-contract.ts";
+import { researchRefreshTarget } from "./research-refresh.ts";
 let input = "";
 for await (const chunk of process.stdin) {
   input += chunk;
@@ -19,17 +20,19 @@ try {
           data.plan_items ?? [],
           data.now,
         )
-      : mode === "intake-dedupe"
-        ? intakeDedupe(data.candidate, data.opportunities, data.sources)
-        : mode === "manual-intake"
-          ? intakeTaskEvidence(data.task, data.event)
-          : mode === "preparation"
-            ? preparationTarget(data.task, data.packages)
-            : (() => {
-                throw new Error(
-                  "Use planner, preparation, manual-intake, or intake-dedupe mode",
-                );
-              })();
+      : mode === "research-refresh"
+        ? researchRefreshTarget(data.task, data.event, data.opportunity)
+        : mode === "intake-dedupe"
+          ? intakeDedupe(data.candidate, data.opportunities, data.sources)
+          : mode === "manual-intake"
+            ? intakeTaskEvidence(data.task, data.event)
+            : mode === "preparation"
+              ? preparationTarget(data.task, data.packages)
+              : (() => {
+                  throw new Error(
+                    "Use planner, preparation, manual-intake, intake-dedupe, or research-refresh mode",
+                  );
+                })();
   process.stdout.write(JSON.stringify(result) + "\n");
 } catch (error) {
   process.stderr.write(

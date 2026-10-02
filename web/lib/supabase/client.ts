@@ -53,6 +53,15 @@ type HqDatabase = Database & {
         };
         Returns: Json;
       };
+      hq_request_research_refresh: {
+        Args: {
+          target_workspace_id: string;
+          target_opportunity_id: string;
+          expected_updated_at: string;
+          request_id: string;
+        };
+        Returns: Json;
+      };
       hq_request_job_intake: {
         Args: { target_workspace_id: string; request_id: string; input: Json };
         Returns: Json;
@@ -81,6 +90,7 @@ export type PublicConfig = {
   offer?: boolean;
   manualIntake?: boolean;
   materialDelivery?: boolean;
+  researchRefresh?: boolean;
 };
 export const OUTREACH_READ_TABLES = new Set([
   "contacts",
@@ -174,6 +184,11 @@ export function readOnlyFetch(
       method === "POST" &&
       url.pathname === "/rest/v1/rpc/hq_request_job_intake" &&
       !url.search;
+    const researchRpc =
+      capabilities.researchRefresh === true &&
+      method === "POST" &&
+      url.pathname === "/rest/v1/rpc/hq_request_research_refresh" &&
+      !url.search;
     const intakePath =
       "hq-intake/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx|png|jpg|txt)";
     const materialPath =
@@ -223,6 +238,7 @@ export function readOnlyFetch(
         humanRpc ||
         domainRpc ||
         intakeRpc ||
+        researchRpc ||
         storageRead ||
         intakeUpload
       )

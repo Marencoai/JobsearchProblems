@@ -37,13 +37,22 @@ Before each run read:
 
 Once `next_actions.available_after` is deployed, keep all open actions in the deduplication set. Exclude actions with a future `available_after` from ranking, Today's One Thing, new Plan Items, and candidate-facing delivery, including items in an existing active Plan. Null means available now. Resume eligibility on the same action when that time arrives; never create a replacement to bypass deferral. Preserve historical Plan snapshots and the existing versioning rule. Do not query this proposed column before its migration is applied.
 
-Use the executable boundary helper from the repository root before ranking or delivery:
+The scheduled Morning Job Queue is a ChatGPT automation, not a persistent Node
+process. Implement the filtering above directly in its self-contained
+instructions using current database rows. Use current Workspace/human-scoped open
+actions for deduplication; use only those with `available_after is null or
+available_after <= now()` for ranking/new items and join existing Plan Items to
+those same live eligible actions before delivery. Fail closed if current action
+state cannot be read. No local Node runtime is a deployment prerequisite.
+
+The following helper is the tested reference/CI implementation. Run it only
+where an explicit local executable environment is available:
 
 ```sh
 node --experimental-strip-types worker-support/cli.mts planner < synthetic-or-authorized-planner-input.json
 ```
 
-Pass JSON containing `workspace_id`, `principal_id`, `now` (UTC ISO timestamp), live `actions` including workspace/assignee/status/deferral, and existing `plan_items` including workspace and `next_action_id`. The helper returns `deduplication_action_ids`, `eligible_action_ids`, and `delivery_plan_item_ids`. Deduplicate against the first set; rank/select One Thing/create new items only from the second; deliver existing items only from the third. It does no database access or ranking. Keep existing Auth/RLS and policy checks. If the helper fails, stop that planner run rather than reverting to unfiltered actions. Use pinned Node 22 or newer; do not put credentials in the input.
+Pass JSON containing `workspace_id`, `principal_id`, `now` (UTC ISO timestamp), live `actions` including workspace/assignee/status/deferral, and existing `plan_items` including workspace and `next_action_id`. The helper returns `deduplication_action_ids`, `eligible_action_ids`, and `delivery_plan_item_ids`. Deduplicate against the first set; rank/select One Thing/create new items only from the second; deliver existing items only from the third. It does no database access or ranking. Keep existing Auth/RLS and policy checks. Invalid/missing live inputs stop that planner run rather than reverting to unfiltered actions. Local reference execution uses pinned Node22+ and credential-free input; hosted adoption is verified by instruction readback and normal-data behavior.
 
 ## Opportunity Review Action
 

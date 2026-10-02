@@ -1,4 +1,4 @@
-# Proposed HQ intake and exact material delivery
+# Proposed HQ intake, document delivery and application packet
 
 Status: local only; migration and Storage changes are unapproved/unapplied. Existing Company → Opportunity → Evaluation → Package → Material architecture and worker permissions remain authoritative.
 
@@ -21,3 +21,30 @@ An insert trigger locks the current draft Material, checks uploaded object size/
 Restrictive object guards constrain preexisting broad permissive policies for these buckets, including authenticated/anonymous overwrite/delete denial. Other buckets are unchanged. Before deployment, inventory actual bucket/policy state and test the real non-production Storage API. SQL catalog mocks do not certify the object API.
 
 `HQ_MANUAL_INTAKE` and `HQ_MATERIAL_DELIVERY` default off independently of `HQ_HUMAN_ACTIONS`. Client admits only exact new RPC/upload or registration-read/download requests with that capability. Auth remains in memory; Workspace/human context is refreshed before operations. UI shows plain next steps without raw task output. Pinned PDF.js renders verified in-memory bytes with its locally copied worker; no public URLs or persistent signed links. See `web/INTAKE_DELIVERY_REVIEW.md` for gates, rollback, validation and full v1 checkpoint.
+
+## Research refresh and approved ATS packet
+
+Separate proposed/unapplied migration `20261002001252_hq_research_refresh_request.sql`
+adds caller-invoker `hq_request_research_refresh(workspace,opportunity,version,key)`.
+It requires an active human and existing Opportunity/Intelligence/Activity/Task
+read/create authority, records explicit request provenance and reuses one pending
+`refresh_company_intelligence` task through actor/request and Workspace/role
+advisory locks. It does not write research facts, completed Evaluation snapshots,
+Next Actions or application authority. The Owner/research handoff is proposed in
+`skills/refresh-company-intelligence/SKILL.md`; no actual hosted consumer has been
+identified/adopted by this repository change. Node helpers remain reference/CI
+contracts; ChatGPT queues use self-contained instructions and database queries,
+not a presumed Node process. `HQ_RESEARCH_REFRESH` defaults off
+and requires its own approved schema/worker verification before activation.
+
+Application packet UI uses existing approved current Material versions and the
+bounded requirements/answers contract in `skills/prepare-application/SKILL.md`.
+Inspected ATS link, exact resume/cover files, skills and confirmed field values
+are presented with explicit Copy/Download. Unknown required inputs disable
+frontend submission confirmation; voluntary/sensitive values are never inferred.
+No new answer table, automatic form fill/submission, or approved Phase2 RPC change.
+Submitted history resolves exact Workspace/Material ID/type even after new
+versions exist. Legacy file references remain stored but have no clickable
+bypass of registered-pair/byte verification. See `web/INTEGRATION_CONTRACT.md`
+for shared API conflicts and the complete capability test matrix required by
+the final domain integrator.

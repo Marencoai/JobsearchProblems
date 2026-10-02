@@ -167,6 +167,11 @@ export function buildJobViews(data: WorkspaceData): JobView[] {
           )
           .sort(actionOrder)[0],
         opportunity,
+        researchTasks: data.tasks.filter(
+          (t) =>
+            t.opportunity_id === opportunity.id &&
+            t.domain === "company_intelligence",
+        ),
         company: data.companies.find((c) => c.id === opportunity.company_id),
         evaluation,
         package: pkg,

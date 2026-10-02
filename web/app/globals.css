@@ -2220,3 +2220,42 @@ small {
   min-height: 0;
   overflow: auto;
 }
+.research-request {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 48%;
+}
+.research-request p {
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.application-packet {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+}
+.application-packet h4 {
+  margin: 20px 0 10px;
+}
+.packet-file,
+.packet-answer,
+.packet-text {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+.packet-answer p {
+  margin: 8px 0;
+}
+.packet-text summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.packet-file .artifact-delivery {
+  max-height: 65vh;
+  overflow: auto;
+}

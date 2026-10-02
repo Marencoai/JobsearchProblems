@@ -1,0 +1,9 @@
+{
+  "renderer_key": "executive-brief-two-page-v2",
+  "input_sha256": "6262eb58ae3c4cdec2cb1d4478c8f20a8562f2fd55c036b9b47fd15b346f0940",
+  "docx_sha256": "65e4e776138fa834977a1657018ef60bdc52f19eec3a65c064279c62eb72c58e",
+  "pdf_sha256": "325731aad1a2874dff01bbc99ae36cc1dccddc804900a3180838a42f0ada1c22",
+  "page_count": 2,
+  "visual_pass": true,
+  "parse_back_pass": true
+}

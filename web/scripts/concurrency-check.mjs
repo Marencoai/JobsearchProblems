@@ -283,6 +283,80 @@ try {
   await intakeRace();
   await intakeRace(true);
 
+  // Both retry identity and per-role queue coalescing are exercised with real
+  // advisory-lock waits. No completed evaluation or opportunity fact changes.
+  async function researchRace(sameKey) {
+    const f = await evaluatedFixture(),
+      firstKey = randomUUID(),
+      secondKey = sameKey ? firstKey : randomUUID();
+    const before = await query(
+      `select row_to_json(e) from evaluations e where id=${literal(f.evaluation_id)}; select row_to_json(o) from opportunities o where id=${literal(f.id)};`,
+    );
+    const requestCall = (key) =>
+      `select hq_request_research_refresh(${literal(workspace)},${literal(f.id)},${literal(f.updated_at)},${literal(key)});`;
+    const lock = sameKey
+      ? workspace + "hq:research-refresh:" + principal + ":" + firstKey
+      : workspace + ":research:" + f.id;
+    const first = query(
+      `begin; ${auth()} select pg_advisory_xact_lock(hashtextextended(${literal(lock)},0)); select pg_sleep(1); ${requestCall(firstKey)} commit;`,
+      "hq-research-first",
+    );
+    const firstHandled = first.then(
+      (value) => ({ status: "fulfilled", value }),
+      (reason) => ({ status: "rejected", reason }),
+    );
+    await waitFor("hq-research-first", "Timeout");
+    const second = query(
+      `begin; ${auth()} ${requestCall(secondKey)} commit;`,
+      "hq-research-second",
+    );
+    const secondHandled = second.then(
+      (value) => ({ status: "fulfilled", value }),
+      (reason) => ({ status: "rejected", reason }),
+    );
+    await waitFor("hq-research-second", "Lock");
+    const outcomes = await Promise.all([firstHandled, secondHandled]);
+    assert.ok(
+      outcomes.every((r) => r.status === "fulfilled"),
+      JSON.stringify(outcomes),
+    );
+    const a = rpcResult(outcomes[0]),
+      b = rpcResult(outcomes[1]);
+    assert.equal(a.task_id, b.task_id);
+    if (sameKey) assert.deepEqual(a, b);
+    assert.equal(
+      await query(
+        `select count(*) from internal_tasks where opportunity_id=${literal(f.id)};`,
+      ),
+      "1",
+    );
+    assert.equal(
+      await query(
+        `select count(*) from activity_events where opportunity_id=${literal(f.id)} and event_type='research_refresh_requested';`,
+      ),
+      sameKey ? "1" : "2",
+    );
+    assert.equal(
+      await query(
+        `select count(*) from next_actions where opportunity_id=${literal(f.id)};`,
+      ),
+      "1",
+    );
+    assert.equal(
+      await query(
+        `select row_to_json(e) from evaluations e where id=${literal(f.evaluation_id)}; select row_to_json(o) from opportunities o where id=${literal(f.id)};`,
+      ),
+      before,
+    );
+    console.log(
+      sameKey
+        ? "PASS concurrent identical research refresh: one event/task, same result; observed Lock wait"
+        : "PASS concurrent distinct research requests: two attributed events, one task, completed evaluation unchanged; observed Lock wait",
+    );
+  }
+  await researchRace(true);
+  await researchRace(false);
+
   const pursuit = await evaluatedFixture();
   let results = await race(
     pursuit,

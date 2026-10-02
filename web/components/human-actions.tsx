@@ -21,10 +21,12 @@ export function HumanActions({
   job,
   stage,
   onAction,
+  submissionBlockedReason,
 }: {
   job: JobView;
   stage: Stage;
   onAction: HumanActionHandler;
+  submissionBlockedReason?: string;
 }) {
   const [command, setCommand] = useState<HumanCommand | null>(null);
   const [notes, setNotes] = useState("");
@@ -76,6 +78,10 @@ export function HumanActions({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!command || submitting.current) return;
+    if (command === "confirm_submission" && submissionBlockedReason) {
+      setError(submissionBlockedReason);
+      return;
+    }
     let payload: HumanPayload = {};
     if (["pursue", "pass", "defer"].includes(command)) {
       payload = {
@@ -193,6 +199,8 @@ export function HumanActions({
             {stage === "Application" && job.package.status === "approved" && (
               <button
                 className="button success"
+                disabled={!!submissionBlockedReason}
+                title={submissionBlockedReason}
                 onClick={() => open("confirm_submission")}
               >
                 I submitted the application
@@ -308,7 +316,7 @@ export function HumanActions({
                   />
                   {command === "approve_package"
                     ? "I reviewed and approve these materials."
-                    : "I submitted the application with these exact materials."}
+                    : "I submitted the application with these exact materials and recorded answers."}
                 </label>
               </>
             )}
