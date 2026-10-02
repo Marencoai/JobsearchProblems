@@ -1,0 +1,51 @@
+{
+  "status": "PREPARATION_ONLY_NOT_INSTALLED_NOT_RUNTIME_PROOF",
+  "name": "HQ Compatibility Test",
+  "tool": {
+    "name": "hq_compatibility_probe",
+    "description": "Read a fixed synthetic compatibility fixture. Test only; no external account, database or production access.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "test_nonce": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9-]{1,64}$"
+        }
+      },
+      "required": [
+        "test_nonce"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "securitySchemes": [
+      {
+        "type": "oauth2",
+        "scopes": [
+          "hq.compatibility.read"
+        ]
+      }
+    ]
+  },
+  "syntheticResultContract": {
+    "fixture": "dummy-plan",
+    "authenticated": true,
+    "production_access": false,
+    "test_nonce": "echo-public-nonce",
+    "receipt": "fresh-nonsecret-receipt"
+  },
+  "testTaskPrompt": "Call only the installed HQ Compatibility Test tool hq_compatibility_probe with test_nonce hq-scheduled-probe-1. Report its non-secret receipt and authenticated boolean. If the tool is unavailable or authentication fails, report blocked and stop. Do not call other connectors or access any production data. Never infer success from this prompt or from a local test.",
+  "scope": {
+    "production": false,
+    "externalData": false,
+    "syntheticOnly": true,
+    "oneTime": true
+  },
+  "actualScheduledCallProven": false,
+  "actualScheduledRefreshProven": false
+}
