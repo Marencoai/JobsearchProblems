@@ -53,6 +53,7 @@ class ProbeTests(unittest.TestCase):
         self.assertIn("resource_metadata=", headers["WWW-Authenticate"])
         metadata = self.request(path="/.well-known/oauth-protected-resource/mcp")[2]
         self.assertEqual(metadata["scopes_supported"], [SCOPE])
+        self.assertEqual(self.request(path="/.well-known/oauth-protected-resource")[2], metadata)
         self.assertEqual(self.request(path="/.well-known/oauth-authorization-server")[2]["code_challenge_methods_supported"], ["S256"])
 
     def test_success_has_no_auth_secret_or_runtime_claim(self):
@@ -87,7 +88,9 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(self.request(msg, extra={"Origin": "https://invalid.example"})[0], 403)
 
     def test_paths_and_no_sse(self):
-        self.assertEqual(self.request(path="/mcp")[0], 405)
+        status, headers, _ = self.request(path="/mcp")
+        self.assertEqual(status, 401)
+        self.assertIn("resource_metadata=", headers["WWW-Authenticate"])
         self.assertEqual(self.request(path="/secrets")[0], 404)
 
 

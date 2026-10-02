@@ -6,6 +6,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
 import synthetic_oauth
 
 SCOPE = "hq.compatibility.read"
@@ -47,6 +48,14 @@ class Handler(BaseHTTPRequestHandler):
         pass  # Never log bearer headers, request bodies or fixture values.
 
     def reply(self, status, body=None, headers=None, html_body=False):
+        if self.server.report_registration:
+            path = urlsplit(self.path).path
+            safe_paths = {"/mcp", "/register", "/authorize", "/consent", "/token", "/revoke",
+                          "/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp",
+                          "/.well-known/oauth-authorization-server"}
+            print(json.dumps({"event": "synthetic_http_response", "method": self.command,
+                              "path": path if path in safe_paths else "other", "status": status,
+                              "observed_at_utc": datetime.now(timezone.utc).isoformat()}), flush=True)
         raw = body.encode() if html_body else (json.dumps(body).encode() if body is not None else b"")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8" if html_body else "application/json")
@@ -60,12 +69,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if synthetic_oauth.get(self):
             return
-        if self.path == "/.well-known/oauth-protected-resource/mcp":
+        if self.path in ("/.well-known/oauth-protected-resource/mcp", "/.well-known/oauth-protected-resource"):
             return self.reply(200, {"resource": self.server.origin + "/mcp",
                 "authorization_servers": [self.server.origin],
                 "scopes_supported": [SCOPE], "bearer_methods_supported": ["header"]})
         if self.path == "/mcp":
-            return self.reply(405, {"error": "json_only_no_sse"}, {"Allow": "POST, DELETE"})
+            return self.reply(401, {"error": "authentication_required_no_sse"}, {
+                "WWW-Authenticate": 'Bearer resource_metadata="' + self.server.origin +
+                '/.well-known/oauth-protected-resource/mcp", scope="' + SCOPE + '"'})
         self.reply(404, {"error": "not_found"})
 
     def do_DELETE(self):
@@ -122,6 +133,9 @@ class Handler(BaseHTTPRequestHandler):
         result = {"test_nonce": args["test_nonce"], "observed_at_utc": datetime.now(timezone.utc).isoformat(),
             "receipt": secrets.token_hex(16), "fixture": "dummy-plan", "local_fixture_verified": True,
             "production_access": False, "oauth_flow_proven": False, "scheduled_runtime_proven": False}
+        if self.server.report_registration:
+            print(json.dumps({"event": "authenticated_synthetic_probe", "test_nonce": result["test_nonce"],
+                              "receipt": result["receipt"], "observed_at_utc": result["observed_at_utc"]}), flush=True)
         self.rpc(ident, {"content": [{"type": "text", "text": json.dumps(result)}],
                          "structuredContent": result, "isError": False})
 

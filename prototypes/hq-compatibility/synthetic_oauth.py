@@ -235,7 +235,11 @@ def post(handler):
             elif handler.path == "/consent":
                 handler.reply(303, None, {"Location": state.consent(p)})
             elif handler.path == "/token":
-                handler.reply(200, state.token(p))
+                result = state.token(p)
+                if handler.server.report_registration:
+                    print(json.dumps({"event": "synthetic_token_exchange_succeeded",
+                                      "grant_type": p.get("grant_type")}), flush=True)
+                handler.reply(200, result)
             else:
                 state.revoke(p)
                 handler.reply(200, {})
