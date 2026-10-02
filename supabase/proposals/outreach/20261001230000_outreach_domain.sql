@@ -385,7 +385,7 @@ begin
  -- reconciliation with one lock order, including two different retry IDs.
  -- Non-key fields/children only: serialize writers while allowing existing
  -- Opportunity-first workflows' Workspace FK KEY SHARE checks to finish.
- -- All new domain writers take this lock before their Opportunity locks.
+ -- Outreach keeps Workspace-first order; peers must use compatible FK locks.
  perform id from public.workspaces where id=target_workspace_id for no key update;
  input:=jsonb_build_object('command',command,'payload',payload);
  select * into previous from private.outreach_action_requests r where r.workspace_id=target_workspace_id

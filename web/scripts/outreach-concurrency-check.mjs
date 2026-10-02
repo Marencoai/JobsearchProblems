@@ -148,13 +148,36 @@ async function count(table, condition) {
     await query(`select count(*) from ${table} where ${condition};`),
   );
 }
-async function phase2Overlap(mode, reverse = false) {
+async function phase2Overlap(
+  mode,
+  reverse = false,
+  command = "save_positioning",
+) {
   const mixed = await json(
-    `begin;${auth()}insert into opportunities(workspace_id,company_id,title,opportunity_stage) values(${literal(workspace)},${literal(company)},'Synthetic mixed-domain role','pursuing') returning json_build_object('id',id,'updated_at',updated_at);commit;`,
+    `begin;${auth()}insert into opportunities(workspace_id,company_id,title,opportunity_stage) values(${literal(workspace)},${literal(company)},'Synthetic mixed-domain role',${literal(command === "pursue" ? "evaluating" : "pursuing")}) returning json_build_object('id',id,'updated_at',updated_at);commit;`,
   );
-  const pkg = await json(
-    `begin;${auth()}insert into application_packages(workspace_id,opportunity_id) values(${literal(workspace)},${literal(mixed.id)}) returning json_build_object('id',id,'updated_at',updated_at);commit;`,
-  );
+  let pkg = null,
+    decision = null;
+  if (command === "save_positioning")
+    pkg = await json(
+      `begin;${auth()}insert into application_packages(workspace_id,opportunity_id) values(${literal(workspace)},${literal(mixed.id)}) returning json_build_object('id',id,'updated_at',updated_at);commit;`,
+    );
+  else {
+    const evaluation = await json(
+      `begin;${auth()}insert into evaluations(workspace_id,opportunity_id) values(${literal(workspace)},${literal(mixed.id)}) returning json_build_object('id',id);commit;`,
+    );
+    await query(
+      `begin;${auth()}update evaluations set candidate_fit_score=89,opportunity_fit_score=76,opportunity_type='mutual_fit',evidence_confidence='high',problem_translation='Synthetic employer need',recommended_next_action='pursue',evaluation_status='complete' where id=${literal(evaluation.id)};commit;`,
+    );
+    decision = await json(
+      `begin;${auth()}insert into next_actions(workspace_id,opportunity_id,assigned_to_principal_id,action_type,title) values(${literal(workspace)},${literal(mixed.id)},${literal(principal)},'decide','Synthetic candidate pursuit decision') returning json_build_object('id',id,'updated_at',updated_at);commit;`,
+    );
+    mixed.updated_at = (
+      await json(
+        `select json_build_object('updated_at',updated_at) from opportunities where id=${literal(mixed.id)};`,
+      )
+    ).updated_at;
+  }
   const person = await rpc("save_contact", {
     full_name: "Synthetic mixed-domain contact",
     source_system: "candidate",
@@ -166,7 +189,7 @@ async function phase2Overlap(mode, reverse = false) {
     relevance: "Synthetic cross-domain race",
     source_system: "candidate",
   });
-  const human = `select public.hq_human_action(${literal(workspace)},${literal(mixed.id)},${literal(mixed.updated_at)}::timestamptz,${literal(randomUUID())},'save_positioning',${literal(JSON.stringify({ package_id: pkg.id, package_updated_at: pkg.updated_at, notes: "Exact mixed-race positioning" }))}::jsonb);`;
+  const human = `select public.hq_human_action(${literal(workspace)},${literal(mixed.id)},${literal(mixed.updated_at)}::timestamptz,${literal(randomUUID())},${literal(command)},${literal(JSON.stringify(command === "pursue" ? { action_id: decision.id, action_updated_at: decision.updated_at } : { package_id: pkg.id, package_updated_at: pkg.updated_at, notes: "Exact mixed-race positioning" }))}::jsonb);`;
   let first, second;
   if (!reverse) {
     first = query(
@@ -187,6 +210,7 @@ async function phase2Overlap(mode, reverse = false) {
       mixed,
       pkg,
       person,
+      decision,
     };
   }
   first = query(
@@ -203,6 +227,7 @@ async function phase2Overlap(mode, reverse = false) {
     mixed,
     pkg,
     person,
+    decision,
   };
 }
 try {
@@ -475,7 +500,7 @@ try {
   );
   assert.notEqual(historical, implementation);
   await query(historical);
-  const oldCycle = await phase2Overlap("update");
+  const oldCycle = await phase2Overlap("update", false, "pursue");
   assert.equal(
     oldCycle.results.filter(
       (r) =>
@@ -488,36 +513,59 @@ try {
     1,
   );
   console.log(
-    "PASS reproduced historical Workspace UPDATE / unchanged Phase 2 Opportunity UPDATE deadlock in isolated cluster",
+    "PASS reproduced historical Workspace UPDATE / exact unchanged Phase 2 Pursue deadlock in isolated cluster",
   );
   await query(implementation);
-  for (const reverse of [false, true]) {
-    const mixed = await phase2Overlap("no key update", reverse);
-    assert.ok(
-      mixed.results.every((r) => r.status === "fulfilled"),
-      JSON.stringify(
-        mixed.results.map((r) =>
-          r.status === "rejected" ? r.reason.message : r.status,
+  for (const command of ["save_positioning", "pursue"])
+    for (const reverse of [false, true]) {
+      const mixed = await phase2Overlap("no key update", reverse, command);
+      assert.ok(
+        mixed.results.every((r) => r.status === "fulfilled"),
+        JSON.stringify(
+          mixed.results.map((r) =>
+            r.status === "rejected" ? r.reason.message : r.status,
+          ),
         ),
-      ),
-    );
-    assert.equal(
-      await count(
-        "opportunity_contacts",
-        `opportunity_id=${literal(mixed.mixed.id)} and contact_id=${literal(mixed.person.contact_id)}`,
-      ),
-      1,
-    );
-    assert.equal(
-      await query(
-        `select candidate_notes from application_packages where id=${literal(mixed.pkg.id)};`,
-      ),
-      "Exact mixed-race positioning",
-    );
-    console.log(
-      `PASS mixed Outreach / unchanged Phase 2 RPC (${reverse ? "Phase 2 starts first" : "Outreach starts first"}): observed Lock wait; both exact operations committed without deadlock`,
-    );
-  }
+      );
+      assert.equal(
+        await count(
+          "opportunity_contacts",
+          `opportunity_id=${literal(mixed.mixed.id)} and contact_id=${literal(mixed.person.contact_id)}`,
+        ),
+        1,
+      );
+      if (command === "save_positioning")
+        assert.equal(
+          await query(
+            `select candidate_notes from application_packages where id=${literal(mixed.pkg.id)};`,
+          ),
+          "Exact mixed-race positioning",
+        );
+      else {
+        assert.equal(
+          await query(
+            `select opportunity_stage from opportunities where id=${literal(mixed.mixed.id)};`,
+          ),
+          "pursuing",
+        );
+        assert.equal(
+          await query(
+            `select status from next_actions where id=${literal(mixed.decision.id)};`,
+          ),
+          "completed",
+        );
+        assert.equal(
+          await count(
+            "internal_tasks",
+            `opportunity_id=${literal(mixed.mixed.id)} and task_type='prepare_application_package' and domain='application' and status='ready' and trigger_type='candidate_action' and trigger_reference='candidate_decided_to_pursue'`,
+          ),
+          1,
+        );
+      }
+      console.log(
+        `PASS mixed Outreach / exact unchanged Phase 2 ${command} (${reverse ? "Phase 2 starts first" : "Outreach starts first"}): observed Lock wait; both exact operations committed without deadlock`,
+      );
+    }
   const foreign = randomUUID();
   await query(
     `insert into auth.users values(${literal(foreign)},'foreign-native@example.invalid');select set_config('request.jwt.claim.sub',${literal(foreign)},false);select public.bootstrap_personal_workspace('Foreign native','synthetic-foreign-native');`,
