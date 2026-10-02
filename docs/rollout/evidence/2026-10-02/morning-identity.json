@@ -1,0 +1,129 @@
+{
+  "functions": [
+    {
+      "name": "current_principal_id",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "private",
+      "source": "\n    select p.id\n    from public.principals p\n    where p.auth_user_id = auth.uid()\n      and p.status = 'active'\n    limit 1;\n",
+      "security_definer": true
+    },
+    {
+      "name": "current_principal_is_human",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "private",
+      "source": "\n    select coalesce(\n        (\n            select p.principal_type = 'human'\n            from public.principals p\n            where p.id = public.current_principal_id()\n            limit 1\n        ),\n        false\n    );\n",
+      "security_definer": true
+    },
+    {
+      "name": "has_permission",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "private",
+      "source": "\n    select exists (\n        select 1\n        from public.workspace_memberships wm\n\n        join public.role_permissions rp\n          on rp.role_id = wm.role_id\n\n        join public.permissions p\n          on p.id = rp.permission_id\n\n        where wm.workspace_id = target_workspace_id\n          and wm.principal_id = public.current_principal_id()\n          and wm.status = 'active'\n          and p.permission_key = required_permission_key\n    );\n",
+      "security_definer": true
+    },
+    {
+      "name": "is_active_workspace_principal",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "private",
+      "source": "\n    select\n        public.is_workspace_member(target_workspace_id)\n        and exists (\n            select 1\n            from public.workspace_memberships wm\n            join public.principals p\n              on p.id = wm.principal_id\n            where wm.workspace_id = target_workspace_id\n              and wm.principal_id = target_principal_id\n              and wm.status = 'active'\n              and p.status = 'active'\n        );\n",
+      "security_definer": true
+    }
+  ],
+  "recorded_actor": {
+    "type": "human",
+    "status": "active",
+    "role_names": [
+      "Owner"
+    ],
+    "principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+    "auth_binding_present": true,
+    "active_workspace_membership": true
+  },
+  "auth_uid_source": "\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.sub', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')\n  )::uuid\n",
+  "identity_columns": [
+    {
+      "type": "uuid",
+      "table": "principals",
+      "column": "id"
+    },
+    {
+      "type": "text",
+      "table": "principals",
+      "column": "principal_type"
+    },
+    {
+      "type": "uuid",
+      "table": "principals",
+      "column": "auth_user_id"
+    },
+    {
+      "type": "text",
+      "table": "principals",
+      "column": "name"
+    },
+    {
+      "type": "text",
+      "table": "principals",
+      "column": "status"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "principals",
+      "column": "created_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "principals",
+      "column": "updated_at"
+    },
+    {
+      "type": "uuid",
+      "table": "workspace_memberships",
+      "column": "id"
+    },
+    {
+      "type": "uuid",
+      "table": "workspace_memberships",
+      "column": "workspace_id"
+    },
+    {
+      "type": "uuid",
+      "table": "workspace_memberships",
+      "column": "principal_id"
+    },
+    {
+      "type": "uuid",
+      "table": "workspace_memberships",
+      "column": "role_id"
+    },
+    {
+      "type": "text",
+      "table": "workspace_memberships",
+      "column": "status"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "workspace_memberships",
+      "column": "joined_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "workspace_memberships",
+      "column": "created_at"
+    },
+    {
+      "type": "timestamp with time zone",
+      "table": "workspace_memberships",
+      "column": "updated_at"
+    }
+  ],
+  "postgres_bypassrls": true
+}

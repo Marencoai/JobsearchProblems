@@ -1,0 +1,357 @@
+{
+  "plan": {
+    "id": "ef3e507c-730e-411b-a8f9-d8705cacd3e1",
+    "status": "draft",
+    "created_at": "2026-10-02T14:56:59.294143+00:00",
+    "updated_at": "2026-10-02T14:56:59.294143+00:00",
+    "generated_at": "2026-10-02T14:56:59.294143+00:00",
+    "workspace_id": "9341c194-c4f6-45c4-b3b1-37a832a7fc68",
+    "one_thing_present": false,
+    "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+    "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+  },
+  "functions": [
+    {
+      "name": "enforce_daily_plan_lifecycle",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "private",
+      "source": "\ndeclare\n    may_update boolean;\n    may_complete boolean;\n    plan_item_count integer;\n\n    old_business_state jsonb;\n    new_business_state jsonb;\nbegin\n\n    may_update :=\n        public.has_permission(\n            new.workspace_id,\n            'daily_plan.update'\n        );\n\n    may_complete :=\n        public.has_permission(\n            new.workspace_id,\n            'daily_plan.complete'\n        );\n\n\n    -- --------------------------------------------------------\n    -- INSERT\n    -- --------------------------------------------------------\n\n    if tg_op = 'INSERT' then\n\n        -- prepare_daily_plan_insert() also sets these values.\n        -- We repeat the rule here intentionally so lifecycle\n        -- behavior remains explicit.\n\n        new.status := 'draft';\n\n        new.todays_one_thing_action_id := null;\n\n        new.grade := null;\n        new.score := null;\n        new.completed_at := null;\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Immutable identity / origin fields.\n    -- --------------------------------------------------------\n\n    if new.id <> old.id then\n        raise exception\n            'Daily Plan id is immutable';\n    end if;\n\n\n    if new.workspace_id <> old.workspace_id then\n        raise exception\n            'Daily Plan Workspace is immutable';\n    end if;\n\n\n    if new.plan_date <> old.plan_date then\n        raise exception\n            'Daily Plan date is immutable';\n    end if;\n\n\n    if new.version_number <> old.version_number then\n        raise exception\n            'Daily Plan version is immutable';\n    end if;\n\n\n    if new.generated_at <> old.generated_at then\n        raise exception\n            'Daily Plan generated_at is immutable';\n    end if;\n\n\n    if new.created_at <> old.created_at then\n        raise exception\n            'Daily Plan created_at is immutable';\n    end if;\n\n\n    if new.created_by_principal_id\n       is distinct from old.created_by_principal_id then\n\n        raise exception\n            'Daily Plan creator is immutable';\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Historical plans are immutable.\n    -- --------------------------------------------------------\n\n    if old.status in (\n        'completed',\n        'superseded'\n    ) then\n\n        raise exception\n            'Completed or superseded Daily Plans are immutable';\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Draft remains Draft.\n    --\n    -- Full editing is allowed with daily_plan.update.\n    -- --------------------------------------------------------\n\n    if old.status = 'draft'\n       and new.status = 'draft' then\n\n        if not may_update then\n            raise exception\n                'Permission daily_plan.update is required to edit a draft Daily Plan';\n        end if;\n\n\n        -- Grade belongs to the completed historical day,\n        -- not a draft plan.\n\n        if new.grade is not null\n           or new.score is not null\n           or new.completed_at is not null then\n\n            raise exception\n                'Draft Daily Plans cannot contain a final grade, score, or completion timestamp';\n\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Draft → Active\n    -- --------------------------------------------------------\n\n    if old.status = 'draft'\n       and new.status = 'active' then\n\n        if not may_update then\n            raise exception\n                'Permission daily_plan.update is required to activate a Daily Plan';\n        end if;\n\n\n        -- A candidate-facing active Plan should contain actual\n        -- work.\n\n        select count(*)\n        into plan_item_count\n        from public.daily_plan_items\n        where workspace_id = new.workspace_id\n          and daily_plan_id = new.id;\n\n\n        if plan_item_count = 0 then\n            raise exception\n                'A Daily Plan must contain at least one Plan Item before activation';\n        end if;\n\n\n        -- ----------------------------------------------------\n        -- Supersede any previously active Plan for the same\n        -- Workspace and date.\n        --\n        -- This preserves v1 rather than rewriting it.\n        -- ----------------------------------------------------\n\n        update public.daily_plans\n        set status = 'superseded'\n        where workspace_id = new.workspace_id\n          and plan_date = new.plan_date\n          and status = 'active'\n          and id <> new.id;\n\n\n        new.grade := null;\n        new.score := null;\n        new.completed_at := null;\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Draft → Superseded\n    --\n    -- Useful when a generated draft is abandoned before it ever\n    -- becomes the candidate-facing Plan.\n    -- --------------------------------------------------------\n\n    if old.status = 'draft'\n       and new.status = 'superseded' then\n\n        if not may_update then\n            raise exception\n                'Permission daily_plan.update is required to supersede a draft Daily Plan';\n        end if;\n\n\n        old_business_state :=\n            to_jsonb(old)\n            - array[\n                'status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        new_business_state :=\n            to_jsonb(new)\n            - array[\n                'status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        if old_business_state\n           is distinct from new_business_state then\n\n            raise exception\n                'Daily Plan content cannot change while marking the draft superseded';\n\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Active remains Active\n    --\n    -- Structural reprioritization should create another Plan\n    -- version rather than silently rewriting history.\n    -- --------------------------------------------------------\n\n    if old.status = 'active'\n       and new.status = 'active' then\n\n        old_business_state :=\n            to_jsonb(old)\n            - array[\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        new_business_state :=\n            to_jsonb(new)\n            - array[\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        if old_business_state\n           is distinct from new_business_state then\n\n            raise exception\n                'Active Daily Plan content is frozen; create a new Plan version for reprioritization';\n\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Active → Completed\n    -- --------------------------------------------------------\n\n    if old.status = 'active'\n       and new.status = 'completed' then\n\n        if not may_complete then\n            raise exception\n                'Permission daily_plan.complete is required to complete a Daily Plan';\n        end if;\n\n\n        -- Structural plan content must not change during\n        -- completion.\n        --\n        -- Grade / score / summary may be finalized.\n\n        old_business_state :=\n            to_jsonb(old)\n            - array[\n                'status',\n                'grade',\n                'score',\n                'summary',\n                'completed_at',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        new_business_state :=\n            to_jsonb(new)\n            - array[\n                'status',\n                'grade',\n                'score',\n                'summary',\n                'completed_at',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        if old_business_state\n           is distinct from new_business_state then\n\n            raise exception\n                'Daily Plan structure cannot change during completion';\n        end if;\n\n\n        if new.grade is null\n           or new.score is null then\n\n            raise exception\n                'Completed Daily Plans require both a grade and numeric score';\n\n        end if;\n\n\n        if new.completed_at is null then\n            new.completed_at := now();\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Active → Superseded\n    --\n    -- This normally happens automatically when a newer version\n    -- becomes active.\n    -- --------------------------------------------------------\n\n    if old.status = 'active'\n       and new.status = 'superseded' then\n\n        if not may_update then\n            raise exception\n                'Permission daily_plan.update is required to supersede a Daily Plan';\n        end if;\n\n\n        old_business_state :=\n            to_jsonb(old)\n            - array[\n                'status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        new_business_state :=\n            to_jsonb(new)\n            - array[\n                'status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        if old_business_state\n           is distinct from new_business_state then\n\n            raise exception\n                'Daily Plan content cannot change while marking the Plan superseded';\n\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Everything else is invalid.\n    -- --------------------------------------------------------\n\n    raise exception\n        'Invalid Daily Plan lifecycle transition: % → %',\n        old.status,\n        new.status;\n\nend;\n",
+      "security_definer": true
+    },
+    {
+      "name": "hq_lock_planner_scope",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "private",
+      "source": "\ndeclare candidate uuid; action_ids uuid[];\nbegin\n  candidate:=private.hq_workspace_candidate(w);\n  if not public.has_permission(w,'next_action.read') or not public.has_permission(w,'daily_plan.read') then\n    raise exception using errcode='42501',message='Planner read authority required';\n  end if;\n  if p is not null then\n    perform id from public.daily_plans where workspace_id=w and id=p and status='active' for share;\n    if not found then raise exception 'Active scoped Plan required'; end if;\n  end if;\n  -- Capture only rows actually locked by this statement. A later INSERT must\n  -- not enter a subsequent invoker read without its own eligibility lock.\n  select coalesce(array_agg(q.id order by q.id),'{}'::uuid[]) into action_ids\n    from (select id from public.next_actions where workspace_id=w and status='open' order by id for share) q;\n  return jsonb_build_object('candidate_principal_id',candidate,'locked_action_ids',action_ids,'checked_at',clock_timestamp());\nend; ",
+      "security_definer": true
+    },
+    {
+      "name": "hq_workspace_candidate",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "private",
+      "source": "\ndeclare ids uuid[];\nbegin\n  if not public.is_active_workspace_principal(w,public.current_principal_id())\n     or not public.has_permission(w,'workspace.read')\n     or not exists(select 1 from public.workspaces where id=w and status='active') then\n    raise exception using errcode='42501',message='Active workspace authority required';\n  end if;\n  select array_agg(p.id order by p.id) into ids\n    from public.workspace_memberships m join public.principals p on p.id=m.principal_id\n    join public.roles r on r.id=m.role_id\n    where m.workspace_id=w and m.status='active' and p.status='active'\n      and p.principal_type='human' and r.workspace_id is null and lower(r.name)='owner';\n  if coalesce(cardinality(ids),0)<>1 then\n    raise exception 'Workspace candidate authority is ambiguous';\n  end if;\n  return ids[1];\nend; ",
+      "security_definer": true
+    },
+    {
+      "name": "current_principal_id",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "source": "\n    select private.current_principal_id();\n",
+      "security_definer": false
+    },
+    {
+      "name": "current_principal_is_human",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "source": "\n    select private.current_principal_is_human();\n",
+      "security_definer": false
+    },
+    {
+      "name": "has_permission",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "source": "\n    select private.has_permission(\n        target_workspace_id,\n        required_permission_key\n    );\n",
+      "security_definer": false
+    },
+    {
+      "name": "is_active_workspace_principal",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "source": "\n    select private.is_active_workspace_principal(\n        target_workspace_id,\n        target_principal_id\n    );\n",
+      "security_definer": false
+    },
+    {
+      "name": "prepare_daily_plan_insert",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "public",
+      "source": "\ndeclare\n    lock_key bigint;\nbegin\n\n    lock_key :=\n        hashtextextended(\n            new.workspace_id::text\n            || ':daily_plan:'\n            || new.plan_date::text,\n            0\n        );\n\n    perform pg_advisory_xact_lock(lock_key);\n\n\n    select coalesce(max(version_number), 0) + 1\n    into new.version_number\n    from public.daily_plans\n    where workspace_id = new.workspace_id\n      and plan_date = new.plan_date;\n\n\n    -- New plans always begin as drafts.\n\n    new.status := 'draft';\n\n    new.completed_at := null;\n\n    new.grade := null;\n\n    new.score := null;\n\n\n    return new;\n\nend;\n",
+      "security_definer": false
+    },
+    {
+      "name": "set_actor_audit_fields",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "public",
+      "source": "\ndeclare\n    actor_id uuid;\nbegin\n\n    actor_id := public.current_principal_id();\n\n    if tg_op = 'INSERT' then\n\n        if actor_id is not null then\n            new.created_by_principal_id := actor_id;\n\n            if to_jsonb(new) ? 'updated_by_principal_id' then\n                new.updated_by_principal_id := actor_id;\n            end if;\n        end if;\n\n    elsif tg_op = 'UPDATE' then\n\n        if actor_id is not null\n           and to_jsonb(new) ? 'updated_by_principal_id' then\n\n            new.updated_by_principal_id := actor_id;\n\n        end if;\n\n    end if;\n\n    return new;\n\nend;\n",
+      "security_definer": false
+    }
+  ],
+  "observed_at": "2026-10-02T15:30:00.206021+00:00",
+  "item_metadata": [
+    {
+      "id": "be13cc6e-5eaa-4b52-a154-0cee6f9f5ce3",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "2bb8f70c-ae95-44a0-8ba8-5da831cf9023",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "545f3d8a-74ec-4510-97f0-5dd416afb2e9",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "e42debd7-1c9b-4647-9146-c719afb09ab7",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "07064ac0-05df-44be-b507-513f7c458278",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "c97eaf5b-2412-4691-a4fc-3127057841b9",
+      "created_at": "2026-10-02T14:57:32.712677+00:00",
+      "planned_status": "required",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "966f8e7a-9959-4016-b3da-2699692e2950",
+      "created_at": "2026-10-02T14:57:50.949055+00:00",
+      "planned_status": "optional",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "017ec241-aaac-455a-9218-28128c05a864",
+      "created_at": "2026-10-02T14:57:50.949055+00:00",
+      "planned_status": "optional",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    },
+    {
+      "id": "e43f8823-8021-43ae-adb9-cdf825e3d277",
+      "created_at": "2026-10-02T14:57:50.949055+00:00",
+      "planned_status": "optional",
+      "completion_status": "pending",
+      "created_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b",
+      "updated_by_principal_id": "5d469573-deae-4500-bacb-4bbecffad83b"
+    }
+  ],
+  "plan_policies": [
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plan_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can create daily plan items",
+      "schemaname": "public",
+      "with_check": "private.has_permission(workspace_id, 'daily_plan.create'::text)"
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "private.has_permission(workspace_id, 'daily_plan.update'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plan_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can remove draft daily plan items",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "private.has_permission(workspace_id, 'daily_plan.update'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plan_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can update daily plan items",
+      "schemaname": "public",
+      "with_check": "private.has_permission(workspace_id, 'daily_plan.update'::text)"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_permission(workspace_id, 'daily_plan.read'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plan_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can view daily plan items",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plans",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can create daily plans",
+      "schemaname": "public",
+      "with_check": "private.has_permission(workspace_id, 'daily_plan.create'::text)"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(private.has_permission(workspace_id, 'daily_plan.update'::text) OR private.has_permission(workspace_id, 'daily_plan.complete'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plans",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can update or complete daily plans",
+      "schemaname": "public",
+      "with_check": "(private.has_permission(workspace_id, 'daily_plan.update'::text) OR private.has_permission(workspace_id, 'daily_plan.complete'::text))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_permission(workspace_id, 'daily_plan.read'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "daily_plans",
+      "permissive": "PERMISSIVE",
+      "policyname": "authorized principals can view daily plans",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "plan_triggers": [
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "enforce_daily_plan_completion_children_before_update",
+      "definition": "CREATE TRIGGER enforce_daily_plan_completion_children_before_update BEFORE UPDATE OF status ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION private.require_reconciled_daily_plan_completion()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "enforce_daily_plan_lifecycle_before_write",
+      "definition": "CREATE TRIGGER enforce_daily_plan_lifecycle_before_write BEFORE INSERT OR UPDATE ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION private.enforce_daily_plan_lifecycle()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "prepare_daily_plan_before_insert",
+      "definition": "CREATE TRIGGER prepare_daily_plan_before_insert BEFORE INSERT ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION prepare_daily_plan_insert()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "prevent_daily_plans_workspace_change",
+      "definition": "CREATE TRIGGER prevent_daily_plans_workspace_change BEFORE UPDATE OF workspace_id ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION prevent_workspace_change()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "set_daily_plans_actor_audit",
+      "definition": "CREATE TRIGGER set_daily_plans_actor_audit BEFORE INSERT OR UPDATE ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION set_actor_audit_fields()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "set_daily_plans_updated_at",
+      "definition": "CREATE TRIGGER set_daily_plans_updated_at BEFORE UPDATE ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "validate_todays_one_thing_before_write",
+      "definition": "CREATE TRIGGER validate_todays_one_thing_before_write BEFORE INSERT OR UPDATE OF todays_one_thing_action_id, status ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION private.validate_todays_one_thing()"
+    },
+    {
+      "table": "daily_plans",
+      "enabled": "O",
+      "trigger": "zz_hq_plan_selection",
+      "definition": "CREATE TRIGGER zz_hq_plan_selection BEFORE INSERT OR UPDATE OF todays_one_thing_action_id, status ON public.daily_plans FOR EACH ROW EXECUTE FUNCTION private.hq_plan_selection_guard()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "enforce_daily_plan_item_lifecycle_before_write",
+      "definition": "CREATE TRIGGER enforce_daily_plan_item_lifecycle_before_write BEFORE INSERT OR DELETE OR UPDATE ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION private.enforce_daily_plan_item_lifecycle()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "hq_plan_item_eligibility",
+      "definition": "CREATE TRIGGER hq_plan_item_eligibility BEFORE INSERT ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION private.hq_plan_item_guard()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "prepare_daily_plan_item_before_insert",
+      "definition": "CREATE TRIGGER prepare_daily_plan_item_before_insert BEFORE INSERT ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION prepare_daily_plan_item()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "prevent_daily_plan_items_workspace_change",
+      "definition": "CREATE TRIGGER prevent_daily_plan_items_workspace_change BEFORE UPDATE OF workspace_id ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION prevent_workspace_change()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "set_daily_plan_items_actor_audit",
+      "definition": "CREATE TRIGGER set_daily_plan_items_actor_audit BEFORE INSERT OR UPDATE ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION set_actor_audit_fields()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "set_daily_plan_items_updated_at",
+      "definition": "CREATE TRIGGER set_daily_plan_items_updated_at BEFORE UPDATE ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    },
+    {
+      "table": "daily_plan_items",
+      "enabled": "O",
+      "trigger": "validate_daily_plan_item_relationships_before_update",
+      "definition": "CREATE TRIGGER validate_daily_plan_item_relationships_before_update BEFORE UPDATE ON public.daily_plan_items FOR EACH ROW EXECUTE FUNCTION private.validate_daily_plan_item_relationships()"
+    }
+  ],
+  "management_context": {
+    "current_role": "postgres",
+    "session_role": "postgres",
+    "auth_uid_present": false,
+    "jwt_sub_setting_present": false,
+    "jwt_claims_setting_present": false,
+    "resolved_principal_present": false
+  }
+}

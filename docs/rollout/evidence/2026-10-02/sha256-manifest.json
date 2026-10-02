@@ -1,0 +1,18 @@
+{
+  "hardening-after.json": "5044049f03d7774791e40b69117971f53792a946d3e78f2952d3623e066c7353",
+  "hardening-before.json": "2c5b0580cf52b136a5f3060e7d93bc99559e4cb3efe95cf2c5d76d4be62beacf",
+  "hardening-preflight-verified.json": "60bb330648f97f9ce5697d7c3cbbc1fdc9c24be386bc8ab107ed27b56a8ca86f",
+  "interview-contacts-after.json": "5c97e060698e43e22838f29037109681f9ab6d015049a145d4e31c35e7e1f5ca",
+  "interview-contacts-before.json": "01f8994aa84253d71e5790b81f1396b9aabd1ce81ab79727b68efc469c4211ae",
+  "interview-core-after.json": "7bde8f34bec0c06779b2d8509ded553c6c076e39ae02c4dda30c91ed70a2a07d",
+  "interview-core-before.json": "a90c995500ee9bad9d50cd6f5a35120bde96a4ba93c6ab48a5140d9e2ec59967",
+  "live-hardening-prompts-verified.md": "f2b9f03c123a170f3767874fd15c26e76d56042a4618bf4797b032468f44cfd3",
+  "morning-guards.json": "95109efed2dbcf7791c40ef980a18f5b2d3761f0b4b625af96d6e5ab7e45de56",
+  "morning-identity.json": "954217f033e0bb5e666219f51dae710aeb3a07e98d85ff44bc7f8f4cb6ebcffa",
+  "morning-plan.json": "4153a3a8b918e32ce5d4f651e72c001f88635014b5529d31b0e300ddbbdb1428",
+  "offer-after.json": "4692251a1a2876c43bc9d1c613c2a53e87948044466eb08d2bf8317d5751f962",
+  "offer-before.json": "166aa275d032cc2a4d7d74a40cf08dde0e59a6089e68745079ded185e8b20393",
+  "outreach-after.json": "020b340fa55a421a0d09e460265410272483e0776ca4b13dfad764127a851d84",
+  "outreach-before.json": "79db1fd42ff5ca0473930b365f677d1fcacf9d867d100c9cb510be873d128c64",
+  "outreach-verified.json": "539aaf980d8808d67761fd521b8c71047d17bb59ac38a01c2fa684ed6f084202"
+}

@@ -1,0 +1,52 @@
+{
+  "functions": [
+    {
+      "name": "prepare_daily_plan_item",
+      "schema": "public",
+      "source": "\ndeclare\n    action_record public.next_actions%rowtype;\n    block_plan_id uuid;\nbegin\n\n    -- --------------------------------------------------------\n    -- Load Next Action.\n    -- --------------------------------------------------------\n\n    select *\n    into action_record\n    from public.next_actions\n    where workspace_id = new.workspace_id\n      and id = new.next_action_id;\n\n\n    if not found then\n        raise exception\n            'Next Action % does not exist in Workspace %',\n            new.next_action_id,\n            new.workspace_id;\n    end if;\n\n\n    -- Only open actions should normally enter a new Daily Plan.\n\n    if action_record.status <> 'open' then\n        raise exception\n            'Only open Next Actions may be added to a new Daily Plan';\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Validate Work Block belongs to this Daily Plan.\n    -- --------------------------------------------------------\n\n    if new.work_block_id is not null then\n\n        select daily_plan_id\n        into block_plan_id\n        from public.work_blocks\n        where workspace_id = new.workspace_id\n          and id = new.work_block_id;\n\n\n        if not found then\n            raise exception\n                'Work Block % does not exist in Workspace %',\n                new.work_block_id,\n                new.workspace_id;\n        end if;\n\n\n        if block_plan_id <> new.daily_plan_id then\n            raise exception\n                'Daily Plan Item Work Block belongs to a different Daily Plan';\n        end if;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Priority snapshot comes from the actual Next Action.\n    --\n    -- The caller should not rewrite history by supplying an\n    -- arbitrary different value.\n    -- --------------------------------------------------------\n\n    new.priority_snapshot :=\n        action_record.priority;\n\n\n    -- --------------------------------------------------------\n    -- Freeze what the candidate saw.\n    -- --------------------------------------------------------\n\n    new.action_snapshot :=\n        jsonb_build_object(\n\n            'next_action_id',\n            action_record.id,\n\n            'opportunity_id',\n            action_record.opportunity_id,\n\n            'internal_task_id',\n            action_record.internal_task_id,\n\n            'assigned_to_principal_id',\n            action_record.assigned_to_principal_id,\n\n            'action_type',\n            action_record.action_type,\n\n            'title',\n            action_record.title,\n\n            'context_summary',\n            action_record.context_summary,\n\n            'priority',\n            action_record.priority,\n\n            'due_at',\n            action_record.due_at,\n\n            'estimated_minutes',\n            action_record.estimated_minutes,\n\n            'approval_required',\n            action_record.approval_required,\n\n            'todays_one_thing_eligible',\n            action_record.todays_one_thing_eligible,\n\n            'status',\n            action_record.status,\n\n            'snapshot_at',\n            now()\n        );\n\n\n    return new;\n\nend;\n",
+      "security_definer": false
+    },
+    {
+      "name": "enforce_daily_plan_item_lifecycle",
+      "schema": "private",
+      "source": "\ndeclare\n    plan_status text;\n\n    old_business_state jsonb;\n    new_business_state jsonb;\nbegin\n\n    if tg_op = 'DELETE' then\n\n        plan_status :=\n            public.get_daily_plan_status(\n                old.workspace_id,\n                old.daily_plan_id\n            );\n\n\n        if plan_status <> 'draft' then\n            raise exception\n                'Daily Plan Items may only be deleted while the Plan is a draft';\n        end if;\n\n\n        return old;\n\n    end if;\n\n\n    plan_status :=\n        public.get_daily_plan_status(\n            new.workspace_id,\n            new.daily_plan_id\n        );\n\n\n    if plan_status is null then\n        raise exception\n            'Daily Plan does not exist';\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- INSERT\n    -- --------------------------------------------------------\n\n    if tg_op = 'INSERT' then\n\n        if plan_status <> 'draft' then\n            raise exception\n                'Daily Plan Items may only be added to draft Plans';\n        end if;\n\n\n        new.completion_status := 'pending';\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Historical Plan\n    -- --------------------------------------------------------\n\n    if plan_status in (\n        'completed',\n        'superseded'\n    ) then\n\n        raise exception\n            'Daily Plan Items on historical Plans are immutable';\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Draft Plan\n    -- --------------------------------------------------------\n\n    if plan_status = 'draft' then\n\n        new.completion_status := 'pending';\n\n        return new;\n\n    end if;\n\n\n    -- --------------------------------------------------------\n    -- Active Plan\n    --\n    -- Only completion_status may change.\n    -- --------------------------------------------------------\n\n    if plan_status = 'active' then\n\n        old_business_state :=\n            to_jsonb(old)\n            - array[\n                'completion_status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        new_business_state :=\n            to_jsonb(new)\n            - array[\n                'completion_status',\n                'updated_at',\n                'updated_by_principal_id'\n            ];\n\n\n        if old_business_state\n           is distinct from new_business_state then\n\n            raise exception\n                'Active Daily Plan Item structure is frozen';\n\n        end if;\n\n\n        -- Once the day records an outcome for this item, that\n        -- historical outcome is terminal.\n\n        if old.completion_status in (\n            'completed',\n            'carried_forward',\n            'removed'\n        )\n        and new.completion_status\n            is distinct from old.completion_status then\n\n            raise exception\n                'Finalized Daily Plan Item outcomes are immutable';\n\n        end if;\n\n\n        if old.completion_status = 'pending'\n           and new.completion_status not in (\n               'pending',\n               'completed',\n               'carried_forward',\n               'removed'\n           ) then\n\n            raise exception\n                'Invalid Daily Plan Item completion transition';\n\n        end if;\n\n\n        return new;\n\n    end if;\n\n\n    return new;\n\nend;\n",
+      "security_definer": true
+    },
+    {
+      "name": "hq_assert_action_eligible",
+      "schema": "private",
+      "source": "\ndeclare candidate uuid; action public.next_actions%rowtype;\nbegin\n  candidate:=private.hq_workspace_candidate(w);\n  if not public.has_permission(w,'next_action.read') then\n    raise exception using errcode='42501',message='Next Action read authority required';\n  end if;\n  select * into action from public.next_actions where workspace_id=w and id=a for share;\n  if not found or action.status<>'open'\n     or (action.assigned_to_principal_id is not null and action.assigned_to_principal_id<>candidate)\n     or (action.available_after is not null and\n       (not isfinite(action.available_after) or action.available_after>clock_timestamp())) then\n    raise exception using errcode='40001',message='Next Action is not currently candidate-eligible';\n  end if;\nend; ",
+      "security_definer": true
+    },
+    {
+      "name": "hq_plan_item_guard",
+      "schema": "private",
+      "source": "\nbegin\n  perform private.hq_assert_action_eligible(new.workspace_id,new.next_action_id);\n  return new;\nend; ",
+      "security_definer": true
+    },
+    {
+      "name": "hq_plan_selection_guard",
+      "schema": "private",
+      "source": "\ndeclare a uuid;\nbegin\n  -- Later deferral does not rewrite history or prohibit completion. Existing\n  -- lifecycle guards still enforce historical immutability/completion rules.\n  if new.status in ('completed','superseded') then return new; end if;\n  if tg_op='UPDATE' and new.todays_one_thing_action_id is not distinct from old.todays_one_thing_action_id\n     and not(old.status='draft' and new.status='active') then return new; end if;\n  if new.todays_one_thing_action_id is not null then\n    perform private.hq_assert_action_eligible(new.workspace_id,new.todays_one_thing_action_id);\n  end if;\n  if tg_op='UPDATE' and old.status='draft' and new.status='active' then\n    for a in select i.next_action_id from public.daily_plan_items i\n      where i.workspace_id=new.workspace_id and i.daily_plan_id=new.id order by i.next_action_id loop\n      perform private.hq_assert_action_eligible(new.workspace_id,a);\n    end loop;\n  end if;\n  return new;\nend; ",
+      "security_definer": true
+    }
+  ],
+  "workspace": {
+    "active": true,
+    "sole_human_owner_count": 1
+  },
+  "plan_force_rls": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "daily_plans",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "daily_plan_items",
+      "force_rls": false
+    }
+  ]
+}

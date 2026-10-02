@@ -715,7 +715,7 @@
   "normal_auth_postgrest_acceptance": false,
   "actual_worker_execution": false,
   "prompt_adoption_status": "Resolved through exact user-supplied live readback; not independent API readback or actual execution",
-  "audit_export_status": "Per-file before/after inventories were saved locally. The execution service then reported 409 environment_offline. Pending local summary export was stopped; this separate docs-only branch preserves the completed compact audit. No production apply or verification is pending.",
+  "audit_export_status": "Execution environment reconnected; original per-file evidence copied into docs/rollout/evidence/2026-10-02 on this isolated docs-only branch. Original local files preserved.",
   "remaining_gates": [
     "Normal owning-app human/agent Auth/PostgREST acceptance",
     "Actual scheduled deferral, exact revision routing and controlled delivered output",
@@ -725,12 +725,12 @@
   ],
   "advisor_notes": {
     "security": "No new WARN/ERROR. Existing leaked-password WARN retained; Outreach private ledger RLS/no-policy INFO is expected deny boundary.",
-    "performance": "Unindexed foreign-key INFO count 96→98 after Interview core; unused-index INFO increases for new empty tables. No unapproved index or DDL added.",
+    "performance": "Unindexed foreign-key INFO count 96\u219298 after Interview core; unused-index INFO increases for new empty tables. No unapproved index or DDL added.",
     "new_unindexed_foreign_keys": [
       "public.interview_questions.interview_questions_workspace_id_interview_preparation_id__fkey",
       "public.interviews.interviews_workspace_id_interview_process_id_opportunity_i_fkey"
     ],
     "remediation_reference": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
   },
-  "execution_environment_blocker": "Mac execution environment offline; reconnect needed only to consolidate local detailed audit files. No further production mutation is planned."
+  "execution_environment_blocker": null
 }

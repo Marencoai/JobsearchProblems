@@ -1,0 +1,366 @@
+{
+  "managed_migration": {
+    "version": "20261002053743",
+    "name": "hq_outreach_domain"
+  },
+  "drift": [],
+  "new_tables": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_action_requests",
+      "schema": "private",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "contacts",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "opportunity_contacts",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_engagement_opportunities",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_engagements",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_interactions",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_message_evidence",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_messages",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "outreach_task_links",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "service_role=Dxtm/postgres",
+        "authenticated=r/postgres"
+      ],
+      "rls": true,
+      "table": "relationship_notes",
+      "schema": "public",
+      "force_rls": false
+    }
+  ],
+  "new_permissions": [
+    {
+      "id": "c6282811-0914-432c-b21d-6afd7dbf6ffc",
+      "action": "manage",
+      "domain": "contact",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Maintain professional contacts and role relationships",
+      "permission_key": "contact.manage"
+    },
+    {
+      "id": "86967603-1268-4572-9910-d56d2960ef14",
+      "action": "read",
+      "domain": "contact",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Read professional contacts in a workspace",
+      "permission_key": "contact.read"
+    },
+    {
+      "id": "5e103587-8a5a-41bb-8887-cf3910d1f0e9",
+      "action": "approve",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Human approval of an exact draft version",
+      "permission_key": "outreach.approve"
+    },
+    {
+      "id": "93aabc83-1307-481f-85f4-2045c3243486",
+      "action": "draft",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Save versioned drafts or request existing worker preparation",
+      "permission_key": "outreach.draft"
+    },
+    {
+      "id": "e5b5b090-ce45-4876-9a17-3e9b38600c87",
+      "action": "manage",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Maintain engagement and opportunity relationships",
+      "permission_key": "outreach.manage"
+    },
+    {
+      "id": "e75386ba-c208-496b-92f9-fae4d98946a5",
+      "action": "read",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Read relationship workstreams and exact message history",
+      "permission_key": "outreach.read"
+    },
+    {
+      "id": "28553e0b-d8de-424b-a1bd-0ad1728e614f",
+      "action": "record_interaction",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Record professional relationship activity",
+      "permission_key": "outreach.record_interaction"
+    },
+    {
+      "id": "f393f7e3-c319-4610-ba30-5d7802bfecd5",
+      "action": "record_received",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Record a verified incoming communication",
+      "permission_key": "outreach.record_received"
+    },
+    {
+      "id": "8af3c74d-401a-4f42-b1b7-ce6a5d81291a",
+      "action": "record_sent",
+      "domain": "outreach",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "description": "Human attestation of an already-sent exact message; never transport authority",
+      "permission_key": "outreach.record_sent"
+    }
+  ],
+  "new_Owner_grants": [
+    {
+      "id": "1e0c7c6c-1d0b-4210-90e6-375dadc354b5",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "28553e0b-d8de-424b-a1bd-0ad1728e614f"
+    },
+    {
+      "id": "310ef060-bc2c-44c3-b88a-3201cac4ac8e",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "5e103587-8a5a-41bb-8887-cf3910d1f0e9"
+    },
+    {
+      "id": "cd4c47fc-fab9-402c-a1a2-56f78a04d985",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "86967603-1268-4572-9910-d56d2960ef14"
+    },
+    {
+      "id": "82521faf-7a49-4753-8a1e-0d01329d4bb0",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "8af3c74d-401a-4f42-b1b7-ce6a5d81291a"
+    },
+    {
+      "id": "d84f0b3e-6bfd-4525-9783-733f4859384a",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "93aabc83-1307-481f-85f4-2045c3243486"
+    },
+    {
+      "id": "0da2b7da-bcad-492b-abaf-fdc2007f93be",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "c6282811-0914-432c-b21d-6afd7dbf6ffc"
+    },
+    {
+      "id": "4651d6ad-40a1-498c-afd6-dfbc6aa0bb36",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "e5b5b090-ce45-4876-9a17-3e9b38600c87"
+    },
+    {
+      "id": "f85df552-ab9a-4390-9bfd-288d352b8df6",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "e75386ba-c208-496b-92f9-fae4d98946a5"
+    },
+    {
+      "id": "bbfefd1b-930e-4bd7-8f89-a193c55198a1",
+      "role_id": "5dd5d3f2-e76f-4c27-9c15-f23613fdac89",
+      "created_at": "2026-10-02T05:37:43.038004+00:00",
+      "permission_id": "f393f7e3-c319-4610-ba30-5d7802bfecd5"
+    }
+  ],
+  "new_functions": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "args": "target_workspace_id uuid, request_id uuid, command text, payload jsonb",
+      "name": "hq_outreach_action",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "private",
+      "signature": "private.hq_outreach_action(uuid,uuid,text,jsonb)",
+      "source_md5": "47a1c669147cb4acfb0f37a4fe16cf11",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": true
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "args": "",
+      "name": "outreach_history_guard",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "private",
+      "signature": "private.outreach_history_guard()",
+      "source_md5": "4d2f949181fc6462cde4f7434ba0a253",
+      "anon_execute": false,
+      "security_definer": false,
+      "authenticated_execute": false
+    },
+    {
+      "acl": [
+        "postgres=X/postgres"
+      ],
+      "args": "",
+      "name": "validate_outreach_activity_link",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "private",
+      "signature": "private.validate_outreach_activity_link()",
+      "source_md5": "6448fdfb2f7d0f4436afe868832f5bee",
+      "anon_execute": false,
+      "security_definer": true,
+      "authenticated_execute": false
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "args": "target_workspace_id uuid, request_id uuid, command text, payload jsonb",
+      "name": "hq_outreach_action",
+      "config": [
+        "search_path=\"\""
+      ],
+      "schema": "public",
+      "signature": "hq_outreach_action(uuid,uuid,text,jsonb)",
+      "source_md5": "29af748f14eb7f04739fab9fe46ad5f1",
+      "anon_execute": false,
+      "security_definer": false,
+      "authenticated_execute": true
+    }
+  ],
+  "security_advisors": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"result\":{\"lints\":[{\"name\":\"rls_enabled_no_policy\",\"title\":\"RLS Enabled No Policy\",\"level\":\"INFO\",\"facing\":\"EXTERNAL\",\"categories\":[\"SECURITY\"],\"description\":\"Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.\",\"remediation\":\"https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy\",\"count\":1,\"findings\":[{\"detail\":\"Table \\\\`private.outreach_action_requests\\\\` has RLS enabled, but no policies exist\",\"metadata\":{\"name\":\"outreach_action_requests\",\"type\":\"table\",\"schema\":\"private\"},\"observed_at\":\"2026-10-02T05:38:55.862Z\"}]},{\"name\":\"auth_leaked_password_protection\",\"title\":\"Leaked Password Protection Disabled\",\"level\":\"WARN\",\"facing\":\"EXTERNAL\",\"categories\":[\"SECURITY\"],\"description\":\"Leaked password protection is currently disabled.\",\"remediation\":\"https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection\",\"count\":1,\"findings\":[{\"detail\":\"Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.\",\"metadata\":{\"type\":\"auth\",\"entity\":\"Auth\"}}]}]}}"
+      }
+    ],
+    "isError": false
+  },
+  "performance_advisors": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"result\":{\"lints\":[{\"name\":\"unindexed_foreign_keys\",\"title\":\"Unindexed foreign keys\",\"level\":\"INFO\",\"facing\":\"EXTERNAL\",\"categories\":[\"PERFORMANCE\"],\"description\":\"Identifies foreign key constraints without a covering index, which can impact database performance.\",\"remediation\":\"https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys\",\"count\":96,\"findings\":[{\"detail\":\"Table \\\\`public.activity_event_links\\\\` has a foreign key \\\\`activity_event_links_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"activity_event_links\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"activity_event_links_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.activity_events\\\\` has a foreign key \\\\`activity_events_actor_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"activity_events\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"activity_events_actor_principal_id_fkey\",\"fkey_columns\":[6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.activity_events\\\\` has a foreign key \\\\`activity_events_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"activity_events\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"activity_events_created_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.activity_replies\\\\` has a foreign key \\\\`activity_replies_author_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"activity_replies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"activity_replies_author_principal_id_fkey\",\"fkey_columns\":[4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_gaps\\\\` has a foreign key \\\\`application_gaps_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_gaps\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_gaps_created_by_principal_id_fkey\",\"fkey_columns\":[14]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_gaps\\\\` has a foreign key \\\\`application_gaps_skill_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_gaps\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_gaps_skill_workspace_fk\",\"fkey_columns\":[2,5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_gaps\\\\` has a foreign key \\\\`application_gaps_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_gaps\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_gaps_updated_by_principal_id_fkey\",\"fkey_columns\":[15]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_material_evidence\\\\` has a foreign key \\\\`application_material_evidence_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_material_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_material_evidence_created_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_material_evidence\\\\` has a foreign key \\\\`application_material_evidence_project_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_material_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_material_evidence_project_workspace_fk\",\"fkey_columns\":[2,5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_material_evidence\\\\` has a foreign key \\\\`application_material_evidence_skill_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_material_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_material_evidence_skill_workspace_fk\",\"fkey_columns\":[2,6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_material_evidence\\\\` has a foreign key \\\\`application_material_evidence_story_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_material_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_material_evidence_story_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_materials\\\\` has a foreign key \\\\`application_materials_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_materials_created_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_materials\\\\` has a foreign key \\\\`application_materials_template_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_materials_template_workspace_fk\",\"fkey_columns\":[2,9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_materials\\\\` has a foreign key \\\\`application_materials_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_materials_updated_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_materials\\\\` has a foreign key \\\\`hq_material_exact_task_package_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"hq_material_exact_task_package_fk\",\"fkey_columns\":[2,3,16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_approved_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_approved_by_principal_id_fkey\",\"fkey_columns\":[10]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_created_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_evaluation_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_evaluation_workspace_fk\",\"fkey_columns\":[2,6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_prepared_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_prepared_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_template_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_template_workspace_fk\",\"fkey_columns\":[2,5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_packages\\\\` has a foreign key \\\\`application_packages_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_packages_updated_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_submitted_materials\\\\` has a foreign key \\\\`application_submitted_materials_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_submitted_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_submitted_materials_created_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_submitted_materials\\\\` has a foreign key \\\\`application_submitted_materials_material_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_submitted_materials\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_submitted_materials_material_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_templates\\\\` has a foreign key \\\\`application_templates_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_templates\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_templates_created_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.application_templates\\\\` has a foreign key \\\\`application_templates_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"application_templates\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"application_templates_updated_by_principal_id_fkey\",\"fkey_columns\":[14]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.applications\\\\` has a foreign key \\\\`applications_approved_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"applications\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"applications_approved_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.applications\\\\` has a foreign key \\\\`applications_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"applications\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"applications_created_by_principal_id_fkey\",\"fkey_columns\":[16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.applications\\\\` has a foreign key \\\\`applications_submitted_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"applications\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"applications_submitted_by_principal_id_fkey\",\"fkey_columns\":[11]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.applications\\\\` has a foreign key \\\\`applications_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"applications\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"applications_updated_by_principal_id_fkey\",\"fkey_columns\":[17]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.automation_policies\\\\` has a foreign key \\\\`automation_policies_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"automation_policies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"automation_policies_created_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.automation_policies\\\\` has a foreign key \\\\`automation_policies_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"automation_policies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"automation_policies_updated_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.candidate_settings\\\\` has a foreign key \\\\`candidate_settings_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"candidate_settings\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"candidate_settings_created_by_principal_id_fkey\",\"fkey_columns\":[15]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.candidate_settings\\\\` has a foreign key \\\\`candidate_settings_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"candidate_settings\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"candidate_settings_updated_by_principal_id_fkey\",\"fkey_columns\":[16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.companies\\\\` has a foreign key \\\\`companies_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"companies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"companies_created_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.companies\\\\` has a foreign key \\\\`companies_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"companies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"companies_updated_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.company_intelligence\\\\` has a foreign key \\\\`company_intelligence_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"company_intelligence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"company_intelligence_created_by_principal_id_fkey\",\"fkey_columns\":[15]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.company_intelligence\\\\` has a foreign key \\\\`company_intelligence_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"company_intelligence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"company_intelligence_updated_by_principal_id_fkey\",\"fkey_columns\":[16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.daily_plan_items\\\\` has a foreign key \\\\`daily_plan_items_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"daily_plan_items\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"daily_plan_items_created_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.daily_plan_items\\\\` has a foreign key \\\\`daily_plan_items_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"daily_plan_items\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"daily_plan_items_updated_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.daily_plans\\\\` has a foreign key \\\\`daily_plans_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"daily_plans\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"daily_plans_created_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.daily_plans\\\\` has a foreign key \\\\`daily_plans_todays_one_thing_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"daily_plans\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"daily_plans_todays_one_thing_workspace_fk\",\"fkey_columns\":[2,6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.daily_plans\\\\` has a foreign key \\\\`daily_plans_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"daily_plans\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"daily_plans_updated_by_principal_id_fkey\",\"fkey_columns\":[13]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_company_intelligence\\\\` has a foreign key \\\\`eval_company_intel_intelligence_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_company_intelligence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"eval_company_intel_intelligence_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_company_intelligence\\\\` has a foreign key \\\\`evaluation_company_intelligence_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_company_intelligence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluation_company_intelligence_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_evidence\\\\` has a foreign key \\\\`evaluation_evidence_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluation_evidence_created_by_principal_id_fkey\",\"fkey_columns\":[11]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_evidence\\\\` has a foreign key \\\\`evaluation_evidence_project_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluation_evidence_project_workspace_fk\",\"fkey_columns\":[2,5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_evidence\\\\` has a foreign key \\\\`evaluation_evidence_skill_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluation_evidence_skill_workspace_fk\",\"fkey_columns\":[2,6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluation_evidence\\\\` has a foreign key \\\\`evaluation_evidence_story_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluation_evidence\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluation_evidence_story_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluations\\\\` has a foreign key \\\\`evaluations_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluations\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluations_created_by_principal_id_fkey\",\"fkey_columns\":[23]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evaluations\\\\` has a foreign key \\\\`evaluations_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evaluations\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evaluations_updated_by_principal_id_fkey\",\"fkey_columns\":[24]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_stories\\\\` has a foreign key \\\\`evidence_stories_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_stories\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_stories_created_by_principal_id_fkey\",\"fkey_columns\":[18]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_stories\\\\` has a foreign key \\\\`evidence_stories_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_stories\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_stories_updated_by_principal_id_fkey\",\"fkey_columns\":[19]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_story_skills\\\\` has a foreign key \\\\`evidence_story_skills_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_story_skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_story_skills_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_story_skills\\\\` has a foreign key \\\\`evidence_story_skills_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_story_skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_story_skills_updated_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_story_tools\\\\` has a foreign key \\\\`evidence_story_tools_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_story_tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_story_tools_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.evidence_story_tools\\\\` has a foreign key \\\\`evidence_story_tools_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"evidence_story_tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"evidence_story_tools_updated_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.internal_tasks\\\\` has a foreign key \\\\`internal_tasks_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"internal_tasks_created_by_principal_id_fkey\",\"fkey_columns\":[24]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.internal_tasks\\\\` has a foreign key \\\\`internal_tasks_owner_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"internal_tasks_owner_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.internal_tasks\\\\` has a foreign key \\\\`internal_tasks_source_event_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"internal_tasks_source_event_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.internal_tasks\\\\` has a foreign key \\\\`internal_tasks_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"internal_tasks_updated_by_principal_id_fkey\",\"fkey_columns\":[25]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.job_families\\\\` has a foreign key \\\\`job_families_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"job_families\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"job_families_created_by_principal_id_fkey\",\"fkey_columns\":[6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.job_families\\\\` has a foreign key \\\\`job_families_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"job_families\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"job_families_updated_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.next_actions\\\\` has a foreign key \\\\`next_actions_assigned_to_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"next_actions_assigned_to_principal_id_fkey\",\"fkey_columns\":[6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.next_actions\\\\` has a foreign key \\\\`next_actions_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"next_actions_created_by_principal_id_fkey\",\"fkey_columns\":[17]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.next_actions\\\\` has a foreign key \\\\`next_actions_event_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"next_actions_event_workspace_fk\",\"fkey_columns\":[2,5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.next_actions\\\\` has a foreign key \\\\`next_actions_task_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"next_actions_task_workspace_fk\",\"fkey_columns\":[2,4]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.next_actions\\\\` has a foreign key \\\\`next_actions_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"next_actions_updated_by_principal_id_fkey\",\"fkey_columns\":[18]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.opportunities\\\\` has a foreign key \\\\`opportunities_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"opportunities\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"opportunities_created_by_principal_id_fkey\",\"fkey_columns\":[25]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.opportunities\\\\` has a foreign key \\\\`opportunities_previous_opportunity_workspace_fk\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"opportunities\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"opportunities_previous_opportunity_workspace_fk\",\"fkey_columns\":[2,24]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.opportunities\\\\` has a foreign key \\\\`opportunities_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"opportunities\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"opportunities_updated_by_principal_id_fkey\",\"fkey_columns\":[26]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.opportunity_sources\\\\` has a foreign key \\\\`opportunity_sources_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"opportunity_sources\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"opportunity_sources_created_by_principal_id_fkey\",\"fkey_columns\":[16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.opportunity_sources\\\\` has a foreign key \\\\`opportunity_sources_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"opportunity_sources\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"opportunity_sources_updated_by_principal_id_fkey\",\"fkey_columns\":[17]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.professional_references\\\\` has a foreign key \\\\`professional_references_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"professional_references\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"professional_references_created_by_principal_id_fkey\",\"fkey_columns\":[16]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.professional_references\\\\` has a foreign key \\\\`professional_references_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"professional_references\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"professional_references_updated_by_principal_id_fkey\",\"fkey_columns\":[17]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_skills\\\\` has a foreign key \\\\`project_skills_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_skills_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_skills\\\\` has a foreign key \\\\`project_skills_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_skills_updated_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_tools\\\\` has a foreign key \\\\`project_tools_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_tools_created_by_principal_id_fkey\",\"fkey_columns\":[7]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_tools\\\\` has a foreign key \\\\`project_tools_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_tools_updated_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_work_experiences\\\\` has a foreign key \\\\`project_work_experiences_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_work_experiences\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_work_experiences_created_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.project_work_experiences\\\\` has a foreign key \\\\`project_work_experiences_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"project_work_experiences\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"project_work_experiences_updated_by_principal_id_fkey\",\"fkey_columns\":[10]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.projects\\\\` has a foreign key \\\\`projects_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"projects\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"projects_created_by_principal_id_fkey\",\"fkey_columns\":[19]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.projects\\\\` has a foreign key \\\\`projects_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"projects\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"projects_updated_by_principal_id_fkey\",\"fkey_columns\":[20]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.skills\\\\` has a foreign key \\\\`skills_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"skills_created_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.skills\\\\` has a foreign key \\\\`skills_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"skills\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"skills_updated_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.task_attempts\\\\` has a foreign key \\\\`task_attempts_executed_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"task_attempts\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"task_attempts_executed_by_principal_id_fkey\",\"fkey_columns\":[5]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.task_dependencies\\\\` has a foreign key \\\\`task_dependencies_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"task_dependencies\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"task_dependencies_created_by_principal_id_fkey\",\"fkey_columns\":[6]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.tools\\\\` has a foreign key \\\\`tools_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"tools_created_by_principal_id_fkey\",\"fkey_columns\":[8]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.tools\\\\` has a foreign key \\\\`tools_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"tools\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"tools_updated_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_blocks\\\\` has a foreign key \\\\`work_blocks_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_blocks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_blocks_created_by_principal_id_fkey\",\"fkey_columns\":[9]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_blocks\\\\` has a foreign key \\\\`work_blocks_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_blocks\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_blocks_updated_by_principal_id_fkey\",\"fkey_columns\":[10]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experience_application_details\\\\` has a foreign key \\\\`work_experience_application_detail_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experience_application_details\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experience_application_detail_created_by_principal_id_fkey\",\"fkey_columns\":[10]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experience_application_details\\\\` has a foreign key \\\\`work_experience_application_detail_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experience_application_details\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experience_application_detail_updated_by_principal_id_fkey\",\"fkey_columns\":[11]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experience_references\\\\` has a foreign key \\\\`work_experience_references_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experience_references\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experience_references_created_by_principal_id_fkey\",\"fkey_columns\":[11]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experience_references\\\\` has a foreign key \\\\`work_experience_references_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experience_references\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experience_references_updated_by_principal_id_fkey\",\"fkey_columns\":[12]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experiences\\\\` has a foreign key \\\\`work_experiences_created_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experiences\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experiences_created_by_principal_id_fkey\",\"fkey_columns\":[20]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Table \\\\`public.work_experiences\\\\` has a foreign key \\\\`work_experiences_updated_by_principal_id_fkey\\\\` without a covering index. This can lead to suboptimal query performance.\",\"metadata\":{\"name\":\"work_experiences\",\"type\":\"table\",\"schema\":\"public\",\"fkey_name\":\"work_experiences_updated_by_principal_id_fkey\",\"fkey_columns\":[21]},\"observed_at\":\"2026-10-02T05:38:55.835Z\"}]},{\"name\":\"unused_index\",\"title\":\"Unused Index\",\"level\":\"INFO\",\"facing\":\"EXTERNAL\",\"categories\":[\"PERFORMANCE\"],\"description\":\"Detects if an index has never been used and may be a candidate for removal.\",\"remediation\":\"https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index\",\"count\":65,\"findings\":[{\"detail\":\"Index \\\\`roles_workspace_id_idx\\\\` on table \\\\`public.roles\\\\` has not been used\",\"metadata\":{\"name\":\"roles\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`permissions_domain_idx\\\\` on table \\\\`public.permissions\\\\` has not been used\",\"metadata\":{\"name\":\"permissions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`companies_workspace_id_idx\\\\` on table \\\\`public.companies\\\\` has not been used\",\"metadata\":{\"name\":\"companies\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`opportunities_workspace_id_idx\\\\` on table \\\\`public.opportunities\\\\` has not been used\",\"metadata\":{\"name\":\"opportunities\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`opportunities_job_family_id_idx\\\\` on table \\\\`public.opportunities\\\\` has not been used\",\"metadata\":{\"name\":\"opportunities\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`opportunity_sources_source_url_idx\\\\` on table \\\\`public.opportunity_sources\\\\` has not been used\",\"metadata\":{\"name\":\"opportunity_sources\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`work_experiences_workspace_idx\\\\` on table \\\\`public.work_experiences\\\\` has not been used\",\"metadata\":{\"name\":\"work_experiences\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`work_experiences_company_idx\\\\` on table \\\\`public.work_experiences\\\\` has not been used\",\"metadata\":{\"name\":\"work_experiences\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`company_intelligence_active_idx\\\\` on table \\\\`public.company_intelligence\\\\` has not been used\",\"metadata\":{\"name\":\"company_intelligence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`projects_workspace_idx\\\\` on table \\\\`public.projects\\\\` has not been used\",\"metadata\":{\"name\":\"projects\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`evidence_stories_workspace_idx\\\\` on table \\\\`public.evidence_stories\\\\` has not been used\",\"metadata\":{\"name\":\"evidence_stories\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`evidence_stories_work_experience_idx\\\\` on table \\\\`public.evidence_stories\\\\` has not been used\",\"metadata\":{\"name\":\"evidence_stories\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`evidence_stories_project_idx\\\\` on table \\\\`public.evidence_stories\\\\` has not been used\",\"metadata\":{\"name\":\"evidence_stories\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`project_skills_skill_idx\\\\` on table \\\\`public.project_skills\\\\` has not been used\",\"metadata\":{\"name\":\"project_skills\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`evidence_story_skills_skill_idx\\\\` on table \\\\`public.evidence_story_skills\\\\` has not been used\",\"metadata\":{\"name\":\"evidence_story_skills\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`activity_replies_event_idx\\\\` on table \\\\`public.activity_replies\\\\` has not been used\",\"metadata\":{\"name\":\"activity_replies\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`internal_tasks_owner_idx\\\\` on table \\\\`public.internal_tasks\\\\` has not been used\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`internal_tasks_due_idx\\\\` on table \\\\`public.internal_tasks\\\\` has not been used\",\"metadata\":{\"name\":\"internal_tasks\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`next_actions_assignee_idx\\\\` on table \\\\`public.next_actions\\\\` has not been used\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`next_actions_due_idx\\\\` on table \\\\`public.next_actions\\\\` has not been used\",\"metadata\":{\"name\":\"next_actions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`professional_references_workspace_idx\\\\` on table \\\\`public.professional_references\\\\` has not been used\",\"metadata\":{\"name\":\"professional_references\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`daily_plans_workspace_date_idx\\\\` on table \\\\`public.daily_plans\\\\` has not been used\",\"metadata\":{\"name\":\"daily_plans\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`daily_plan_items_block_idx\\\\` on table \\\\`public.daily_plan_items\\\\` has not been used\",\"metadata\":{\"name\":\"daily_plan_items\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`application_templates_job_family_idx\\\\` on table \\\\`public.application_templates\\\\` has not been used\",\"metadata\":{\"name\":\"application_templates\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`application_packages_status_idx\\\\` on table \\\\`public.application_packages\\\\` has not been used\",\"metadata\":{\"name\":\"application_packages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`contacts_company_idx\\\\` on table \\\\`public.contacts\\\\` has not been used\",\"metadata\":{\"name\":\"contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`contacts_name_idx\\\\` on table \\\\`public.contacts\\\\` has not been used\",\"metadata\":{\"name\":\"contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`opportunity_contacts_contact_idx\\\\` on table \\\\`public.opportunity_contacts\\\\` has not been used\",\"metadata\":{\"name\":\"opportunity_contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagements_contact_idx\\\\` on table \\\\`public.outreach_engagements\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagements\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagements_company_idx\\\\` on table \\\\`public.outreach_engagements\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagements\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagement_opportunities_opportunity_idx\\\\` on table \\\\`public.outreach_engagement_opportunities\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagement_opportunities\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_engagement_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_opportunity_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_previous_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_response_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_review_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_send_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_message_evidence_message_idx\\\\` on table \\\\`public.outreach_message_evidence\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_message_evidence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_message_evidence_story_idx\\\\` on table \\\\`public.outreach_message_evidence\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_message_evidence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_message_evidence_project_idx\\\\` on table \\\\`public.outreach_message_evidence\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_message_evidence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_message_evidence_skill_idx\\\\` on table \\\\`public.outreach_message_evidence\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_message_evidence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_interactions_engagement_idx\\\\` on table \\\\`public.outreach_interactions\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_interactions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_interactions_opportunity_idx\\\\` on table \\\\`public.outreach_interactions\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_interactions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`relationship_notes_contact_idx\\\\` on table \\\\`public.relationship_notes\\\\` has not been used\",\"metadata\":{\"name\":\"relationship_notes\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`relationship_notes_engagement_idx\\\\` on table \\\\`public.relationship_notes\\\\` has not been used\",\"metadata\":{\"name\":\"relationship_notes\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_task_links_engagement_idx\\\\` on table \\\\`public.outreach_task_links\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_task_links\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_task_links_message_idx\\\\` on table \\\\`public.outreach_task_links\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_task_links\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_task_links_context_idx\\\\` on table \\\\`public.outreach_task_links\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_task_links\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_contact_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`contacts_creator_idx\\\\` on table \\\\`public.contacts\\\\` has not been used\",\"metadata\":{\"name\":\"contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`opportunity_contacts_creator_idx\\\\` on table \\\\`public.opportunity_contacts\\\\` has not been used\",\"metadata\":{\"name\":\"opportunity_contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagements_creator_idx\\\\` on table \\\\`public.outreach_engagements\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagements\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagement_opportunities_creator_idx\\\\` on table \\\\`public.outreach_engagement_opportunities\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagement_opportunities\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_creator_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_message_evidence_creator_idx\\\\` on table \\\\`public.outreach_message_evidence\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_message_evidence\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_interactions_creator_idx\\\\` on table \\\\`public.outreach_interactions\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_interactions\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`relationship_notes_creator_idx\\\\` on table \\\\`public.relationship_notes\\\\` has not been used\",\"metadata\":{\"name\":\"relationship_notes\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_task_links_creator_idx\\\\` on table \\\\`public.outreach_task_links\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_task_links\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`contacts_updater_idx\\\\` on table \\\\`public.contacts\\\\` has not been used\",\"metadata\":{\"name\":\"contacts\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_engagements_updater_idx\\\\` on table \\\\`public.outreach_engagements\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_engagements\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_preparer_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_approver_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_messages_sender_idx\\\\` on table \\\\`public.outreach_messages\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_messages\",\"type\":\"table\",\"schema\":\"public\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_action_requests_actor_idx\\\\` on table \\\\`private.outreach_action_requests\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_action_requests\",\"type\":\"table\",\"schema\":\"private\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"},{\"detail\":\"Index \\\\`outreach_action_requests_event_idx\\\\` on table \\\\`private.outreach_action_requests\\\\` has not been used\",\"metadata\":{\"name\":\"outreach_action_requests\",\"type\":\"table\",\"schema\":\"private\"},\"observed_at\":\"2026-10-02T05:38:55.835Z\"}]}]}}"
+      }
+    ],
+    "isError": false
+  },
+  "workflow_counts_unchanged": true,
+  "approved_existing_trigger_change": {
+    "before": {
+      "table": "activity_event_links",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "public",
+      "enabled": "O",
+      "trigger": "validate_activity_event_link_before_insert",
+      "function": "validate_activity_event_link",
+      "trigger_def": "CREATE TRIGGER validate_activity_event_link_before_insert BEFORE INSERT ON public.activity_event_links FOR EACH ROW EXECUTE FUNCTION private.validate_activity_event_link()",
+      "definition_md5": "50e1b8177a2677d8d2fb8c7225ee78e3",
+      "function_schema": "private",
+      "security_definer": true
+    },
+    "after": {
+      "table": "activity_event_links",
+      "config": [
+        "search_path=public"
+      ],
+      "schema": "public",
+      "enabled": "O",
+      "trigger": "validate_activity_event_link_before_insert",
+      "function": "validate_activity_event_link",
+      "trigger_def": "CREATE TRIGGER validate_activity_event_link_before_insert BEFORE INSERT ON public.activity_event_links FOR EACH ROW WHEN ((new.entity_type <> ALL (ARRAY['contact'::text, 'outreach_engagement'::text, 'outreach_message'::text, 'outreach_interaction'::text]))) EXECUTE FUNCTION private.validate_activity_event_link()",
+      "definition_md5": "50e1b8177a2677d8d2fb8c7225ee78e3",
+      "function_schema": "private",
+      "security_definer": true
+    },
+    "reason": "Exact approved SQL lines303–306 recreates unchanged historical validator with exclusion of four Outreach kinds; separate scoped validator covers those kinds."
+  },
+  "private_ledger_advisor": "Expected INFO: RLS with no policies intentionally denies normal callers; no direct ledger privilege is added."
+}
