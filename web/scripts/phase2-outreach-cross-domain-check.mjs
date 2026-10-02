@@ -5,7 +5,6 @@ await runNative("interview", async (h) => {
     query,
     json,
     auth,
-    call,
     literal: l,
     workspace,
     principal,
@@ -49,7 +48,6 @@ await runNative("interview", async (h) => {
     `begin;${auth()}select id from workspaces where id=${l(workspace)} for no key update;select pg_sleep(1);select hq_outreach_action(${l(workspace)},${l(randomUUID())},'link_contact',${l(JSON.stringify(input))}::jsonb);commit;`,
     "review-workspace-first",
   );
-  const pending = [first];
   let settled;
   const observed = async (name, event) => {
     for (let i = 0; i < 200; i++) {
@@ -64,13 +62,6 @@ await runNative("interview", async (h) => {
     throw new Error("Lock observation failed");
   };
   await observed("review-workspace-first", "Timeout");
-  const source = {
-    verified: true,
-    source_system: "synthetic",
-    source_reference: randomUUID(),
-    interview_type: "Panel",
-    scheduled_start_at: "2026-11-01T12:00:00Z",
-  };
   const second = query(
     `begin;${auth()}select id from opportunities where id=${l(f.id)} for update;select hq_human_action(${l(workspace)},${l(f.id)},${l(f.updated_at)},${l(randomUUID())},'pursue',${l(JSON.stringify({ action_id: f.action_id, action_updated_at: f.action_updated_at }))}::jsonb);commit;`,
     "review-opportunity-first",

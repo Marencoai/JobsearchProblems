@@ -1,0 +1,24 @@
+{
+  "browser": "154.0.8037.93",
+  "checks": [
+    "Seven role stages at desktop and mobile; no document horizontal overflow",
+    "Synthetic two-page PDF rendered by installed PDF.js; text extraction and real PDF/DOCX browser downloads pass (transport fixtures, not canonical renderer acceptance)",
+    "Manual URL, pasted description, and real file-picker synthetic text upload reach explicit confirmation"
+  ],
+  "downloads": [
+    {
+      "format": "PDF",
+      "filename": "resume-v1-resume-material.pdf",
+      "bytes": 1062,
+      "sha256": "7ee65fe9c899584eb498caa9e95a0b04950b3d05b72d9c2a3d86eece4985053f"
+    },
+    {
+      "format": "DOCX",
+      "filename": "resume-v1-resume-material.docx",
+      "bytes": 63,
+      "sha256": "06017cedea364bfe5f80ed58bb946a0e2f9e84b699481f495879d171ef0f4840"
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": 0
+}

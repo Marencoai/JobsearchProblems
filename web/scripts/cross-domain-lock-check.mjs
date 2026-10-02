@@ -18,7 +18,7 @@ export async function checkCrossDomain(h, domain) {
   const sql = await readFile(process.env.HQ_OUTREACH_PROPOSAL, "utf8");
   assert.equal(
     createHash("sha256").update(sql).digest("hex"),
-    "7340bd4bc0f71d12b88fd20d6e3fe46f15ffab460ac697341e7a7ab23708bcd0",
+    "9a8dffce9152ffa51220c5da6787d1c87f4444b11d4b21b3b697f6c04c194e6b",
   );
   await query(sql);
   const contact = await json(

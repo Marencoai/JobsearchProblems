@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readOnlyFetch, type PublicConfig } from "@/lib/supabase/client";
 const origin = "https://xhhfnxswwspejdxjyvzz.supabase.co";
 const domains = [
-  ["outreach", "contacts", "hq_outreach_action"],
+  ["outreach", "outreach_engagements", "hq_outreach_action"],
   ["interview", "interviews", "hq_interview_action"],
   ["offer", "offers", "hq_offer_action"],
 ] as const;
