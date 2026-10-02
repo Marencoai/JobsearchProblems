@@ -2,6 +2,10 @@ Job Search AI Agent
 
 Database Schema
 
+## Proposed HQ intake/material artifacts (not deployed)
+
+Migration `20261001225212_hq_manual_intake_and_material_delivery.sql` adds the immutable `application_material_artifacts` child of existing exact Material versions, private `hq-intake`/`hq-materials` buckets and caller-invoker manual-intake/Storage boundaries. It preserves existing roles, business permissions and lifecycle triggers. This proposal needs its own approval; the earlier Phase 2 approval does not cover it. See [design and schema contract](hq-intake-material-delivery.md) and [review/rollout gates](../../web/INTAKE_DELIVERY_REVIEW.md).
+
 ## Proposed Job Hunt HQ additive change (2026-10-01; not deployed)
 
 Migration `20261001205019_hq_existing_human_actions.sql` adds nullable `next_actions.available_after` and one authenticated-only SECURITY INVOKER RPC, `hq_human_action(workspace_id, opportunity_id, expected_updated_at, request_id, command, payload)`. Existing rows remain null and need no backfill. This does not introduce an Opportunity lifecycle value, change RLS policies, or grant new role permissions.

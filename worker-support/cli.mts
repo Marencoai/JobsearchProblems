@@ -1,5 +1,7 @@
 // JSON over stdin only; no credentials, connection strings, or network.
 import { plannerEligibility, preparationTarget } from "./hq-contracts.ts";
+import { intakeDedupe } from "./intake-dedupe.ts";
+import { intakeTaskEvidence } from "./intake-contract.ts";
 let input = "";
 for await (const chunk of process.stdin) {
   input += chunk;
@@ -17,11 +19,17 @@ try {
           data.plan_items ?? [],
           data.now,
         )
-      : mode === "preparation"
-        ? preparationTarget(data.task, data.packages)
-        : (() => {
-            throw new Error("Use planner or preparation mode");
-          })();
+      : mode === "intake-dedupe"
+        ? intakeDedupe(data.candidate, data.opportunities, data.sources)
+        : mode === "manual-intake"
+          ? intakeTaskEvidence(data.task, data.event)
+          : mode === "preparation"
+            ? preparationTarget(data.task, data.packages)
+            : (() => {
+                throw new Error(
+                  "Use planner, preparation, manual-intake, or intake-dedupe mode",
+                );
+              })();
   process.stdout.write(JSON.stringify(result) + "\n");
 } catch (error) {
   process.stderr.write(

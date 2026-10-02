@@ -1,48 +1,37 @@
-import { OFFER_TABLES } from "../offer";
-import { INTERVIEW_TABLES } from "../interview";
+import {INTERVIEW_TABLES} from "../interview";
+import {OFFER_TABLES} from "../offer";
+import type {Contact,OpportunityContact,Engagement,EngagementOpportunity,OutreachMessage,OutreachEvidence,OutreachInteraction,RelationshipNote,OutreachTaskLink} from "../outreach-types";
+type ProposedTable<T>={Row:T;Insert:never;Update:never;Relationships:[]};
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { MaterialArtifact } from "@/lib/types";
 import type { Database, Json } from "@/lib/database.types";
-import type {
-  Contact,
-  OpportunityContact,
-  Engagement,
-  EngagementOpportunity,
-  OutreachMessage,
-  OutreachEvidence,
-  OutreachInteraction,
-  RelationshipNote,
-  OutreachTaskLink,
-} from "../outreach-types";
-type ProposedTable<T> = {
-  Row: T;
-  Insert: never;
-  Update: never;
-  Relationships: [];
-};
 
 // Draft RPC contract overlays live generated types until migration approval.
 // Regenerate database.types.ts from the deployed project after that gate.
 type HqDatabase = Database & {
   public: {
     Tables: {
-      contacts: ProposedTable<Contact>;
-      opportunity_contacts: ProposedTable<OpportunityContact>;
-      outreach_engagements: ProposedTable<Engagement>;
-      outreach_engagement_opportunities: ProposedTable<EngagementOpportunity>;
-      outreach_messages: ProposedTable<OutreachMessage>;
-      outreach_message_evidence: ProposedTable<OutreachEvidence>;
-      outreach_interactions: ProposedTable<OutreachInteraction>;
-      relationship_notes: ProposedTable<RelationshipNote>;
-      outreach_task_links: ProposedTable<OutreachTaskLink>;
+      contacts:ProposedTable<Contact>;
+      opportunity_contacts:ProposedTable<OpportunityContact>;
+      outreach_engagements:ProposedTable<Engagement>;
+      outreach_engagement_opportunities:ProposedTable<EngagementOpportunity>;
+      outreach_messages:ProposedTable<OutreachMessage>;
+      outreach_message_evidence:ProposedTable<OutreachEvidence>;
+      outreach_interactions:ProposedTable<OutreachInteraction>;
+      relationship_notes:ProposedTable<RelationshipNote>;
+      outreach_task_links:ProposedTable<OutreachTaskLink>;
+
+      application_material_artifacts: {
+        Row: MaterialArtifact;
+        Insert: MaterialArtifact;
+        Update: never;
+        Relationships: [];
+      };
     };
     Functions: {
-      hq_outreach_action: {
-        Args: {
-          target_workspace_id: string;
-          request_id: string;
-          command: string;
-          payload: Json;
-        };
+      hq_outreach_action:{Args:{target_workspace_id:string;request_id:string;command:string;payload:Json};Returns:Json};
+      hq_request_job_intake: {
+        Args: { target_workspace_id: string; request_id: string; input: Json };
         Returns: Json;
       };
       hq_human_action: {
@@ -64,21 +53,11 @@ export type PublicConfig = {
   url: string;
   key: string;
   humanActions?: boolean;
-  interview?: boolean;
-  offer?: boolean;
-  outreach?: boolean;
+  outreach?:boolean;interview?:boolean;offer?:boolean;
+  manualIntake?: boolean;
+  materialDelivery?: boolean;
 };
-export const OUTREACH_READ_TABLES = new Set([
-  "contacts",
-  "opportunity_contacts",
-  "outreach_engagements",
-  "outreach_engagement_opportunities",
-  "outreach_messages",
-  "outreach_message_evidence",
-  "outreach_interactions",
-  "relationship_notes",
-  "outreach_task_links",
-]);
+export const OUTREACH_READ_TABLES=new Set(["contacts","opportunity_contacts","outreach_engagements","outreach_engagement_opportunities","outreach_messages","outreach_message_evidence","outreach_interactions","relationship_notes","outreach_task_links"]);
 export const READ_TABLES = new Set([
   "principals",
   "workspace_memberships",
@@ -121,9 +100,9 @@ export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
   humanActions = false,
-  capabilities: {outreach?: boolean;interview?: boolean;offer?: boolean} = {},
+  capabilities: Omit<PublicConfig,"url"|"key"> = {},
 ): typeof fetch {
-  const {outreach=false,interview=false,offer=false}=capabilities;
+  const {interview=false,offer=false,outreach=false}=capabilities;
   return async (input, init) => {
     const url = new URL(
       typeof input === "string"
@@ -149,14 +128,41 @@ export function readOnlyFetch(
       url.search === "?scope=local";
     const dataRead =
       method === "GET" &&
-      (READ_TABLES.has(table) || (outreach && OUTREACH_READ_TABLES.has(table)) || (interview && INTERVIEW_TABLES.includes(table)) || (offer && OFFER_TABLES.includes(table)));
-    const outreachRpc =
-      outreach &&
+      (READ_TABLES.has(table) || (interview && INTERVIEW_TABLES.includes(table)) || (offer && OFFER_TABLES.includes(table)) || (outreach && OUTREACH_READ_TABLES.has(table)) ||
+        (capabilities.materialDelivery === true &&
+          table === "application_material_artifacts"));
+    const intakeRpc =
+      capabilities.manualIntake === true &&
       method === "POST" &&
-      url.pathname === "/rest/v1/rpc/hq_outreach_action" &&
+      url.pathname === "/rest/v1/rpc/hq_request_job_intake" &&
       !url.search;
-    const interviewRpc=interview && method==="POST" && url.pathname==="/rest/v1/rpc/hq_interview_action" && !url.search;
-    const offerRpc=offer && method==="POST" && url.pathname==="/rest/v1/rpc/hq_offer_action" && !url.search;
+    const intakePath =
+      "hq-intake/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx|png|jpg|txt)";
+    const materialPath =
+      "hq-materials/[a-f0-9-]{36}/[a-f0-9-]{36}/[a-f0-9]{64}\\.(pdf|docx)";
+    const storageRead =
+      method === "GET" &&
+      !url.search &&
+      ((capabilities.manualIntake === true &&
+        new RegExp("^/storage/v1/object/" + intakePath + "$").test(
+          url.pathname,
+        )) ||
+        (capabilities.materialDelivery === true &&
+          new RegExp("^/storage/v1/object/" + materialPath + "$").test(
+            url.pathname,
+          )));
+    const headers = new Headers(
+      init?.headers ?? (input instanceof Request ? input.headers : undefined),
+    );
+    const intakeUpload =
+      capabilities.manualIntake === true &&
+      method === "POST" &&
+      !url.search &&
+      new RegExp("^/storage/v1/object/" + intakePath + "$").test(
+        url.pathname,
+      ) &&
+      headers.get("x-upsert") !== "true";
+    const domainRpc=method==="POST" && !url.search && ((interview && url.pathname==="/rest/v1/rpc/hq_interview_action") || (offer && url.pathname==="/rest/v1/rpc/hq_offer_action") || (outreach && url.pathname==="/rest/v1/rpc/hq_outreach_action"));
     const humanRpc =
       humanActions &&
       method === "POST" &&
@@ -166,7 +172,16 @@ export function readOnlyFetch(
       url.origin !== origin ||
       url.username ||
       url.password ||
-      !(authRead || login || logout || dataRead || humanRpc || outreachRpc || interviewRpc || offerRpc)
+      !(
+        authRead ||
+        login ||
+        logout ||
+        dataRead ||
+        humanRpc || domainRpc ||
+        intakeRpc ||
+        storageRead ||
+        intakeUpload
+      )
     ) {
       throw new Error("This preview permits authenticated reads only.");
     }

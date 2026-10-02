@@ -12,6 +12,7 @@ node scripts/outreach-browser-check.mjs
 ```
 
 Screenshots and exact test/browser evidence are in [`qa-evidence/outreach/`](qa-evidence/outreach/) and [the dated validation report](../docs/03-design/outreach-validation-2026-10-01.md). The browser is test-only; no global browser preference, user profile, credential or live communication is touched.
+Manual intake and exact private PDF/DOCX delivery are locally proposed on a separate stacked branch. See [INTAKE_DELIVERY_REVIEW.md](INTAKE_DELIVERY_REVIEW.md) for SQL, worker adoption, Storage validation, rollback and remaining v1 gates. `HQ_MANUAL_INTAKE` and `HQ_MATERIAL_DELIVERY` default off and require separate approved rollout/activation. For development-only synthetic transport QA use `/qa?job=resume&intake=1&delivery=1` and Load synthetic file fixtures. No database/Storage request or canonical candidate rendering occurs there.
 
 Phase 2 human actions are now proposed on the stacked branch; see [PHASE2_REVIEW.md](PHASE2_REVIEW.md). The default runtime remains read-only. Only after authenticated Phase 1 acceptance and explicit migration approval should the server environment set `HQ_HUMAN_ACTIONS=1`. That enables just the `hq_human_action` RPC and reads the new deferral column; it never permits direct table writes or other RPCs. Do not enable the flag against the pre-migration database.
 

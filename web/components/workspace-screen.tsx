@@ -81,6 +81,9 @@ export function WorkspaceScreen({ selectedId }: { selectedId?: string }) {
       domainActions={session.domainActions}
       onAction={session.humanActions ? session.act : undefined}
       onOutreach={session.outreach ? session.actOutreach : undefined}
+      onIntake={session.manualIntake ? session.intake : undefined}
+      onUpload={session.manualIntake ? session.upload : undefined}
+      onDelivery={session.materialDelivery ? session.deliver : undefined}
     />
   );
 }

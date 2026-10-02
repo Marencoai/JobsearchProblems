@@ -46,6 +46,11 @@ import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
 import { OfferPanel } from "./offer-panel";
 import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
+import { IntakeDialog } from "./intake-dialog";
+import { MaterialDelivery } from "./material-delivery";
+import type { IntakeHandler, IntakeUploadHandler } from "@/lib/intake";
+import type { MaterialDeliveryHandler } from "@/lib/material-delivery";
+import type { MaterialArtifact } from "@/lib/types";
 import type { HumanActionHandler } from "@/lib/human-actions";
 import type { OutreachHandler } from "@/lib/outreach";
 import type { OutreachData } from "@/lib/outreach-types";
@@ -65,6 +70,9 @@ type ShellProps = {
   domainActions?: boolean;
   onAction?: HumanActionHandler;
   onOutreach?: OutreachHandler;
+  onIntake?: IntakeHandler;
+  onUpload?: IntakeUploadHandler;
+  onDelivery?: MaterialDeliveryHandler;
 };
 const stageIcons = [
   Target,
@@ -85,6 +93,7 @@ function mobileSnapshot() {
 }
 export function HqShell(props: ShellProps) {
   const { identity, data, workspaceId, loading, error } = props;
+  const [intakeOpen, setIntakeOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Stage[]>([]);
   const [expanded, setExpanded] = useState<Stage[]>([]);
@@ -166,8 +175,16 @@ export function HqShell(props: ShellProps) {
         </div>
         <button
           className="button primary add-job"
-          disabled
-          title="Job intake will be available in a later phase"
+          disabled={!props.onIntake || !props.onUpload}
+          onClick={() => {
+            setMobileOpen(false);
+            setIntakeOpen(true);
+          }}
+          title={
+            props.onIntake
+              ? "Add a job for review"
+              : "Job intake is not enabled yet"
+          }
         >
           <Plus size={19} /> Add Job
         </button>
@@ -354,7 +371,7 @@ export function HqShell(props: ShellProps) {
           <span className="access-badge">
             <ShieldCheck size={13} />
             {role} ·{" "}
-            {props.onAction || props.onOutreach || props.domainActions ? "Candidate workspace" : "Read-only"}
+            {props.onAction || props.onOutreach || props.domainActions || props.onIntake ? "Candidate workspace" : "Read-only"}
             {props.fixture ? " · QA fixture" : ""}
           </span>
           <button
@@ -376,6 +393,49 @@ export function HqShell(props: ShellProps) {
               </button>
             </div>
           )}
+          {!loading &&
+            data &&
+            data.activities
+              .filter((e) => e.event_type === "manual_job_intake_requested")
+              .map((e) => {
+                const task = data.tasks.find(
+                  (t) => t.source_activity_event_id === e.id,
+                );
+                if (
+                  !task ||
+                  (task.status === "completed" && task.opportunity_id)
+                )
+                  return null;
+                const status =
+                  task.status === "completed"
+                    ? "Review complete"
+                    : task.status === "blocked" || task.status === "failed"
+                      ? "Job review needs attention"
+                      : task.status === "cancelled"
+                        ? "Review cancelled"
+                        : "Job review in progress";
+                return (
+                  <section
+                    className="pending-intake"
+                    key={e.id}
+                    aria-label="Supplied job review"
+                  >
+                    <strong>{status}</strong>
+                    <p>
+                      {task.status === "blocked" || task.status === "failed"
+                        ? "The supplied evidence could not be resolved yet. Your original evidence is saved; check the recorded review note or add more complete evidence."
+                        : task.status === "completed"
+                          ? "The worker finished checking your supplied evidence."
+                          : "Your supplied evidence is saved. The discovery workflow checks the posting and matches existing jobs before evaluation."}
+                    </p>
+                    {task.opportunity_id && (
+                      <Link href={"/jobs/" + task.opportunity_id}>
+                        Open role
+                      </Link>
+                    )}
+                  </section>
+                );
+              })}
           {loading && (
             <div className="loading-state" role="status">
               <div className="skeleton" />
@@ -408,6 +468,8 @@ export function HqShell(props: ShellProps) {
               outreach={data?.outreach}
               tasks={data?.tasks ?? []}
               onOutreach={props.onOutreach}
+              artifacts={data?.artifacts ?? []}
+              onDelivery={props.onDelivery}
             />
           )}
           {!loading && data && (
@@ -419,6 +481,14 @@ export function HqShell(props: ShellProps) {
           )}
         </main>
       </div>
+      {intakeOpen && props.onIntake && props.onUpload && (
+        <IntakeDialog
+          key={workspaceId}
+          onClose={() => setIntakeOpen(false)}
+          onRequest={props.onIntake}
+          onUpload={props.onUpload}
+        />
+      )}
     </div>
   );
 }
@@ -476,6 +546,8 @@ function TextBlock({
 function JobWorkspace({
   job,
   onAction,
+  artifacts,
+  onDelivery,
   domainActions,
   outreach,
   tasks,
@@ -483,6 +555,8 @@ function JobWorkspace({
 }: {
   job: JobView;
   onAction?: HumanActionHandler;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
   domainActions?: boolean;
   outreach?: OutreachData;
   tasks: WorkspaceData["tasks"];
@@ -915,7 +989,12 @@ function JobWorkspace({
         <IntelligencePanel job={job} />
       </div>
       {material && (
-        <MaterialDialog material={material} onClose={() => setMaterial(null)} />
+        <MaterialDialog
+          material={material}
+          artifacts={artifacts}
+          onDelivery={onDelivery}
+          onClose={() => setMaterial(null)}
+        />
       )}
     </>
   );
@@ -1213,9 +1292,13 @@ function snapshotText(snapshot: unknown): string | undefined {
 function MaterialDialog({
   material,
   onClose,
+  artifacts,
+  onDelivery,
 }: {
   material: Material;
   onClose: () => void;
+  artifacts: MaterialArtifact[];
+  onDelivery?: MaterialDeliveryHandler;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -1271,6 +1354,14 @@ function MaterialDialog({
           {material.content_text ??
             "No text preview recorded for this material."}
         </div>
+        {onDelivery && (
+          <MaterialDelivery
+            key={material.id}
+            material={material}
+            artifacts={artifacts}
+            load={onDelivery}
+          />
+        )}
         <div className="modal-footer">
           <External url={material.file_url}>Open recorded artifact</External>
           <button className="button" onClick={onClose}>

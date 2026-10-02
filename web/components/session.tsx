@@ -14,6 +14,16 @@ import {
   type OutreachHandler,
 } from "@/lib/outreach";
 
+import {
+  requestIntake,
+  uploadIntake,
+  type IntakeHandler,
+  type IntakeUploadHandler,
+} from "@/lib/intake";
+import {
+  loadMaterialArtifact,
+  type MaterialDeliveryHandler,
+} from "@/lib/material-delivery";
 type SessionState = {
   identity: Identity | null;
   data: WorkspaceData | null;
@@ -26,6 +36,11 @@ type SessionState = {
   outreach: boolean;
   actOutreach: OutreachHandler;
   act: HumanActionHandler;
+  manualIntake: boolean;
+  materialDelivery: boolean;
+  intake: IntakeHandler;
+  upload: IntakeUploadHandler;
+  deliver: MaterialDeliveryHandler;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   selectWorkspace: (id: string) => Promise<void>;
@@ -57,6 +72,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   });
   const [outreach, setOutreach] = useState(false);
   const mutation = useRef(false);
+  const [manualIntake, setManualIntake] = useState(false),
+    [materialDelivery, setMaterialDelivery] = useState(false);
   useEffect(() => {
     const activeGeneration = generation;
     let cancelled = false;
@@ -93,6 +110,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           );
         setHumanActions(config.humanActions === true);
         setOutreach(config.outreach === true);
+        setManualIntake(config.manualIntake === true);
+        setMaterialDelivery(config.materialDelivery === true);
         const subscription = instance.auth.onAuthStateChange((event) => {
           if (event === "SIGNED_OUT") {
             generation.current++;
@@ -150,6 +169,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         id,
         profile.principal.id,
         humanActions,
+        materialDelivery,
       );
       if (run !== generation.current) return;
       if (outreach) rows.outreach = await loadOutreach(instance, id);
@@ -297,9 +317,73 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         );
       setData(rows);
       return result;
+    } finally { mutation.current=false; }
+  };
+  async function verifiedContext() {
+    const instance = client.current,
+      profile = identityRef.current,
+      target = workspaceRef.current,
+      run = generation.current;
+    if (!instance || !profile || !target)
+      throw new Error("Sign in and select a workspace.");
+    const verified = await resolveIdentity(instance);
+    if (
+      run !== generation.current ||
+      target !== workspaceRef.current ||
+      verified.principal.id !== profile.principal.id ||
+      !verified.workspaces.some((w) => w.id === target)
+    )
+      throw new Error(
+        "Your workspace changed. Start again in the current workspace.",
+      );
+    return { instance, profile, target, run };
+  }
+  const intake: IntakeHandler = async (input, request) => {
+    if (!manualIntake) throw new Error("Job intake is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, target, run } = await verifiedContext();
+      await requestIntake(instance, target, input, request);
+      if (run === generation.current && target === workspaceRef.current)
+        await reload();
     } finally {
       mutation.current = false;
     }
+  };
+  const upload: IntakeUploadHandler = async (file, request) => {
+    if (!manualIntake) throw new Error("Job intake is not enabled yet.");
+    if (mutation.current)
+      throw new Error("Another action is still being confirmed.");
+    mutation.current = true;
+    try {
+      const { instance, profile, target, run } = await verifiedContext();
+      const input = await uploadIntake(
+        instance,
+        file,
+        target,
+        profile.principal.id,
+        request,
+      );
+      if (run !== generation.current || target !== workspaceRef.current)
+        throw new Error(
+          "Your workspace changed. Start again in the current workspace.",
+        );
+      return input;
+    } finally {
+      mutation.current = false;
+    }
+  };
+  const deliver: MaterialDeliveryHandler = async (material, artifact) => {
+    if (!materialDelivery) throw new Error("File delivery is not enabled yet.");
+    const { instance, target, run } = await verifiedContext();
+    if (material.workspace_id !== target || artifact.workspace_id !== target)
+      throw new Error("This material belongs to a different workspace.");
+    const blob = await loadMaterialArtifact(instance, material, artifact);
+    if (run !== generation.current || target !== workspaceRef.current)
+      throw new Error("Your workspace changed. Open the material again.");
+    return blob;
   };
   return (
     <Context.Provider
@@ -315,6 +399,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         outreach,
         actOutreach,
         act,
+        manualIntake,
+        materialDelivery,
+        intake,
+        upload,
+        deliver,
         signIn,
         signOut,
         selectWorkspace,
