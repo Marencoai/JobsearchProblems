@@ -43,6 +43,7 @@ import type {
 import { STAGES } from "@/lib/types";
 import { buildJobViews } from "@/lib/workflow";
 import { age, date, humanText, initials, label, safeUrl } from "@/lib/format";
+import { InterviewPanel } from "./interview-panel";
 import { HumanActions } from "./human-actions";
 import type { HumanActionHandler } from "@/lib/human-actions";
 
@@ -57,6 +58,7 @@ type ShellProps = {
   onReload: () => void;
   onSignOut: () => void;
   fixture?: boolean;
+  domainActions?: boolean;
   onAction?: HumanActionHandler;
 };
 const stageIcons = [
@@ -346,7 +348,10 @@ export function HqShell(props: ShellProps) {
           </label>
           <span className="access-badge">
             <ShieldCheck size={13} />
-            {role} · {props.onAction ? "Human actions" : "Read-only"}
+            {role} ·{" "}
+            {props.onAction || props.domainActions
+              ? "Candidate workspace"
+              : "Read-only"}
             {props.fixture ? " · QA fixture" : ""}
           </span>
           <button
@@ -396,6 +401,7 @@ export function HqShell(props: ShellProps) {
               key={`${workspaceId}:${selected.opportunity.id}`}
               job={selected}
               onAction={props.onAction}
+              domainActions={props.domainActions}
             />
           )}
           {!loading && data && (
@@ -464,9 +470,11 @@ function TextBlock({
 function JobWorkspace({
   job,
   onAction,
+  domainActions,
 }: {
   job: JobView;
   onAction?: HumanActionHandler;
+  domainActions?: boolean;
 }) {
   const [stage, setStage] = useState<Stage>(job.stage ?? "Evaluate");
   const [tab, setTab] = useState("Overview");
@@ -878,7 +886,9 @@ function JobWorkspace({
           </details>
           <p className="record-caption panel-caption">
             Backend lifecycle: {label(job.opportunity.opportunity_stage)} ·
-            {onAction ? "Candidate workspace" : "Read-only preview"}
+            {onAction || domainActions
+              ? "Candidate workspace"
+              : "Read-only preview"}
           </p>
         </article>
         <IntelligencePanel job={job} />
@@ -952,6 +962,13 @@ function StageRecords({
   onMaterial: (material: Material) => void;
   humanActions: boolean;
 }) {
+  if (stage === "Interview")
+    return (
+      <>
+        <InterviewPanel key={job.opportunity.id} job={job} />
+        <EventList job={job} filter="interview" />
+      </>
+    );
   if (stage === "Pursue")
     return (
       <div className="stage-records">

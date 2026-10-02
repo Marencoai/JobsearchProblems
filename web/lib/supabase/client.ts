@@ -1,3 +1,4 @@
+import { INTERVIEW_TABLES } from "../interview";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
 
@@ -21,7 +22,12 @@ type HqDatabase = Database & {
   };
 };
 export type HqClient = SupabaseClient<HqDatabase>;
-export type PublicConfig = { url: string; key: string; humanActions?: boolean };
+export type PublicConfig = {
+  url: string;
+  key: string;
+  humanActions?: boolean;
+  interview?: boolean;
+};
 export const READ_TABLES = new Set([
   "principals",
   "workspace_memberships",
@@ -64,6 +70,7 @@ export function readOnlyFetch(
   origin: string,
   nativeFetch: typeof fetch,
   humanActions = false,
+  interview = false,
 ): typeof fetch {
   return async (input, init) => {
     const url = new URL(
@@ -88,7 +95,10 @@ export function readOnlyFetch(
       method === "POST" &&
       url.pathname === "/auth/v1/logout" &&
       url.search === "?scope=local";
-    const dataRead = method === "GET" && READ_TABLES.has(table);
+    const dataRead =
+      method === "GET" &&
+      (READ_TABLES.has(table) ||
+        (interview && INTERVIEW_TABLES.includes(table)));
     const humanRpc =
       humanActions &&
       method === "POST" &&
@@ -98,7 +108,17 @@ export function readOnlyFetch(
       url.origin !== origin ||
       url.username ||
       url.password ||
-      !(authRead || login || logout || dataRead || humanRpc)
+      !(
+        authRead ||
+        login ||
+        logout ||
+        dataRead ||
+        humanRpc ||
+        (interview &&
+          method === "POST" &&
+          url.pathname === "/rest/v1/rpc/hq_interview_action" &&
+          !url.search)
+      )
     ) {
       throw new Error("This preview permits authenticated reads only.");
     }
@@ -128,6 +148,7 @@ export function createHqClient(
         new URL(config.url).origin,
         nativeFetch,
         config.humanActions === true,
+        config.interview === true,
       ),
     },
   });

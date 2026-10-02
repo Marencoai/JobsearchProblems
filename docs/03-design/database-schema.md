@@ -7754,3 +7754,43 @@ That will make foreign keys, dependency order, and even RLS much easier to reaso
 Once you paste this in, **we are done designing the schema for now**.
 
 The next step is our first actual build step: **turn Section 1, the Security Foundation, into Supabase SQL.**
+
+## Job Hunt HQ Interview v1 proposal · October 1, 2026
+
+Status: proposed only, not deployed. The intended §7 entities are implemented in
+`supabase/proposals/interview/001_interview.sql` and `002_interview_contacts.sql`.
+The second file requires Outreach's separately reviewed `contacts` table and
+composite Workspace identity. Do not add a duplicate contact model.
+
+The proposal preserves the existing authoritative Opportunity lifecycle and seven
+derived HQ stages. Source references uniquely match verified interviews within a
+Workspace. One active Process is allowed per Opportunity. Every interview/process,
+preparation/question and candidate-knowledge reference is tenant-scoped; questions
+cannot attach a preparation from a different interview. Evaluation context must
+belong to the same Opportunity. Evidence rows contain exactly one Story, Project,
+or Skill. Predicted and actual questions stay distinct. Reviewed preparations and
+their questions/evidence are frozen; new reviewed content needs a new package.
+
+Proposed permission impacts: add `interview.read` and `interview.manage` and grant
+both only to the existing global Owner role. RLS requires existing principal and
+membership checks, with human-only writes and active Workspace checks. No agent
+roles, identity, existing table policies, automation authority or Calendar/Gmail
+capability is changed. Agent preparation requires a future separately reviewed
+capability; this implementation supports manual structured preparation.
+
+`hq_interview_action` is a SECURITY INVOKER transaction that checks all required
+existing permissions, locks the Opportunity, checks the reviewed timestamp,
+records attributed idempotent activity, and reconciles only explicitly linked
+interview actions. It supports human-reviewed source recording, prep start and
+prep save/review. Browser transport permits only this RPC when `HQ_INTERVIEW=1`;
+raw table writes remain blocked. Default is off and performs no new-table reads.
+No meeting invitation or external message is performed.
+
+
+Interview exact retry bodies live in `hq_interview_action_requests`, with SELECT
+and INSERT restricted to the current active human actor and interview.read/manage
+permissions. Generic Activity details retain safe references only. The ledger is
+outside frontend read allowlists, append-only, RLS enabled, and denies anonymous
+access. The separate approval package includes these proposed permission impacts.
+The Interview Contact dependency is pinned to Outreach PR3 commit
+`2af79c2dfa31611083bf3f233d02b82bf890b8fe` (`full_name`, nullable `title`, Workspace UUID FK).
