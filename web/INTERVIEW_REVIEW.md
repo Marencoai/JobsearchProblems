@@ -162,3 +162,12 @@ proposal; this contract does not provide one. Hosted sync adoption, preclassifie
 recovery execution, source-change commands and exact temporary Gmail action linkage
 remain undelivered. Synthetic contract tests cover those boundary dispositions,
 identity scoping, stable retries and unsafe schedules/links, not live reconciliation.
+
+Remaining owner dependency: exact pinned Outreach Workspace `FOR UPDATE` also
+reproduces a deadlock with unchanged approved Phase2 Pursue (Opportunity `FOR UPDATE`
+then Workspace-FK Internal Task insert). The Interview correction does not modify
+or claim to fix that existing RPC. The Outreach owner should review an FK-compatible
+Workspace serialization lock and provide a new frozen migration hash; alternatively,
+a Phase2 SQL change would require a new explicit approval dependency. Current
+Interview/Offer cross-domain passes apply only to the recorded pinned Outreach hash.
+The complete stack is not certified until the owner fix and integrated regressions.
