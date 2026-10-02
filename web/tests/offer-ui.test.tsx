@@ -142,14 +142,12 @@ it("default transport blocks domain RPC and raw writes; flags remain independent
     readOnlyFetch(origin, native)(origin + "/rest/v1/offers"),
   ).rejects.toThrow();
   await expect(
-    readOnlyFetch(
-      origin,
-      native,
-      false,
-      true,
-    )(origin + "/rest/v1/rpc/hq_offer_action", { method: "POST" }),
+    readOnlyFetch(origin, native, false, { interview: true })(
+      origin + "/rest/v1/rpc/hq_offer_action",
+      { method: "POST" },
+    ),
   ).rejects.toThrow();
-  const on = readOnlyFetch(origin, native, false, false, true);
+  const on = readOnlyFetch(origin, native, false, { offer: true });
   await on(origin + "/rest/v1/offers");
   await on(origin + "/rest/v1/rpc/hq_offer_action", { method: "POST" });
   await expect(

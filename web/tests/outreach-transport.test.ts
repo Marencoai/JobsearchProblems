@@ -26,7 +26,7 @@ describe("Outreach SDK capability boundary", () => {
   });
   it("permits only the nine public reads and exact approved RPC path when gated on", async () => {
     const native = vi.fn<typeof fetch>(async () => response([])),
-      send = readOnlyFetch(origin, native, false, true);
+      send = readOnlyFetch(origin, native, false, { outreach: true });
     for (const table of OUTREACH_READ_TABLES)
       await send(
         `${origin}/rest/v1/${table}?workspace_id=eq.fixture-workspace`,

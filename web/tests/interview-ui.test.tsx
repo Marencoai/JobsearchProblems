@@ -83,7 +83,7 @@ it("transport blocks all domain reads and RPC when disabled and all raw writes w
   await expect(
     off(origin + "/rest/v1/rpc/hq_interview_action", { method: "POST" }),
   ).rejects.toThrow();
-  const on = readOnlyFetch(origin, native, false, true);
+  const on = readOnlyFetch(origin, native, false, { interview: true });
   await on(origin + "/rest/v1/interviews");
   await on(origin + "/rest/v1/rpc/hq_interview_action", { method: "POST" });
   await expect(

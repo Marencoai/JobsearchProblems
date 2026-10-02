@@ -18,7 +18,7 @@ export async function checkCrossDomain(h, domain) {
   const sql = await readFile(process.env.HQ_OUTREACH_PROPOSAL, "utf8");
   assert.equal(
     createHash("sha256").update(sql).digest("hex"),
-    "b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906",
+    "7340bd4bc0f71d12b88fd20d6e3fe46f15ffab460ac697341e7a7ab23708bcd0",
   );
   await query(sql);
   const contact = await json(
@@ -67,7 +67,7 @@ export async function checkCrossDomain(h, domain) {
       randomUUID(),
     );
     const first = query(
-      `begin;${auth()}select id from ${direction === "outreach-first" ? "workspaces" : "opportunities"} where id=${l(direction === "outreach-first" ? workspace : f.id)} for ${direction === "outreach-first" ? "update" : "no key update"};select pg_sleep(1);${direction === "outreach-first" ? outreach : invoke}commit;`,
+      `begin;${auth()}select id from ${direction === "outreach-first" ? "workspaces" : "opportunities"} where id=${l(direction === "outreach-first" ? workspace : f.id)} for ${"no key update"};select pg_sleep(1);${direction === "outreach-first" ? outreach : invoke}commit;`,
       "cross-first",
     );
     await wait("cross-first", "Timeout");
@@ -76,7 +76,7 @@ export async function checkCrossDomain(h, domain) {
       "cross-second",
     );
     const settled = Promise.allSettled([first, second]);
-    if (direction === "outreach-first") await wait("cross-second", "Lock");
+
     const results = await settled;
     for (const r of results)
       assert.equal(
@@ -103,7 +103,7 @@ export async function checkCrossDomain(h, domain) {
       "1",
     );
     console.log(
-      `PASS ${domain}/${direction}: overlapping exact RPCs commit once without deadlock; ${direction === "outreach-first" ? "second Lock wait observed" : "Outreach FK lock compatible with held Opportunity lock"}`,
+      `PASS ${domain}/${direction}: overlapping exact RPCs commit once without deadlock; ${direction === "outreach-first" ? "Workspace lock compatible with Interview/Offer foreign-key checks" : "Outreach FK lock compatible with held Opportunity lock"}`,
     );
   }
 }

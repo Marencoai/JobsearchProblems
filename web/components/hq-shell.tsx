@@ -129,7 +129,7 @@ export function HqShell(props: ShellProps) {
   const role = identity.roles.find((r) => r.id === roleId)?.name ?? "Member";
   const jobLink = (id: string) =>
     props.fixture
-      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}${data?.outreach ? "&outreach=1" : ""}`
+      ? `/qa?job=${encodeURIComponent(id)}${props.onAction ? "&actions=1" : ""}${data?.outreach ? "&outreach=1" : ""}${props.onIntake ? "&intake=1" : ""}${props.onDelivery ? "&delivery=1" : ""}`
       : `/jobs/${encodeURIComponent(id)}`;
   return (
     <div className="app-shell">
@@ -371,7 +371,12 @@ export function HqShell(props: ShellProps) {
           <span className="access-badge">
             <ShieldCheck size={13} />
             {role} ·{" "}
-            {props.onAction || props.onOutreach || props.domainActions || props.onIntake ? "Candidate workspace" : "Read-only"}
+            {props.onAction ||
+            props.onOutreach ||
+            props.domainActions ||
+            props.onIntake
+              ? "Candidate workspace"
+              : "Read-only"}
             {props.fixture ? " · QA fixture" : ""}
           </span>
           <button

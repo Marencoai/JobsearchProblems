@@ -62,7 +62,7 @@ beforeAll(async () => {
   if (process.env.HQ_OUTREACH_PROPOSAL) {
     const dependency = await readFile(process.env.HQ_OUTREACH_PROPOSAL, "utf8");
     expect(createHash("sha256").update(dependency).digest("hex")).toBe(
-      "b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906",
+      "7340bd4bc0f71d12b88fd20d6e3fe46f15ffab460ac697341e7a7ab23708bcd0",
     );
     await db.exec(dependency);
     await db.exec(

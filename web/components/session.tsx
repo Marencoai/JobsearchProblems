@@ -305,6 +305,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         target,
         profile.principal.id,
         humanActions,
+        materialDelivery,
       );
       if (run !== generation.current || workspaceRef.current !== target)
         throw new Error(
@@ -317,7 +318,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         );
       setData(rows);
       return result;
-    } finally { mutation.current=false; }
+    } finally {
+      mutation.current = false;
+    }
   };
   async function verifiedContext() {
     const instance = client.current,

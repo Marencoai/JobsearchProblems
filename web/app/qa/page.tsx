@@ -5,7 +5,8 @@ export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<{
-    job?: string;outreach?: string;
+    job?: string;
+    outreach?: string;
     actions?: string;
     intake?: string;
     delivery?: string;

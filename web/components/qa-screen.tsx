@@ -15,12 +15,16 @@ export function QaScreen({
   selectedId,
   actions = false,
   outreach = false,
-  intake=false,delivery=false,fail=false,
+  intake = false,
+  delivery = false,
+  fail = false,
 }: {
   selectedId?: string;
   actions?: boolean;
   outreach?: boolean;
-  intake?: boolean;delivery?: boolean;fail?: boolean;
+  intake?: boolean;
+  delivery?: boolean;
+  fail?: boolean;
 }) {
   const interview = useMemo(() => interviewFixture(), []);
   const offer = useMemo(() => offerFixture(), []);
@@ -90,118 +94,120 @@ export function QaScreen({
     });
   }
   return (
-    <InterviewContext.Provider value={interview}><OfferContext.Provider value={offer}>
-      {(intake || delivery) && (
-        <p role="status" className="notice">
-          Synthetic intake/file transport preview. No database, storage or
-          worker execution. {result}
-          {delivery && (
-            <button className="button" onClick={() => void openFiles()}>
-              Load synthetic file fixtures
-            </button>
-          )}
-        </p>
-      )}
-      {(actions || outreach) && (
-        <p role="status" className="notice">
-          Synthetic action preview. No database connection or worker execution.{" "}
-          {result}
-        </p>
-      )}
-      <HqShell
-        identity={fixtureIdentity}
-        data={data}
-        workspaceId="fixture-workspace"
-        selectedId={selectedId}
-        loading={false}
-        error=""
-        fixture
-        domainActions
-        onWorkspace={() => {}}
-        onReload={() => {}}
-        onSignOut={() => {}}
-        onOutreach={
-          outreach
-            ? async (command, payload, requestId) => {
-                const input = JSON.stringify({ command, payload });
-                const previous = savedRequests.current.get(requestId);
-                if (previous) {
-                  if (previous.input !== input)
-                    throw new Error("Synthetic retry input changed");
-                  return previous.result;
+    <InterviewContext.Provider value={interview}>
+      <OfferContext.Provider value={offer}>
+        {(intake || delivery) && (
+          <p role="status" className="notice">
+            Synthetic intake/file transport preview. No database, storage or
+            worker execution. {result}
+            {delivery && (
+              <button className="button" onClick={() => void openFiles()}>
+                Load synthetic file fixtures
+              </button>
+            )}
+          </p>
+        )}
+        {(actions || outreach) && (
+          <p role="status" className="notice">
+            Synthetic action preview. No database connection or worker
+            execution. {result}
+          </p>
+        )}
+        <HqShell
+          identity={fixtureIdentity}
+          data={data}
+          workspaceId="fixture-workspace"
+          selectedId={selectedId}
+          loading={false}
+          error=""
+          fixture
+          domainActions
+          onWorkspace={() => {}}
+          onReload={() => {}}
+          onSignOut={() => {}}
+          onOutreach={
+            outreach
+              ? async (command, payload, requestId) => {
+                  const input = JSON.stringify({ command, payload });
+                  const previous = savedRequests.current.get(requestId);
+                  if (previous) {
+                    if (previous.input !== input)
+                      throw new Error("Synthetic retry input changed");
+                    return previous.result;
+                  }
+                  const next = applyOutreachFixture(
+                    outreachData,
+                    command,
+                    payload,
+                    requestId,
+                  );
+                  savedRequests.current.set(requestId, {
+                    input,
+                    result: next.result,
+                  });
+                  setOutreachData(next.data);
+                  setResult(
+                    "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
+                  );
+                  return next.result;
                 }
-                const next = applyOutreachFixture(
-                  outreachData,
-                  command,
-                  payload,
-                  requestId,
-                );
-                savedRequests.current.set(requestId, {
-                  input,
-                  result: next.result,
-                });
-                setOutreachData(next.data);
-                setResult(
-                  "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
-                );
-                return next.result;
-              }
-            : undefined
-        }
-        onIntake={
-          intake
-            ? async (_input, request) => {
-                if (fail && !failed) {
-                  setFailed(true);
-                  throw new Error(
-                    "Synthetic uncertain response. Retry the same request.",
+              : undefined
+          }
+          onIntake={
+            intake
+              ? async (_input, request) => {
+                  if (fail && !failed) {
+                    setFailed(true);
+                    throw new Error(
+                      "Synthetic uncertain response. Retry the same request.",
+                    );
+                  }
+                  setResult("Confirmed synthetic intake " + request + ".");
+                }
+              : undefined
+          }
+          onUpload={
+            intake
+              ? async (file, request) =>
+                  (
+                    await prepareUpload(
+                      file,
+                      "11111111-1111-1111-1111-111111111111",
+                      "22222222-2222-2222-2222-222222222222",
+                      request,
+                    )
+                  ).input
+              : undefined
+          }
+          onDelivery={
+            delivery
+              ? async (_material, a) =>
+                  new Blob(
+                    [
+                      a.format === "pdf"
+                        ? (syntheticPdf().buffer as ArrayBuffer)
+                        : (syntheticDocxBytes().buffer as ArrayBuffer),
+                    ],
+                    {
+                      type:
+                        a.format === "pdf"
+                          ? "application/pdf"
+                          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    },
+                  )
+              : undefined
+          }
+          onAction={
+            actions
+              ? async (_job, command) => {
+                  setResult(
+                    "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
                   );
                 }
-                setResult("Confirmed synthetic intake " + request + ".");
-              }
-            : undefined
-        }
-        onUpload={
-          intake
-            ? async (file, request) =>
-                (
-                  await prepareUpload(
-                    file,
-                    "11111111-1111-1111-1111-111111111111",
-                    "22222222-2222-2222-2222-222222222222",
-                    request,
-                  )
-                ).input
-            : undefined
-        }
-        onDelivery={
-          delivery
-            ? async (_material, a) =>
-                new Blob(
-                  [
-                    a.format === "pdf"
-                      ? (syntheticPdf().buffer as ArrayBuffer)
-                      : (syntheticDocxBytes().buffer as ArrayBuffer),
-                  ],
-                  {
-                    type:
-                      a.format === "pdf"
-                        ? "application/pdf"
-                        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                  },
-                )
-            : undefined
-        }
-        onAction={
-          actions
-            ? async (_job, command) => {
-                setResult(
-                  "Confirmed synthetic " + command.replaceAll("_", " ") + ".",
-                );
-              }
-            : undefined
-        }
-      />
-    </OfferContext.Provider></InterviewContext.Provider>
+              : undefined
+          }
+        />
+      </OfferContext.Provider>
+    </InterviewContext.Provider>
   );
 }

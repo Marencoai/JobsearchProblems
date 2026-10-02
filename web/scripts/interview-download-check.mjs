@@ -13,12 +13,12 @@ const browser = await chromium.launch({
 try {
   const context = await browser.newContext({ acceptDownloads: true });
   await context.route("**/*", (route) =>
-    new URL(route.request().url()).origin === "http://127.0.0.1:3023"
+    new URL(route.request().url()).origin === "http://127.0.0.1:3117"
       ? route.continue()
       : route.abort(),
   );
   const page = await context.newPage();
-  await page.goto("http://127.0.0.1:3023/qa?job=interview");
+  await page.goto("http://127.0.0.1:3117/qa?job=interview");
   const link = page.getByRole("link", { name: "Download concise cheat sheet" });
   await link.waitFor();
   const href = await link.getAttribute("href");
