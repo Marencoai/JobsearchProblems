@@ -1,0 +1,11 @@
+{
+  "material": {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "workspace_id": "11111111-1111-4111-8111-111111111111",
+    "material_type": "resume",
+    "status": "draft",
+    "is_current_package_version": true,
+    "version_number": 2
+  },
+  "renderer_key": "executive-brief-two-page-v2"
+}
