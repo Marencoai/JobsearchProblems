@@ -1,5 +1,14 @@
 # Job Hunt HQ human actions · proposed migration review
 
+**October 2 rollout update supersedes earlier holds:** both user-verified live
+scheduled prompt insertions pass exact mechanical comparison. The single
+approved migration was applied at 01:56:36 UTC; hosted body/grant/catalog checks
+pass. `HQ_HUMAN_ACTIONS` remains unactivated. Actual authenticated human/agent
+and scheduled deferral/revision acceptance remain pending; normal data has no
+such cases and no test fixture mutations were authorized. See the authoritative
+[hosted validation report](PHASE2_HOSTED_VALIDATION.md). All earlier observations
+below are retained as historical review evidence.
+
 **Rollout clarification supersedes the earlier deployment-target/runtime
 blocker below:** the live queues are ChatGPT scheduled automations. Node helpers
 are tested reference/CI contracts, not hosted prerequisites. Parent's authorized

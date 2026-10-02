@@ -2,6 +2,17 @@
 
 Status: local review only. Branch `codex/job-hunt-hq-intake-delivery`, existing draft PR4, stacked on Phase2 and preserving the user-authored worker snapshot commit `a254eae`. Proposed migrations `20261001225212_hq_manual_intake_and_material_delivery.sql` and `20261002001252_hq_research_refresh_request.sql` are unapproved and unapplied. No production buckets, data, worker prompts or flags were changed. Exact approved Phase2 SQL remains Git blob `0ef9a55b7158d19a99cdf426a628b234191ee318`.
 
+**October 2 follow-up:** the independent official 26.2.6 converter passes strict
+signature and Gatekeeper verification; its newly converted synthetic pair passes
+visual/parse/hash checks in [separate version 2 evidence](qa-evidence/canonical-validated/README.md).
+Original input, DOCX, PDF and QA evidence are preserved. A bounded reference
+extractor and result-binding contract now cover uploaded documents/images;
+the command fails closed on this Mac's unsupported resource limit. Linux CI
+tests the full command; hosted sandbox/vision adoption remains pending. Separately,
+the exact approved Phase2 migration was applied after verified prompt comparison;
+its [hosted validation report](PHASE2_HOSTED_VALIDATION.md) supersedes earlier
+Phase2 deployment holds. No PR4 production migration was applied.
+
 Proposed SQL SHA256 review pins:
 
 - Intake/artifacts: `ad96b4e0bdbba0a8da1c12522f733e86f6f785cfe0caa60ce68c0b02545084a6` (unchanged from published PR4).
@@ -42,7 +53,7 @@ Buckets: `hq-intake` maximum 8 MB (PDF, DOCX, PNG, JPEG, text); `hq-materials` m
 
 Artifact QA is a trusted preparation-worker attestation bound to exact hashes, not independent SQL proof that content was visually inspected. The helper validates provenance and emits registration rows; it does not render, convert, QA, upload or approve. DOCX file signatures establish a container only; the worker must safely validate/extract untrusted uploads with decompression limits. No service/admin credential bypass is allowed.
 
-See [design/schema contract](../docs/03-design/hq-intake-material-delivery.md), [intake worker skill](../skills/job-alert-intake/SKILL.md) and [preparation publication contract](../skills/prepare-application/SKILL.md). Node helpers are tested reference/CI contracts, optional only in an explicit local executable environment. The live queues are ChatGPT scheduled automations; Node availability is not a deployment prerequisite. Hosted instructions state the same invariants self-contained and preserve existing workflow. These repository proposals alone do not prove adoption. See [current task-access status and database audit](AUTOMATION_DB_BOUNDARY_AUDIT.md): both authorized additive task edits were denied, no change occurred, and no browser/alternate-route retry is permitted.
+See [design/schema contract](../docs/03-design/hq-intake-material-delivery.md), [intake worker skill](../skills/job-alert-intake/SKILL.md) and [preparation publication contract](../skills/prepare-application/SKILL.md). Node helpers are tested reference/CI contracts, optional only in an explicit local executable environment. The live queues are ChatGPT scheduled automations; Node availability is not a deployment prerequisite. Hosted instructions state the same invariants self-contained and preserve existing workflow. These repository proposals alone do not prove adoption. Both earlier authorized additive task edits were denied, no change occurred, and no browser/alternate-route retry is permitted. User subsequently verified adoption in the committed live snapshot; see [hosted validation](PHASE2_HOSTED_VALIDATION.md) and the unchanged [database audit](AUTOMATION_DB_BOUNDARY_AUDIT.md).
 
 The second proposed migration adds only `hq_request_research_refresh`, with
 existing active-human Opportunity/Intelligence/Activity/Task authority and
@@ -54,7 +65,8 @@ proposed, not an adopted hosted consumer. No new answer table is introduced.
 
 ## Validation
 
-- Automated suite: **195 tests in15 files pass**, covering research SQL/RLS, unchanged completed Evaluation snapshots, retry/double-click/task completion, default-off/individual-on/all-on transport matrix, approved packet/required unknown fields, copy errors, legacy bypass and exact old submitted-version selection, alongside all previous intake/delivery/Phase2 cases.
+- Automated suite: **201 tests in16 files pass**, covering research SQL/RLS, unchanged completed Evaluation snapshots, retry/double-click/task completion, default-off/individual-on/all-on transport matrix, approved packet/required unknown fields, copy errors, legacy bypass and exact old submitted-version selection, alongside all previous intake/delivery/Phase2 cases.
+- Fourteen synthetic Python checks pass locally, distinguishing pure parser coverage from the Mac CLI resource-limit denial. Linux CI exercises the complete command; five result-binding tests reject foreign bytes, unsupported metadata, fake OCR, incomplete output and malformed bounds.
 - Native PostgreSQL17.6: nine overlapping two-connection checks passed with actual lock waits. Two research cases cover identical-key replay and distinct requests coalescing to one task, with exact completed Evaluation/Opportunity preservation. Identical intake retries produce one event/task; conflicting same-key evidence is rejected. Existing Pursue, competing decisions, revision, approval and submission races still pass. Replayed actual baseline and proposed migrations, skipped only two production identity provisions; Storage catalog interface is a local test mock. Owned private Unix-socket cluster, TCP disabled, no production credentials; stopped/removed after verification.
 - Typecheck, lint, formatting and optimized Next.js build pass. Generated pinned PDF worker is ignored by format/lint and recreated by predev/prebuild, not maintained as source.
 - Synthetic desktop and 390×844 mobile browser QA: intake success/retry and pasted-description confirmation; two PDF pages render, extracted text includes both pages, controls and Done remain accessible, document width equals viewport. Screenshots below. These fixtures contain no candidate document or real employer content and execute no database, Storage or worker request.
@@ -76,7 +88,9 @@ text and page geometry; it does not replace human visual inspection.
 its copied bundle failed strict signature validation. One isolated headless
 conversion ran before that result was noticed; no signature/security bypass,
 global install or user-profile changes. Further copied-runtime execution stopped.
-Validated converter-runtime acceptance remains pending. See the full
+That original converter was not reused. The independent official 26.2.6 runtime
+subsequently passed both checks and produced the separate inspected pair above.
+Hosted converter adoption remains pending. See the original
 [canonical evidence/limitations](qa-evidence/canonical/README.md).
 
 Earlier browser fixtures remain hand-authored transport files, not these canonical
@@ -102,25 +116,25 @@ Rollback: disable the affected intake/delivery capabilities, preserve events/tas
 
 ## Master Build Brief §26 · full Definition of Done checkpoint
 
-| Item                                  | Evidence and remaining gate                                                                                                                                                         |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Sign in as Diana                   | Real Phase 1 sign-in accepted by Diana.                                                                                                                                             |
-| 2. Active jobs by stage               | Real stage organization accepted; preserve seven derived stages.                                                                                                                    |
-| 3. Coherent role workspace            | Core tabs/navigation accepted; later domains extend the same view.                                                                                                                  |
-| 4. Candidate Fit and Opportunity Fit  | Real separate scores accepted; no score authorizes pursuit.                                                                                                                         |
-| 5. Research and freshness             | Local explicit refresh request/queue/UI/RLS/retry/concurrency complete; actual research consumer/policy/adoption/activation gate remains. Richer signals deferred non-blocking.     |
-| 6. Pursue, Pass, Defer                | Phase 2 local RPC/UI/RLS/retry/concurrency pass; exact approved production migration and hosted worker adoption/activation remain coordinated gates.                                |
-| 7. Review generated materials         | Version/text viewers exist; actual hosted generation-to-review handoff still needs safe validation.                                                                                 |
-| 8. Exact resume/cover-letter PDF/DOCX | Local pair delivery and real canonical synthetic DOCX→PDF/visual/parse/hash proof complete; validated converter runtime, hosted publication, real Storage and browser saves remain. |
-| 9. Approve package                    | Exact Material approval verified locally; hosted Phase 2 rollout pending.                                                                                                           |
-| 10. Employer ATS with answers/files   | Local approved packet/inspected ATS/confirmed field Copy/required-input guards complete; actual form-inspection worker contract adoption and supported browser acceptance remain.   |
-| 11. Record submission                 | Local explicit confirmation/attribution/retry/concurrency pass; hosted validation pending, no real submission authorized.                                                           |
-| 12. Exact employer-received materials | Local exact old Material ID/pair selection after newer versions and foreign-snapshot denial pass; real historical Storage/browser acceptance and final stack remain.                |
-| 13. Outreach contacts                 | Separately assigned Outreach implementation; consolidated domain approval/rollout remains.                                                                                          |
-| 14. Exact outreach and sent state     | Same separate Outreach work; explicit human sent-state and external-action gates preserved.                                                                                         |
-| 15. Interview preparation             | Separately assigned structured Interview work; domain approval/rollout remains.                                                                                                     |
-| 16. Offer review                      | Separately assigned structured Offer work; domain approval/rollout remains.                                                                                                         |
-| 17. URL/JD/upload intake              | All three local paths and existing-worker contract implemented; actual worker adoption, safe extractor, Storage API and live acceptance remain.                                     |
-| 18. Clear next steps                  | Candidate workspace accepted; new plain intake progress/block states hide raw machine output.                                                                                       |
+| Item                                  | Evidence and remaining gate                                                                                                                                                               |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Sign in as Diana                   | Real Phase 1 sign-in accepted by Diana.                                                                                                                                                   |
+| 2. Active jobs by stage               | Real stage organization accepted; preserve seven derived stages.                                                                                                                          |
+| 3. Coherent role workspace            | Core tabs/navigation accepted; later domains extend the same view.                                                                                                                        |
+| 4. Candidate Fit and Opportunity Fit  | Real separate scores accepted; no score authorizes pursuit.                                                                                                                               |
+| 5. Research and freshness             | Local explicit refresh request/queue/UI/RLS/retry/concurrency complete; actual research consumer/policy/adoption/activation gate remains. Richer signals deferred non-blocking.           |
+| 6. Pursue, Pass, Defer                | Phase 2 local RPC/UI/RLS/retry/concurrency pass; exact approved production migration and hosted worker adoption/activation remain coordinated gates.                                      |
+| 7. Review generated materials         | Version/text viewers exist; actual hosted generation-to-review handoff still needs safe validation.                                                                                       |
+| 8. Exact resume/cover-letter PDF/DOCX | Local exact-byte pair proof and independently validated 26.2.6 runtime complete; hosted publication, real Storage and browser saves remain.                                               |
+| 9. Approve package                    | Exact Material approval verified locally; hosted Phase 2 rollout pending.                                                                                                                 |
+| 10. Employer ATS with answers/files   | Local approved packet/inspected ATS/confirmed field Copy/required-input guards complete; actual form-inspection worker contract adoption and supported browser acceptance remain.         |
+| 11. Record submission                 | Local explicit confirmation/attribution/retry/concurrency pass; hosted validation pending, no real submission authorized.                                                                 |
+| 12. Exact employer-received materials | Local exact old Material ID/pair selection after newer versions and foreign-snapshot denial pass; real historical Storage/browser acceptance and final stack remain.                      |
+| 13. Outreach contacts                 | Separately assigned Outreach implementation; consolidated domain approval/rollout remains.                                                                                                |
+| 14. Exact outreach and sent state     | Same separate Outreach work; explicit human sent-state and external-action gates preserved.                                                                                               |
+| 15. Interview preparation             | Separately assigned structured Interview work; domain approval/rollout remains.                                                                                                           |
+| 16. Offer review                      | Separately assigned structured Offer work; domain approval/rollout remains.                                                                                                               |
+| 17. URL/JD/upload intake              | All local paths plus bounded extraction/reference binding implemented; Mac command fails closed on resource limits. Hosted worker/sandbox/vision, Storage API and live acceptance remain. |
+| 18. Clear next steps                  | Candidate workspace accepted; new plain intake progress/block states hide raw machine output.                                                                                             |
 
 V1 is not declared complete. Phase 7 still needs the integrated safe end-to-end pass through discovery, evaluation, pursuit, generation/review/approval, submission/history, Outreach, Interview and Offer, including closed/history and desktop/mobile behavior. Business-problem wording and richer company signals remain deferred non-blocking improvements; they were not started here.
