@@ -70,9 +70,9 @@ The earlier IAB timeout is superseded by this actual isolated browser acceptance
 Evidence: [desktop](qa-evidence/interview/desktop.jpg), [mobile](qa-evidence/interview/mobile.jpg).
 
 The contacts dependency is Outreach PR3 commit
-`2af79c2dfa31611083bf3f233d02b82bf890b8fe`, migration
+`0a31190b99ed52d332c61d97f8b9f21af3fb9f7c`, migration
 `20261001230000_outreach_domain.sql`, SHA256
-`b6162b864581cdfac8b043b79ff8038cd8ae7e8d169712195dc679f10c65c906`.
+`9a8dffce9152ffa51220c5da6787d1c87f4444b11d4b21b3b697f6c04c194e6b`.
 It uses `full_name`, nullable `title`, UUID keys and UNIQUE(workspace_id,id).
 The exact dependency and contacts proposal execute successfully together: the
 actual Outreach RPC creates synthetic contacts, Interview can link them, and
@@ -136,16 +136,16 @@ is the only retained browser file. No new production package dependency is intro
 
 This remains a human-reviewed manual source-record adapter. Gmail/calendar ingest,
 worker reconciliation and new agent authority are not delivered by this proposal.
-Outreach002 integration remains pinned to the recorded2af79c2 commit/hash; final
-integration green awaits the parent's final Outreach dependency confirmation.
+The Contacts dependency now pins the final frozen Outreach head/hash above.
+Combined local integration reran the contact linkage and both native lock orders
+against that exact SQL; production approval remains separate.
 
 ## Local concurrency correction and proposed Gmail hook
 
 The Opportunity serialization lock is now `FOR NO KEY UPDATE`, with the owned
 order Opportunity → Interview → Preparation. It still serializes competing domain
-RPCs but permits foreign-key KEY SHARE locks. Outreach's Workspace-first exclusive
-lock can therefore finish its Opportunity-referencing insert while Interview waits
-for the Workspace FK. No Workspace mutation capability, role grant, RLS policy or
+RPCs but permits foreign-key KEY SHARE locks. Outreach retains Workspace-first `FOR NO KEY UPDATE`; both writers permit
+foreign-key KEY SHARE checks while serializing their own concurrent operations. No Workspace mutation capability, role grant, RLS policy or
 approved Phase2 SQL was changed. Native cross-domain checks run exact pinned Outreach
 SQL in both acquisition orders and assert both RPCs commit once without deadlock.
 `HQ_OUTREACH_PROPOSAL=/absolute/pinned.sql node scripts/interview-cross-domain-check.mjs /absolute/postgres/bin /absolute/psql`.
@@ -163,11 +163,9 @@ recovery execution, source-change commands and exact temporary Gmail action link
 remain undelivered. Synthetic contract tests cover those boundary dispositions,
 identity scoping, stable retries and unsafe schedules/links, not live reconciliation.
 
-Remaining owner dependency: exact pinned Outreach Workspace `FOR UPDATE` also
-reproduces a deadlock with unchanged approved Phase2 Pursue (Opportunity `FOR UPDATE`
-then Workspace-FK Internal Task insert). The Interview correction does not modify
-or claim to fix that existing RPC. The Outreach owner should review an FK-compatible
-Workspace serialization lock and provide a new frozen migration hash; alternatively,
-a Phase2 SQL change would require a new explicit approval dependency. Current
-Interview/Offer cross-domain passes apply only to the recorded pinned Outreach hash.
-The complete stack is not certified until the owner fix and integrated regressions.
+The previous Outreach/Phase2 Pursue deadlock is corrected in the final owner pin
+by Workspace `FOR NO KEY UPDATE`, leaving approved Phase2 SQL unchanged. The
+isolated combined candidate verifies exact Phase2 Pursue and save_positioning in
+both overlap orders, plus Interview/Offer mixed races and contact dependencies.
+No production schema, RLS, grants or live worker was changed. Full hosted v1
+acceptance and durable renderer/Storage/worker adoption remain separate gates.
