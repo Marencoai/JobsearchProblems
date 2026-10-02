@@ -1,0 +1,32 @@
+{
+  "status": "TEMPORARY_SYNTHETIC_ENDPOINT_LIVE_CALLBACK_NOT_ALLOWLISTED",
+  "origin": "https://discount-euro-shoppers-estimate.trycloudflare.com",
+  "mcp_url": "https://discount-euro-shoppers-estimate.trycloudflare.com/mcp",
+  "owned_sessions": {
+    "cloudflared": 29324,
+    "probe": 48231
+  },
+  "binary_source": "https://github.com/cloudflare/cloudflared/releases/download/2026.9.3/cloudflared-darwin-arm64.tgz",
+  "binary_checksum_reported": "5472c1a01c84bc31b3021056a73b4e5774ddddefc572124ea8fdf6c340639f32",
+  "checks": {
+    "public_oauth_metadata": true,
+    "public_protected_resource_metadata": true,
+    "one_readonly_probe_discovered": true,
+    "unauthenticated_probe_http": 401,
+    "local_http_tests_passed": 22
+  },
+  "callback_allowlist": [],
+  "production_access": false,
+  "real_credentials": false,
+  "chatgpt_authenticated_call_proven": false,
+  "scheduled_call_proven": false,
+  "scheduled_refresh_proven": false,
+  "lifetimes": {
+    "consent_seconds": 60,
+    "code_seconds": 60,
+    "access_seconds": 30,
+    "refresh_grant_absolute_seconds": 600,
+    "tunnel": "manual teardown; URL ends when owned cloudflared stops"
+  },
+  "cleanup": "Send Ctrl-C to owned probe session 48231 and cloudflared session 29324 only; remove user-installed test connection and isolated test tasks after evidence. No unknown process termination."
+}

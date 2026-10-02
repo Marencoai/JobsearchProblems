@@ -61,6 +61,15 @@ class OAuthState:
 
     def register(self, body):
         redirects = body.get("redirect_uris")
+        if self.server.report_registration and isinstance(redirects, list):
+            for uri in redirects:
+                if isinstance(uri, str) and len(uri) <= 512:
+                    parsed = urlsplit(uri)
+                    if (parsed.scheme == "https" and parsed.hostname == "chatgpt.com" and
+                            not parsed.username and not parsed.password and not parsed.query and
+                            not parsed.fragment and parsed.port in (None, 443)):
+                        print(json.dumps({"event": "observed_chatgpt_registration_callback",
+                                          "redirect_uri": uri, "allowlisted": uri in self.redirects}), flush=True)
         if (not isinstance(redirects, list) or not redirects or
                 any(not isinstance(u, str) or u not in self.redirects for u in redirects) or
                 body.get("token_endpoint_auth_method", "none") != "none" or

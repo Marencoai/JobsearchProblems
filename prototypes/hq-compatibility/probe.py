@@ -22,11 +22,12 @@ TOOL = {
 
 
 class ProbeServer(ThreadingHTTPServer):
-    def __init__(self, address=("127.0.0.1", 0), origin=None, redirects=()):
+    def __init__(self, address=("127.0.0.1", 0), origin=None, redirects=(), report_registration=False):
         configured = synthetic_oauth.public_origin(origin) if origin else None
         super().__init__(address, Handler)
         self.origin = configured or f"http://127.0.0.1:{self.server_port}"
         self.fixtures = {}
+        self.report_registration = report_registration
         try:
             self.oauth = synthetic_oauth.OAuthState(self, redirects)
         except ValueError:
@@ -134,9 +135,10 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8769)
     parser.add_argument("--public-origin", help="Explicit bare HTTPS origin; never taken from Host")
     parser.add_argument("--redirect-uri", action="append", default=[], help="Exact test client callback allowlist; repeat as needed")
+    parser.add_argument("--report-registration", action="store_true", help="Report only observed query-free ChatGPT callback URIs; never codes/tokens")
     args = parser.parse_args()
-    server = ProbeServer(("127.0.0.1", args.port), args.public_origin, args.redirect_uri)
-    print(f"Local dummy probe: {server.origin}/mcp; synthetic OAuth only; in-memory grants")
+    server = ProbeServer(("127.0.0.1", args.port), args.public_origin, args.redirect_uri, args.report_registration)
+    print(f"Local dummy probe: {server.origin}/mcp; synthetic OAuth only; in-memory grants", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
