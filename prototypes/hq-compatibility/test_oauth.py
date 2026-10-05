@@ -178,9 +178,16 @@ class OAuthTests(unittest.TestCase):
     def test_same_origin_consent_keeps_one_use_csrf(self):
         status, headers, page = self.authorization()
         self.assertEqual(headers['Referrer-Policy'], 'same-origin')
+        self.assertEqual(headers['Content-Security-Policy'], "default-src 'none'; form-action 'self' " + self.callback + "; frame-ancestors 'none'")
         consent = re.search(r'name="consent" value="([A-Za-z0-9_-]+)"', page).group(1)
         self.assertEqual(self.request('/consent', {'consent':consent,'decision':'approve'}, headers={'Origin':self.server.origin})[0],303)
         self.assertEqual(self.request('/consent', {'consent':consent,'decision':'approve'}, headers={'Origin':self.server.origin})[0],400)
+
+    def test_callback_cannot_inject_csp(self):
+        from synthetic_oauth import OAuthState
+        for uri in ['https://example.com/cb; form-action *', 'https://example.com/cb\"', "https://example.com/cb'"]:
+            with self.assertRaises(ValueError):
+                OAuthState(self.server,[uri])
 
     def test_safe_public_origin_configuration(self):
         self.assertEqual(public_origin("https://TEST.example/"), "https://test.example")

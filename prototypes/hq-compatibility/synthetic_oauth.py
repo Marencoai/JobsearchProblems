@@ -37,7 +37,8 @@ class OAuthState:
             parsed = urlsplit(uri)
             local = parsed.scheme == "http" and parsed.hostname == "127.0.0.1"
             if (not (local or parsed.scheme == "https") or not parsed.hostname or
-                    parsed.username or parsed.password or parsed.fragment):
+                    parsed.username or parsed.password or parsed.fragment or
+                    any(char.isspace() or char in ";'\"" for char in uri)):
                 raise ValueError("Redirect must be exact HTTPS or loopback URL")
         self.clients, self.pending, self.codes = {}, {}, {}
         self.refresh, self.families, self.used_refresh = {}, {}, {}
@@ -206,8 +207,12 @@ def get(handler):
             with state.lock:
                 if not state.bounded():
                     return handler.reply(429, {"error": "test_capacity"})
-                page = state.authorize(pairs(url.query))
-            handler.reply(200, page, {"Content-Security-Policy": "default-src 'none'; form-action 'self'; frame-ancestors 'none'", "Referrer-Policy": "same-origin"}, html_body=True)
+                parameters = pairs(url.query)
+                page = state.authorize(parameters)
+            # Chrome checks form-action on the 303 destination too. This URI was
+            # just checked against this registered client's exact allowlist.
+            policy = "default-src 'none'; form-action 'self' " + parameters['redirect_uri'] + "; frame-ancestors 'none'"
+            handler.reply(200, page, {"Content-Security-Policy": policy, "Referrer-Policy": "same-origin"}, html_body=True)
         except ValueError:
             handler.reply(400, {"error": "invalid_authorization_request"})
     else:
