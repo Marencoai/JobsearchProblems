@@ -207,7 +207,7 @@ def get(handler):
                 if not state.bounded():
                     return handler.reply(429, {"error": "test_capacity"})
                 page = state.authorize(pairs(url.query))
-            handler.reply(200, page, {"Content-Security-Policy": "default-src 'none'; form-action 'self'; frame-ancestors 'none'", "Referrer-Policy": "no-referrer"}, html_body=True)
+            handler.reply(200, page, {"Content-Security-Policy": "default-src 'none'; form-action 'self'; frame-ancestors 'none'", "Referrer-Policy": "same-origin"}, html_body=True)
         except ValueError:
             handler.reply(400, {"error": "invalid_authorization_request"})
     else:

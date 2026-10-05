@@ -173,6 +173,14 @@ class OAuthTests(unittest.TestCase):
     def test_duplicate_parameters_and_origin_rejected(self):
         self.assertEqual(self.request("/authorize?client_id=a&client_id=b")[0], 400)
         self.assertEqual(self.request("/consent", {"consent": "x", "decision": "approve"}, headers={"Origin": "https://invalid"})[0], 403)
+        self.assertEqual(self.request("/consent", {"consent": "x", "decision": "approve"}, headers={"Origin": "null"})[0], 403)
+
+    def test_same_origin_consent_keeps_one_use_csrf(self):
+        status, headers, page = self.authorization()
+        self.assertEqual(headers['Referrer-Policy'], 'same-origin')
+        consent = re.search(r'name="consent" value="([A-Za-z0-9_-]+)"', page).group(1)
+        self.assertEqual(self.request('/consent', {'consent':consent,'decision':'approve'}, headers={'Origin':self.server.origin})[0],303)
+        self.assertEqual(self.request('/consent', {'consent':consent,'decision':'approve'}, headers={'Origin':self.server.origin})[0],400)
 
     def test_safe_public_origin_configuration(self):
         self.assertEqual(public_origin("https://TEST.example/"), "https://test.example")
